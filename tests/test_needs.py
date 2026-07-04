@@ -18,11 +18,11 @@ Bch_1 = 994.83 * 11712.4 * (1-0.045143) / 1000 = 11 126.1 kWh
 """
 
 import pytest
-from tests.test_envelope import _bare_house_kwargs
-from tests.test_models import make_reference_building
 
 from renosim.needs import annual_needs, monthly_dhw_needs, monthly_heating_needs
 from renosim.occupancy import CONVENTIONAL, OccupancyScenario
+from tests.test_envelope import _bare_house_kwargs
+from tests.test_models import make_reference_building
 
 
 def test_dhw_needs_hand_computed() -> None:

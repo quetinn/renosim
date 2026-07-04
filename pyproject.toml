@@ -6,6 +6,9 @@ target-version = "py311"
 line-length = 100
 src = ["engine", "tests", "validation"]
 
+[tool.ruff.lint.isort]
+known-first-party = ["renosim", "tests"]
+
 [tool.ruff.lint]
 select = [
     "E",   # pycodestyle errors

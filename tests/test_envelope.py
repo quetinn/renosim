@@ -21,7 +21,6 @@ GV = 822 + 65.76 + 40.8 + 66.27 = 994.83 W/K
 """
 
 import pytest
-from tests.test_models import make_reference_building
 
 from renosim.envelope import default_u_values, envelope_heat_loss
 from renosim.models import (
@@ -32,6 +31,7 @@ from renosim.models import (
     VentilationType,
     Window,
 )
+from tests.test_models import make_reference_building
 
 
 def _bare_house_kwargs() -> dict[str, object]:
