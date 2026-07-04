@@ -1,0 +1,9 @@
+# Normalize line endings: LF in the repository, LF on checkout too
+# (consistent with ruff format and .editorconfig, avoids CRLF noise on Windows).
+* text=auto eol=lf
+
+# Binary assets
+*.png binary
+*.jpg binary
+*.woff2 binary
+*.whl binary

@@ -1,0 +1,37 @@
+# Repository-wide tool configuration.
+# The installable package lives in engine/pyproject.toml (install with: pip install -e "engine[dev]").
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+src = ["engine", "tests", "validation"]
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "UP",  # pyupgrade
+    "B",   # flake8-bugbear
+    "SIM", # flake8-simplify
+    "C4",  # flake8-comprehensions
+    "RUF", # ruff-specific
+]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+files = ["engine/renosim", "tests"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "--cov=renosim --cov-report=term-missing"
+
+[tool.coverage.run]
+source = ["renosim"]
+
+[tool.coverage.report]
+# Engine coverage target per CLAUDE.md §7.1. Kept low during Phase 0 (skeleton only);
+# raise to 85 once Phase 1 lands the calculation modules.
+fail_under = 0

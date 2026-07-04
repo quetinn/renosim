@@ -1,0 +1,40 @@
+:root {
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  line-height: 1.6;
+  color-scheme: light dark;
+}
+
+body {
+  margin: 0;
+  display: flex;
+  min-height: 100vh;
+  align-items: center;
+  justify-content: center;
+}
+
+.shell {
+  max-width: 40rem;
+  padding: 2rem;
+  text-align: center;
+}
+
+h1 {
+  font-size: 3rem;
+  margin-bottom: 0.25rem;
+}
+
+.tagline {
+  font-size: 1.15rem;
+  opacity: 0.8;
+  margin-top: 0;
+}
+
+.disclaimer {
+  font-size: 0.9rem;
+  opacity: 0.7;
+}
+
+.privacy {
+  font-size: 0.9rem;
+  opacity: 0.7;
+}

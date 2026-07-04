@@ -1,0 +1,35 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "renosim"
+version = "0.1.0"
+description = "Simplified 3CL-DPE 2021 energy engine for renovation simulation of French single-family homes"
+authors = [{ name = "Noé Quetin", email = "noe.quetin@gmail.com" }]
+license = { text = "MIT" }
+requires-python = ">=3.11"
+# The engine is deliberately stdlib-only: it must build as a pure-Python wheel
+# and run in the browser under Pyodide (CLAUDE.md §3.2, §7.3).
+dependencies = []
+classifiers = [
+    "Programming Language :: Python :: 3.11",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Topic :: Scientific/Engineering :: Physics",
+]
+
+[project.urls]
+Repository = "https://github.com/noequetin/renosim"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8",
+    "pytest-cov>=5",
+    "mypy>=1.10",
+    "ruff>=0.5",
+    "build>=1.2",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["renosim"]

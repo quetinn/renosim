@@ -1,0 +1,61 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+jobs:
+  engine:
+    name: Engine — lint, types, tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install engine (editable) with dev tools
+        run: pip install -e "engine[dev]"
+
+      - name: Lint (ruff)
+        run: |
+          ruff check .
+          ruff format --check .
+
+      - name: Type-check (mypy strict)
+        run: mypy
+
+      - name: Tests (pytest + coverage)
+        run: pytest
+
+      - name: Build pure-Python wheel (Pyodide constraint check)
+        run: python -m build --wheel engine --outdir dist/
+
+      - name: Assert wheel is pure Python
+        run: |
+          ls dist/
+          test -f dist/renosim-*-py3-none-any.whl
+
+  app:
+    name: App — typecheck & build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck & build
+        run: npm run build
