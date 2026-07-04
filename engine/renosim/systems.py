@@ -269,7 +269,10 @@ def ventilation_auxiliary_kwh(building: Building) -> float:
     if vtype in (VentilationType.NATURAL,):
         return 0.0
     aux = load_table("ventilation")["auxiliary_power_house_w"]
-    recent = building.construction_period.value in ("after_2013",)
+    recent = (
+        building.ventilation_system.installed_after_2012
+        or building.construction_period.value == "after_2013"
+    )
     key = "after_2012" if recent else "until_2012"
     if vtype is VentilationType.EXHAUST_ONLY_MANUAL:
         p = float(aux["exhaust_only_manual"][key])

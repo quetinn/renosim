@@ -206,9 +206,14 @@ class VentilationSystem:
     ventilation_type
         Type of ventilation system, used to look up conventional airflow rates and,
         for balanced systems, heat recovery efficiency.
+    installed_after_2012
+        True when the system was installed after 2012 (e.g. by a renovation
+        measure): the recent conventional airflow/auxiliary brackets then apply
+        regardless of the building construction period.
     """
 
     ventilation_type: VentilationType
+    installed_after_2012: bool = False
 
 
 @dataclass(frozen=True, slots=True)

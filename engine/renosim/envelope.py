@@ -172,6 +172,7 @@ def conventional_airflows(building: Building) -> tuple[float, float, float]:
     airflow = load_table("ventilation")["airflow_by_type"]
     vtype = building.ventilation_system.ventilation_type
     period = building.construction_period
+    installed_recent = building.ventilation_system.installed_after_2012
 
     def bracket(entry: dict[str, object], *keys: str) -> dict[str, float]:
         for key in keys:
@@ -183,10 +184,13 @@ def conventional_airflows(building: Building) -> tuple[float, float, float]:
         e = airflow["natural"]
         return float(e["qvarep"]), float(e["qvasouf"]), float(e["smea"])
 
-    recent = period in (ConstructionPeriod.Y2006_2012, ConstructionPeriod.AFTER_2013)
+    recent = installed_recent or period in (
+        ConstructionPeriod.Y2006_2012,
+        ConstructionPeriod.AFTER_2013,
+    )
     if vtype is VentilationType.EXHAUST_ONLY_MANUAL:
         entry = airflow["exhaust_only_manual"]
-        if period is ConstructionPeriod.AFTER_2013:
+        if installed_recent or period is ConstructionPeriod.AFTER_2013:
             b = bracket(entry, "after_2012")
         elif period is ConstructionPeriod.Y2006_2012 or period is ConstructionPeriod.Y2001_2005:
             b = bracket(entry, "2001_2012")
@@ -196,15 +200,11 @@ def conventional_airflows(building: Building) -> tuple[float, float, float]:
             b = bracket(entry, "before_1982")
     elif vtype is VentilationType.EXHAUST_ONLY_HYGRO_A:
         entry = airflow["exhaust_only_hygro_a"]
-        b = bracket(entry, "after_2012" if recent else "2001_2012")
-        if period in (
-            ConstructionPeriod.BEFORE_1948,
-            ConstructionPeriod.Y1948_1974,
-            ConstructionPeriod.Y1975_1977,
-            ConstructionPeriod.Y1978_1982,
-            ConstructionPeriod.Y1983_1988,
-            ConstructionPeriod.Y1989_2000,
-        ):
+        if recent:
+            b = bracket(entry, "after_2012")
+        elif period in (ConstructionPeriod.Y2001_2005,):
+            b = bracket(entry, "2001_2012")
+        else:
             b = bracket(entry, "before_2001")
     elif vtype is VentilationType.EXHAUST_ONLY_HYGRO_B:
         entry = airflow["exhaust_only_hygro_b"]
@@ -217,7 +217,10 @@ def conventional_airflows(building: Building) -> tuple[float, float, float]:
     elif vtype is VentilationType.BALANCED_HEAT_RECOVERY:
         entry = airflow["balanced_heat_recovery"]
         b = bracket(
-            entry, "after_2012" if period is ConstructionPeriod.AFTER_2013 else "before_2012"
+            entry,
+            "after_2012"
+            if installed_recent or period is ConstructionPeriod.AFTER_2013
+            else "before_2012",
         )
     else:  # pragma: no cover - exhaustive over VentilationType
         raise ValueError(f"unsupported ventilation type: {vtype}")

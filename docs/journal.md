@@ -1,5 +1,27 @@
 # Journal de bord
 
+## 2026-07-04 (fin d'après-midi) — Phase 2 : gestes de rénovation & économie
+
+**Fait :** `renovation.py` (6 gestes en dataclasses gelées, transformation pure
+Building→Building, bouquets appliqués dans l'ordre canonique enveloppe→ventilation→systèmes,
+3 bouquets prédéfinis), `economics.py` (fourchettes de coûts, économies annuelles €/kWh/CO₂,
+temps de retour simple borné à l'infini si économies nulles), `tables/renovation_costs.json`
+(fourchettes ONRE pour l'enveloppe, guides professionnels pour les équipements — champ
+`confidence` explicite, consolidation prévue Phase 5). `VentilationSystem` gagne
+`installed_after_2012` pour que le geste VMC utilise les tranches récentes (résout la
+limite notée en D-15).
+
+**Résultat clé du notebook (`demo_phase2.ipynb`)** : maison G fioul → rénovation globale
+G→C, −88 % de conso finale, 4 568 €/an économisés, retour 4-18 ans. Découverte
+pédagogique : sur une passoire, le bouquet enveloppe est **super-additif** (l'effet
+intermittence INT domine l'effet apports gratuits F) — le test de non-additivité teste
+l'écart, pas la direction.
+
+**Tests :** 68/68 verts, couverture 93,8 %, mypy strict OK (leçon : les membres d'un
+`Protocol` doivent être des propriétés lecture seule pour matcher des dataclasses gelées).
+
+**Prochaine étape :** Phase 3 — validation ADEME.
+
 ## 2026-07-04 (après-midi) — Phase 0 finalisée + Phase 1 : moteur cœur
 
 **Phase 0 bouclée :** dépôt GitHub créé (`quetinn/renosim`), CI verte au premier push, GitHub

@@ -1,0 +1,80 @@
+{
+  "_meta": {
+    "description": "Investment cost ranges per renovation measure (EUR TTC, pose incluse). Always displayed as ranges, never a single figure (CLAUDE.md §4.4). Confidence levels: 'onre' = Observatoire National de la Rénovation Énergétique (médianes et déciles observés) ; 'professional_guides' = fourchettes convergentes de guides professionnels, à recouper avec une source ONRE/ADEME en Phase 5.",
+    "sources": {
+      "onre": "ONRE / SDES, « La rénovation énergétique des maisons individuelles » (enquête TREMI), statistiques.developpement-durable.gouv.fr, rapport mai 2021 — fourchettes de coûts observés par geste.",
+      "professional_guides": "Fourchettes convergentes 2024-2025 (guides Hellowatt, IZI by EDF, QuelleEnergie) pour les équipements ; ordre de grandeur cohérent avec les guides ADEME particuliers (ademe.fr). TODO Phase 5 : consolider avec une source ONRE/ADEME unique datée."
+    },
+    "date_accessed": "2026-07-04",
+    "notes": "Le geste 'isolation murs' V1 ne distingue pas ITI/ITE (écart D-04) : la fourchette couvre ITI (bas) à ITE (haut) ; médianes observées ONRE : ITI 55 €/m², ITE 142 €/m². Le coût fenêtres est ramené au m² de baie en supposant une fenêtre moyenne de 1,5 m² (250-1600 €/unité, médiane 560 €)."
+  },
+  "measures": {
+    "roof_insulation": {
+      "unit": "eur_per_m2_roof",
+      "low": 17,
+      "high": 93,
+      "median": 40,
+      "confidence": "onre",
+      "label_fr": "Isolation des combles / toiture"
+    },
+    "wall_insulation": {
+      "unit": "eur_per_m2_wall",
+      "low": 18,
+      "high": 238,
+      "median": 100,
+      "confidence": "onre",
+      "label_fr": "Isolation des murs (ITI-ITE confondus)"
+    },
+    "window_replacement": {
+      "unit": "eur_per_m2_window",
+      "low": 170,
+      "high": 1070,
+      "median": 375,
+      "confidence": "onre",
+      "label_fr": "Remplacement des fenêtres",
+      "note": "Dérivé de 250-1600 €/fenêtre (médiane 560 €) avec 1,5 m²/fenêtre."
+    },
+    "heat_pump_air_water": {
+      "unit": "eur_lump_sum",
+      "low": 9000,
+      "high": 18000,
+      "confidence": "professional_guides",
+      "label_fr": "Pompe à chaleur air-eau (posée)"
+    },
+    "condensing_gas_boiler": {
+      "unit": "eur_lump_sum",
+      "low": 4500,
+      "high": 11500,
+      "confidence": "professional_guides",
+      "label_fr": "Chaudière gaz à condensation (posée)"
+    },
+    "wood_pellet_stove": {
+      "unit": "eur_lump_sum",
+      "low": 3000,
+      "high": 6000,
+      "confidence": "professional_guides",
+      "label_fr": "Poêle à granulés (posé)"
+    },
+    "heat_pump_water_heater": {
+      "unit": "eur_lump_sum",
+      "low": 2500,
+      "high": 4500,
+      "confidence": "professional_guides",
+      "label_fr": "Chauffe-eau thermodynamique (posé)"
+    },
+    "vmc_hygro_b": {
+      "unit": "eur_lump_sum",
+      "low": 1500,
+      "high": 4000,
+      "confidence": "professional_guides",
+      "label_fr": "VMC simple flux hygroréglable B (posée)"
+    },
+    "vmc_double_flux": {
+      "unit": "eur_lump_sum",
+      "low": 3500,
+      "high": 9000,
+      "confidence": "professional_guides",
+      "label_fr": "VMC double flux avec récupération (posée)"
+    }
+  }
+}

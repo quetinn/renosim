@@ -54,7 +54,7 @@ npm run dev
 
 - [x] **Phase 0** — Scaffolding : structure, CI, app vide déployée
 - [x] **Phase 1** — Moteur cœur : enveloppe, besoins, systèmes, étiquettes, 2 modes
-- [ ] **Phase 2** — Gestes de rénovation & économie
+- [x] **Phase 2** — Gestes de rénovation & économie
 - [ ] **Phase 3** — Validation contre la base DPE ADEME + note technique
 - [ ] **Phase 4** — App React + Pyodide (3 écrans)
 - [ ] **Phase 5** — Consolidation, docs, v1.0
