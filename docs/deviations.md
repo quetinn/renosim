@@ -140,6 +140,16 @@ Format : un écart = une entrée. Statut : `décidé` (au niveau du brief, pas e
   tranche récente.
 - **Impact :** faible.
 
+## D-16 — Hypothèses conventionnelles issues de la calibration (itération 6)
+
+- **Statut :** calibré (campagne ADEME du 04/07/2026, voir `validation/report/note_validation.md`)
+- **3CL officielle :** Rr et Rd ECS saisis selon l'installation réelle.
+- **RénoSim :** deux hypothèses conventionnelles fixées après calibration : émetteurs joule
+  supposés certifiés NF (Rr = 0,99, valeur officielle §12.3) et production ECS individuelle
+  en volume habitable avec pièces contiguës (Rd = 0,93, valeur officielle §11.5.1).
+- **Impact :** biais CEP global ramené à +7,8 kWhep/m²/an sur 11 624 maisons.
+
 ---
 
-*Les entrées suivantes seront ajoutées au fil de l'implémentation (Phases 2 et 3).*
+*Les choix de mapping de la validation (M-1 à M-7, dont le coefficient Ue des planchers sur
+terre-plein) sont documentés dans `validation/mapping.py` et la note de validation.*

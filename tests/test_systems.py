@@ -13,14 +13,15 @@ Intermittence: GV=994.83, G = 994.83/(2.5*100) = 3.9793
   INT = 0.87 / (1 + 0.1*(3.9793-1)) = 0.87/1.29793 = 0.67030
 With Bch = 1000 kWh: Cch = 1000 * 0.67030 / 0.61447 = 1090.85 kWh
 
-Electric joule: Rg=1, Re=0.95, Rd=1, Rr=0.96 -> eff = 0.912
+Electric joule (NF-certified emitters, calibration iteration 6):
+  Rg=1, Re=0.95, Rd=1, Rr=0.99 -> eff = 0.9405
   INT (divided radiator, medium inertia -> light_medium 0.83):
-  INT = 0.83/1.29793 = 0.63948 ; Cch(1000) = 1000*0.63948/0.912 = 701.19 kWh
+  INT = 0.83/1.29793 = 0.63948 ; Cch(1000) = 1000*0.63948/0.9405 = 679.94 kWh
 
-DHW electric storage (200 l, vertical unknown Cr=0.23, Rd=0.87):
+DHW electric storage (200 l, vertical unknown Cr=0.23, Rd=0.93 adjacent rooms):
   Qg,w = 8592*(45/24)*200*0.23 = 741 060 Wh = 741.06 kWh
-  With Becs = 1500 kWh: Rs = 1/(1 + 741.06*0.87/1500) = 0.69946
-  Cecs = 1500 / (1*0.87*0.69946) = 2464.9 kWh
+  With Becs = 1500 kWh: Rs = 1/(1 + 741.06*0.93/1500) = 0.68519
+  Cecs = 1500 / (1*0.93*0.68519) = 2354.0 kWh
 """
 
 import pytest
@@ -77,7 +78,7 @@ def test_electric_joule_consumption_hand_computed() -> None:
         )
     )
     result = heating_consumption(building, heating_needs_kwh=1000.0)
-    assert result.final_energy_kwh == pytest.approx(701.19, rel=2e-3)
+    assert result.final_energy_kwh == pytest.approx(679.94, rel=2e-3)
 
 
 def test_heat_pump_beats_boiler() -> None:
@@ -109,7 +110,7 @@ def test_dhw_electric_storage_hand_computed() -> None:
         )
     )
     result = dhw_consumption(building, dhw_needs_kwh=1500.0)
-    assert result.final_energy_kwh == pytest.approx(2464.9, rel=2e-3)
+    assert result.final_energy_kwh == pytest.approx(2354.0, rel=2e-3)
     assert result.energy_carrier is EnergyCarrier.ELECTRICITY
 
 

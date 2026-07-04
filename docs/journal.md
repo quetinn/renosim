@@ -1,5 +1,30 @@
 # Journal de bord
 
+## 2026-07-04 (soir) — Phase 3 : validation contre la base DPE ADEME
+
+**Fait :** `download_dpe.py` (API data-fair `dpe03existant` vérifiée en ligne, échantillon
+stratifié époque×zone×énergie, 11 708 maisons, données jamais committées), `mapping.py`
+(choix M-1 à M-7 documentés, 99,3 % de lignes mappées), `run_validation.py` (biais/MAE/MAPE,
+matrice de confusion, accord exact/±1, déclinaisons par strate).
+
+**Campagne : 6 itérations documentées** (voir `validation/report/note_validation.md`),
+de biais +99 → **+7,8 kWhep/m²/an**, accord exact 27 % → **50,5 %**, ±1 classe 62 % →
+**90,8 %**. Trois découvertes structurantes : (1) « isolation insuffisante » ADEME ≠ paroi
+nue — les constructions ≥ 1975 ont l'isolation réglementaire d'époque ; (2) le coefficient
+**Ue des planchers sur terre-plein** (annexe 1 p.18) est indispensable (~160 W/K d'écart sur
+une maison ancienne) ; (3) la base ADEME **mélange les conventions EP 2,3 et 1,9** depuis le
+01/01/2026 — le millésime est maintenant choisi par DPE selon sa date d'établissement.
+
+**Critères §7.2 : ±1 classe ✅ (90,8 % ≥ 90 %) ; exact ❌ (50,5 % < 60 %).** Analyse dans la
+note : plafond d'information du mapping (4 classes de qualité par paroi), pas de la physique —
+le gaz, population homogène, atteint 65,9 % ; le parcours app collectera une information plus
+riche. Pistes listées (rendements bûches officiels, ligne U RE2020, ECS électrique affinée).
+
+**Tests :** 68/68 verts (2 ancres manuelles recalculées après itération 6), couverture 93,8 %,
+mypy strict, ruff.
+
+**Prochaine étape :** Phase 4 — app React + Pyodide (bridge JSON versionné, 3 écrans).
+
 ## 2026-07-04 (fin d'après-midi) — Phase 2 : gestes de rénovation & économie
 
 **Fait :** `renovation.py` (6 gestes en dataclasses gelées, transformation pure

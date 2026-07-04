@@ -127,11 +127,13 @@ def heating_system_efficiency(building: Building) -> HeatingEfficiency:
     old_system = age is not None and age >= 25
 
     if gtype is HeatingGeneratorType.ELECTRIC_JOULE:
+        # Conventional assumption (calibration iteration 6): installed electric
+        # emitters are overwhelmingly NF-certified -> Rr 0.99 (official value).
         return HeatingEfficiency(
             generation=float(eff["generation_rg_non_combustion"]["electric_joule_direct"]),
             emission=float(re_t["electric_convector"]),
             distribution=1.0,
-            regulation=float(rr_t["other_electric_joule"]),
+            regulation=float(rr_t["electric_convector_nf"]),
             intermittence_i0=float(i0_t["divided_radiator_convector"]["light_medium"]),
         )
 
@@ -229,7 +231,10 @@ def dhw_consumption(building: Building, dhw_needs_kwh: float) -> UseConsumption:
     generator's seasonal Rg with the same storage/distribution chain.
     """
     eff = load_table("system_efficiencies")["dhw"]
-    rd = float(eff["distribution_rd_individual"]["production_in_living_space_distant_rooms"])
+    # Conventional assumption (calibration iteration 6): production inside the
+    # living space with adjacent bathroom/kitchen — the most common single-family
+    # configuration (official Rd 0.93, annexe 1 §11.5.1).
+    rd = float(eff["distribution_rd_individual"]["production_in_living_space_adjacent_rooms"])
     gtype = building.dhw_system.generator_type
     carrier = building.dhw_system.energy_carrier
 

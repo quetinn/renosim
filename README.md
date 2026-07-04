@@ -55,7 +55,8 @@ npm run dev
 - [x] **Phase 0** — Scaffolding : structure, CI, app vide déployée
 - [x] **Phase 1** — Moteur cœur : enveloppe, besoins, systèmes, étiquettes, 2 modes
 - [x] **Phase 2** — Gestes de rénovation & économie
-- [ ] **Phase 3** — Validation contre la base DPE ADEME + note technique
+- [x] **Phase 3** — Validation contre la base DPE ADEME + note technique
+      (11 624 maisons : biais +7,8 kWhep/m²/an, 90,8 % d'accord à ±1 classe — [note](validation/report/note_validation.md))
 - [ ] **Phase 4** — App React + Pyodide (3 écrans)
 - [ ] **Phase 5** — Consolidation, docs, v1.0
 
