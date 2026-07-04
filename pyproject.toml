@@ -32,6 +32,5 @@ addopts = "--cov=renosim --cov-report=term-missing"
 source = ["renosim"]
 
 [tool.coverage.report]
-# Engine coverage target per CLAUDE.md §7.1. Kept low during Phase 0 (skeleton only);
-# raise to 85 once Phase 1 lands the calculation modules.
-fail_under = 0
+# Engine coverage target per CLAUDE.md §7.1.
+fail_under = 85

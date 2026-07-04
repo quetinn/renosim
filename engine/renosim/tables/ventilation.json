@@ -1,0 +1,59 @@
+{
+  "_meta": {
+    "description": "Conventional ventilation airflow rates (Qvarep: extracted, Qvasouf: supplied, per m2 of living area; Smea: air-inlet modules) per ventilation type, conventional envelope airtightness Q4Pa-conv per construction period (single-family houses), wind-shelter coefficients e/f, and average ventilation auxiliary power for single-family homes. In the 3CL method the heat-recovery benefit of balanced ventilation is embedded in its low conventional Qvarep values (no separate recovery efficiency).",
+    "source": "Annexe 1 (méthode 3CL-DPE 2021) de l'arrêté du 31 mars 2021 modifié : tableau des débits conventionnels §4 (p.40), Q4Paconv/m² et cas particuliers §4 (p.39), coefficients e/f (p.39), formules Hvent=0,34·Qvarep·Sh et Hperm §4 (p.38-39), puissances d'auxiliaires §5 (p.41).",
+    "date_accessed": "2026-07-04",
+    "notes": "V1 keeps the subset of ventilation types exposed in the app journey; keys map to VentilationType in models.py. 'period' sub-keys refer to the system installation period. Q4Paconv special cases (pre-1948/1948-74 with wall or ceiling insulation) implemented in envelope.py.",
+    "units": { "qvarep_qvasouf": "m3/(h.m2 of living area)", "smea": "m3/(h.m2) under 20 Pa", "q4pa_conv": "m3/(h.m2 of deperditive wall area, under 4 Pa)", "pvent_moy": "W (average, single-family)" }
+  },
+  "airflow_by_type": {
+    "natural": { "label": "Ventilation par ouverture des fenêtres", "qvarep": 1.2, "qvasouf": 1.2, "smea": 0 },
+    "natural_air_inlets": { "label": "Ventilation par entrées d'air hautes et basses", "qvarep": 2.23, "qvasouf": 0, "smea": 4 },
+    "exhaust_only_manual": {
+      "label": "VMC simple flux autoréglable",
+      "before_1982": { "qvarep": 1.97, "qvasouf": 0, "smea": 2 },
+      "1982_2000": { "qvarep": 1.65, "qvasouf": 0, "smea": 2 },
+      "2001_2012": { "qvarep": 1.5, "qvasouf": 0, "smea": 2 },
+      "after_2012": { "qvarep": 1.32, "qvasouf": 0, "smea": 2 }
+    },
+    "exhaust_only_hygro_a": {
+      "label": "VMC simple flux hygroréglable A",
+      "before_2001": { "qvarep": 1.5, "qvasouf": 0, "smea": 2 },
+      "2001_2012": { "qvarep": 1.44, "qvasouf": 0, "smea": 2 },
+      "after_2012": { "qvarep": 1.16, "qvasouf": 0, "smea": 2 }
+    },
+    "exhaust_only_hygro_b": {
+      "label": "VMC simple flux hygroréglable B",
+      "before_2001": { "qvarep": 1.36, "qvasouf": 0, "smea": 1.5 },
+      "2001_2012": { "qvarep": 1.24, "qvasouf": 0, "smea": 1.5 },
+      "after_2012": { "qvarep": 1.09, "qvasouf": 0, "smea": 1.5 }
+    },
+    "balanced_heat_recovery": {
+      "label": "VMC double flux individuelle avec échangeur",
+      "before_2012": { "qvarep": 0.6, "qvasouf": 0.6, "smea": 0 },
+      "after_2012": { "qvarep": 0.26, "qvasouf": 0.26, "smea": 0 }
+    }
+  },
+  "q4pa_conv_house_by_period": {
+    "before_1948": 3.3,
+    "1948_1974": 2.2,
+    "1975_2005": 1.9,
+    "2006_2012": 1.3,
+    "after_2012": 0.6,
+    "special_cases": {
+      "before_1948_insulated_walls_or_ceiling": 2.0,
+      "1948_1974_insulated_walls_or_ceiling": 1.9,
+      "before_1948_windows_with_seals": 2.5
+    }
+  },
+  "shelter_coefficients": {
+    "several_exposed_facades": { "e": 0.07, "f": 15 },
+    "single_exposed_facade": { "e": 0.02, "f": 20 }
+  },
+  "auxiliary_power_house_w": {
+    "exhaust_only_manual": { "until_2012": 65, "after_2012": 35 },
+    "exhaust_only_hygro": { "until_2012": 50, "after_2012": 15 },
+    "balanced_heat_recovery": { "until_2012": 80, "after_2012": 35 },
+    "formula": "Caux_vent [kWh/an] = 8760 * Pvent_moy / 1000"
+  }
+}

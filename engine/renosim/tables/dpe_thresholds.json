@@ -1,0 +1,18 @@
+{
+  "_meta": {
+    "description": "DPE 2021 label thresholds (A-G). Final label = worst of the energy (primary energy) and climate (CO2) classifications. Upper bounds are exclusive ('Cep < 70' => class A), values compared after rounding down to integer per the annexe.",
+    "source": "Annexe 5 de l'arrêté du 31 mars 2021 relatif au DPE pour les bâtiments à usage d'habitation (JORFTEXT000043353335), version consolidée publiée sur rt-re-batiment.developpement-durable.gouv.fr (consolide_annexes_arrete_du_31_03_2021_relatif_au_dpe_habitation.pdf, pages 11-12), transcription verbatim.",
+    "date_accessed": "2026-07-04",
+    "notes": "The 'high_altitude_cold_zones' variant applies to dwellings in zones H1b, H1c, H2d above 800 m: classes E, F and G get relaxed bounds; A-D are unchanged. The arrêté du 25 mars 2024 (JORFTEXT000049446315) introduces surface-dependent thresholds for dwellings <= 40 m2; NOT encoded in V1 (documented deviation, see docs/deviations.md)."
+  },
+  "standard": {
+    "primary_energy_upper_kwhep_m2y": { "A": 70, "B": 110, "C": 180, "D": 250, "E": 330, "F": 420 },
+    "co2_upper_kgco2_m2y": { "A": 6, "B": 11, "C": 30, "D": 50, "E": 70, "F": 100 }
+  },
+  "high_altitude_cold_zones": {
+    "applies_to_zones": ["H1b", "H1c", "H2d"],
+    "applies_above_altitude_m": 800,
+    "primary_energy_upper_kwhep_m2y": { "A": 70, "B": 110, "C": 180, "D": 250, "E": 390, "F": 500 },
+    "co2_upper_kgco2_m2y": { "A": 6, "B": 11, "C": 30, "D": 50, "E": 80, "F": 110 }
+  }
+}

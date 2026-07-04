@@ -1,5 +1,49 @@
 # Journal de bord
 
+## 2026-07-04 (après-midi) — Phase 0 finalisée + Phase 1 : moteur cœur
+
+**Phase 0 bouclée :** dépôt GitHub créé (`quetinn/renosim`), CI verte au premier push, GitHub
+Pages activé (source Actions) et déployé après configuration manuelle de la source par Noé —
+site en ligne : <https://quetinn.github.io/renosim/>. Tag `phase-0` poussé.
+
+**Phase 1 — extraction des sources réglementaires :**
+
+- Annexe 1 (méthode 3CL-DPE 2021) et annexes DPE habitation téléchargées depuis
+  rt-re-batiment.developpement-durable.gouv.fr et extraites (pypdf/pdfplumber + rendu image
+  pour la table Umur_tab qui n'existe qu'en image dans le PDF).
+- Valeurs confirmées verbatim à la source : seuils étiquettes (annexe 5, y c. variante
+  > 800 m H1b/H1c/H2d), facteurs CO₂ par énergie et par usage (arrêté modificatif
+  JORFTEXT000043353421), tables U par défaut (murs/plancher/toiture × période × H1-H3 × joule),
+  débits VMC conventionnels, Q4Pa-conv, SCOP PAC, COP CET, Re/Rd/Rr, I0/INT, formules
+  Rpn/Rpint chaudières, Nadeq/Becs, apports internes, facteur d'utilisation par inertie,
+  données climatiques mensuelles complètes (§18.2, parsées par script → `climate_zones.json`),
+  tarifs conventionnels (annexe 7, 01/01/2021 — TODO mise à jour avant Phase 4).
+- **Découverte réglementaire importante** : l'arrêté du 13 août 2025 abaisse le coefficient EP
+  électricité de 2,3 à 1,9 au 01/01/2026 (déjà en vigueur aujourd'hui). Choix V1 : défaut 2,3
+  (cohérent avec la base ADEME de validation), convention 2026 encodée et sélectionnable
+  (`regulation_vintage`). Documenté en D-13.
+
+**Phase 1 — implémentation :** `models.py` (dataclasses frozen), 7 tables JSON sourcées,
+`occupancy.py` (scénario conventionnel figé + personnalisé, interpolation DH19/DH21),
+`envelope.py` (GV complet avec infiltrations 3CL), `needs.py` (besoins mensuels, facteur
+d'utilisation ISO 13790/3CL), `systems.py` (rendements officiels, INT), `outputs.py` (EP, CO₂,
+étiquettes double seuil, coûts par tranches), `simulation.py` (API `simulate()`).
+Écarts D-06 à D-15 documentés au fil de l'eau dans `deviations.md`.
+
+**État des tests :** 53/53 verts, couverture 92 % (seuil monté à 85), mypy strict OK, ruff OK.
+Tests unitaires avec valeurs calculées à la main (GV, Becs, Bch janvier, rendements chaudière,
+ballon ECS) + 5 cas de référence de bout en bout + invariants. Notebook de démo exécuté :
+`validation/notebooks/demo_phase1.ipynb` (maison fioul 1960s → G à 639 kWhep/m²/an ;
+bouquet → C-D attendu en Phase 2).
+
+**Pièges Windows (session) :** les shims `pip.exe`/`mypy.exe` du venv échouent silencieusement
+(exit 1 sans sortie) — utiliser `python -m pip` / `python -m mypy`. Le `.pth` editable doit être
+réécrit en chemin court 8.3 après chaque `pip install -e engine` (voir entrée Phase 0).
+
+**Prochaines étapes :** Phase 2 — `renovation.py` (6 gestes, bouquets enveloppe→systèmes,
+immutabilité), `economics.py`, `renovation_costs.json` sourcée (ONRE/ADEME, fourchettes déjà
+repérées), tests d'invariants (bouquet ≥ meilleur geste, non-additivité).
+
 ## 2026-07-04 — Phase 0 : scaffolding
 
 **Fait :**

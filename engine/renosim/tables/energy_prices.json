@@ -1,0 +1,33 @@
+{
+  "_meta": {
+    "description": "Conventional energy prices used to estimate annual energy costs, per the DPE convention (annexe 7 de l'arrêté habitation). Electricity and natural gas use consumption-bracket formulas 'cost = fixed + rate * kWh_ef'; other carriers use flat EUR/kWh PCI rates (subscription included).",
+    "source": "Annexe 7 (évaluation des frais annuels d'énergie) de l'arrêté du 31 mars 2021 relatif au DPE habitation, version consolidée rt-re-batiment.developpement-durable.gouv.fr, barèmes au 1er janvier 2021 (p.14-15 des annexes). Les tarifs sont révisés annuellement par arrêté (dernière actualisation connue : arrêté du 25 mars 2024, JORFTEXT000049446315) — voir notes.",
+    "date_reference": "2021-01-01",
+    "date_accessed": "2026-07-04",
+    "notes": "TODO (non bloquant pour le moteur, bloquant pour l'affichage € final) : mettre à jour vers le barème le plus récent (arrêté du 25 mars 2024 ou postérieur) avant la Phase 4 ; le schéma JSON restera identique. En mode personnalisé, l'utilisateur peut remplacer ces prix par les siens.",
+    "units": "EUR TTC per kWh of final energy (PCI), subscription included"
+  },
+  "flat_rates_eur_per_kwh": {
+    "fuel_oil": 0.09142,
+    "district_heating": 0.0787,
+    "lpg_propane": 0.14305,
+    "lpg_butane": 0.20027,
+    "coal": 0.02372,
+    "wood_pellets": 0.05991,
+    "wood_logs": 0.03201
+  },
+  "bracket_formulas": {
+    "natural_gas": [
+      { "max_kwh": 5009, "fixed_eur": 0, "rate_eur_per_kwh": 0.11121 },
+      { "max_kwh": 50055, "fixed_eur": 230, "rate_eur_per_kwh": 0.06533 },
+      { "max_kwh": null, "fixed_eur": 415, "rate_eur_per_kwh": 0.06164 }
+    ],
+    "electricity": [
+      { "max_kwh": 1000, "fixed_eur": 0, "rate_eur_per_kwh": 0.29007 },
+      { "max_kwh": 2500, "fixed_eur": 149, "rate_eur_per_kwh": 0.14066 },
+      { "max_kwh": 5000, "fixed_eur": 122, "rate_eur_per_kwh": 0.15176 },
+      { "max_kwh": 15000, "fixed_eur": 94, "rate_eur_per_kwh": 0.15735 },
+      { "max_kwh": null, "fixed_eur": null, "rate_eur_per_kwh": 0.15989, "note": "fixed part per annexe formula 7500*T4e-7500*T5e; V1 uses fixed 94 EUR continuation — negligible for houses (rare > 15 MWh)" }
+    ]
+  }
+}

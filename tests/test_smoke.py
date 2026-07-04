@@ -1,13 +1,10 @@
-"""Phase 0 smoke tests: the package installs, imports and identifies itself.
-
-Real engine tests (envelope, needs, systems, reference cases) arrive in Phase 1.
-"""
+"""Smoke tests: the package installs, imports and identifies itself."""
 
 import renosim
 
 
 def test_package_imports_and_has_version() -> None:
-    assert renosim.__version__ == "0.1.0"
+    assert renosim.__version__ == "0.2.0"
 
 
 def test_engine_info_contract() -> None:

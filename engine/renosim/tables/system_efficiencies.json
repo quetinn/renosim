@@ -1,0 +1,111 @@
+{
+  "_meta": {
+    "description": "Conventional efficiencies of heating and DHW systems per the 3CL-DPE 2021 method: emission (Re), distribution (Rd), regulation (Rr) and generation (Rg / SCOP / COP) plus the intermittence factor base I0. Heating consumption: Cch = Bch * INT / (Rg*Re*Rd*Rr); DHW: Cecs = Becs / (Rg*Rd*Rs) or Becs / (COP*Rd) for heat-pump water heaters.",
+    "source": "Annexe 1 (méthode 3CL-DPE 2021) de l'arrêté du 31 mars 2021 modifié : Re §12.1 (p.75-76), Rd §12.2 (p.76), Rr §12.3 (p.76), Rg générateurs non-combustion §12.4.1 (p.76), SCOP PAC §12.4.2 (p.77), poêles/inserts §13.1 (p.78), formules Rpn/Rpint chaudières §13.2.2 (p.86-87), intermittence I0 et formule INT §8 (p.55), Rd ECS §11.5.1 (p.74), pertes ballons électriques §11.6.2 (p.75), Rs §11.6.3, COP chauffe-eau thermodynamiques §14.2 (p.95), réseau de chaleur ECS §14.3.",
+    "date_accessed": "2026-07-04",
+    "notes": "V1 simplifications (documented in docs/deviations.md): (a) boiler seasonal generation efficiency approximated from Rpn/Rpint at the default nominal power below instead of the full load-profile weighting with Qp0 standby losses; (b) recovered losses (pertes récupérées) ignored in heating needs; (c) heating Rd uses the 'individual water network' rows. SCOP periods: pre-2008 values are COPs per the annexe footnote.",
+    "units": "dimensionless efficiencies; power in kW"
+  },
+  "emission_re": {
+    "electric_convector": 0.95,
+    "electric_radiant_panel": 0.97,
+    "other_electric_joule": 0.95,
+    "hot_air_blowing": 0.95,
+    "heated_floor": 1.0,
+    "heated_ceiling": 0.98,
+    "other_equipment": 0.95
+  },
+  "distribution_rd_heating": {
+    "no_network": 1.0,
+    "individual_water_low_temp": { "uninsulated": 0.91, "insulated": 0.95 },
+    "individual_water_high_temp": { "uninsulated": 0.88, "insulated": 0.92 },
+    "air_network": { "uninsulated": 0.8, "insulated": 0.85 },
+    "refrigerant_network": 1.0
+  },
+  "regulation_rr": {
+    "electric_convector_nf": 0.99,
+    "electric_radiant_panel_nf": 0.99,
+    "other_electric_joule": 0.96,
+    "water_radiator_with_thermostatic_valves": 0.95,
+    "water_radiator_without_thermostatic_valves": 0.9,
+    "heated_floor_individual": 0.95,
+    "stove_or_insert": 0.8,
+    "blown_air": 0.96,
+    "default_unlisted": 0.9
+  },
+  "generation_rg_non_combustion": {
+    "electric_joule_direct": 1.0,
+    "electric_boiler": 0.97,
+    "district_heating": 0.97
+  },
+  "stoves_rg": {
+    "wood_log_stove": { "before_1990": 0.5, "1990_2004": 0.6, "2005_2017_label": 0.7, "after_2018_label": 0.75, "2005_no_label": 0.65 },
+    "wood_pellet_stove": { "before_2012_or_no_label": 0.8, "2012_2019_label": 0.85, "after_2020_label": 0.87 },
+    "oil_or_lpg_stove": 0.72
+  },
+  "boiler_efficiency_formulas": {
+    "note": "Rpn/Rpint in % PCI as a function of log10(Pn[kW]). Seasonal Rg approximated in systems.py as a 0.3/0.7 weighted blend of full-load and intermediate-load efficiency (residential load profile is dominated by part load).",
+    "default_nominal_power_kw": 24,
+    "gas_and_oil": {
+      "standard": { "rpn": "84 + 2*log10(Pn)", "rpint": "80 + 3*log10(Pn)" },
+      "low_temperature": { "rpn": "87.5 + 1.5*log10(Pn)", "rpint": "87.5 + 1.5*log10(Pn)" },
+      "condensing_pre_2016": { "rpn": "91 + 1*log10(Pn)", "rpint": "97 + 1*log10(Pn)" },
+      "condensing_2016_plus_le_70kw": { "rpn": "91 + 3*log10(Pn)", "rpint": "103 + 2.5*log10(Pn)" }
+    },
+    "old_boiler_derating": {
+      "note": "V1: pre-1991 'classique' boilers use the standard formulas (identical per the annexe); higher standby losses Qp0 (4%/2%/1.5% of Pn by age) are approximated by an extra multiplicative derating.",
+      "before_1980": 0.93,
+      "1981_1990": 0.96,
+      "after_1990": 1.0
+    }
+  },
+  "heat_pump_scop": {
+    "air_water": {
+      "H1_H2": {
+        "radiators": { "before_2008": 2.2, "2008_2014": 2.4, "2015_2016": 2.6, "after_2017": 2.8 },
+        "floor_ceiling": { "before_2008": 2.4, "2008_2014": 2.6, "2015_2016": 2.9, "after_2017": 3.2 }
+      },
+      "H3": {
+        "radiators": { "before_2008": 2.5, "2008_2014": 2.8, "2015_2016": 3.0, "after_2017": 3.2 },
+        "floor_ceiling": { "before_2008": 2.9, "2008_2014": 3.1, "2015_2016": 3.5, "after_2017": 3.8 }
+      }
+    },
+    "air_air": {
+      "H1_H2": { "before_2008": 2.2, "2008_2014": 2.3, "after_2015": 3.0 },
+      "H3": { "before_2008": 2.4, "2008_2014": 2.6, "after_2015": 3.3 }
+    }
+  },
+  "intermittence": {
+    "formula": "INT = I0 / (1 + 0.1*(G - 1)) avec G = GV / (Hsp * Sh)",
+    "default_ceiling_height_m": 2.5,
+    "i0_house_individual": {
+      "note": "Maison individuelle, chauffage individuel, avec régulation pièce par pièce, équipement d'intermittence 'central sans minimum de température'; colonnes = inertie légère/moyenne vs lourde/très lourde.",
+      "divided_radiator_convector": { "light_medium": 0.83, "heavy": 0.85 },
+      "central_radiator": { "light_medium": 0.87, "heavy": 0.89 },
+      "central_heated_floor": { "light_medium": 0.89, "heavy": 0.91 },
+      "blown_air": { "light_medium": 0.85, "heavy": 0.87 }
+    }
+  },
+  "dhw": {
+    "distribution_rd_individual": { "production_in_living_space_adjacent_rooms": 0.93, "production_in_living_space_distant_rooms": 0.87, "production_outside_living_space": 0.83 },
+    "electric_storage_losses": {
+      "formula": "Qg,w [Wh/an] = 8592 * (45/24) * Vs * Cr ; Rs = 1 / (1 + Qg,w*Rd/Becs) (1,08 au numérateur pour catégorie C/3*)",
+      "default_volume_l": 200,
+      "cr_vertical_unknown_by_volume": { "le_100": 0.32, "100_200": 0.23, "200_300": 0.22, "gt_300": 0.22 }
+    },
+    "gas_water_heater_rg": { "before_1990": 0.81, "1990_2000": 0.84, "after_2000": 0.84, "condensing_after_1996": 0.98 },
+    "heat_pump_water_heater_cop": {
+      "H1_H2": { "outdoor_or_unheated_air": { "before_2010": 2.0, "2010_2014": 2.2, "after_2015": 2.5 }, "extract_air": { "before_2010": 2.3, "2010_2014": 2.5, "after_2015": 2.8 } },
+      "H3": { "outdoor_or_unheated_air": { "before_2010": 2.3, "2010_2014": 2.5, "after_2015": 2.8 }, "extract_air": { "before_2010": 2.3, "2010_2014": 2.5, "after_2015": 2.9 } },
+      "iecs_formula": "Iecs = 1 / (Rd * COP)"
+    },
+    "district_heating_substation": { "rs_rg_insulated": 0.9, "rs_rg_uninsulated": 0.75 }
+  },
+  "lighting": {
+    "formula": "Cecl [kWh/an] = C * Pecl * Nh * Sh / 1000",
+    "c_switch_control": 0.9,
+    "p_ecl_w_per_m2": 1.4,
+    "annual_hours_national_average": 2123,
+    "note": "V1 uses the national average lighting hours (2123 h, §6.1 des apports internes) instead of the per-zone monthly Nh tables; documented deviation."
+  }
+}

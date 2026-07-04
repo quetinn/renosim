@@ -1,7 +1,8 @@
 # RénoSim — Simulateur de rénovation énergétique résidentielle
 
-> ⚠️ **Projet en construction (Phase 0 — scaffolding).** Le moteur de calcul, la validation et
-> l'application arrivent dans les phases suivantes (voir la feuille de route ci-dessous).
+> ⚠️ **Projet en construction (Phase 1 terminée — moteur cœur).** Les gestes de rénovation, la
+> validation ADEME et l'application arrivent dans les phases suivantes (feuille de route ci-dessous).
+> Démo en ligne (placeholder) : <https://quetinn.github.io/renosim/>
 
 **RénoSim** est un simulateur open-source de rénovation énergétique pour maisons individuelles
 françaises. Décrivez votre logement, obtenez une estimation de sa performance (consommation,
@@ -52,7 +53,7 @@ npm run dev
 ## Feuille de route
 
 - [x] **Phase 0** — Scaffolding : structure, CI, app vide déployée
-- [ ] **Phase 1** — Moteur cœur : enveloppe, besoins, systèmes, étiquettes, 2 modes
+- [x] **Phase 1** — Moteur cœur : enveloppe, besoins, systèmes, étiquettes, 2 modes
 - [ ] **Phase 2** — Gestes de rénovation & économie
 - [ ] **Phase 3** — Validation contre la base DPE ADEME + note technique
 - [ ] **Phase 4** — App React + Pyodide (3 écrans)

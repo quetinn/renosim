@@ -1,0 +1,84 @@
+{
+  "_meta": {
+    "description": "Default U-values (W/(m2.K)) for opaque walls, floors and roofs by construction/insulation period, climate zone group (H1/H2/H3) and heating type (electric joule vs others), per the 3CL-DPE 2021 lookup tables used when insulation characteristics are unknown. Also carries the uninsulated defaults (U_nu) and simplified window U defaults.",
+    "source": "Annexe 1 (méthode 3CL-DPE 2021) de l'arrêté du 31 mars 2021 modifié, version consolidée rt-re-batiment.developpement-durable.gouv.fr : Umur_tab §3.2.1.1 (p.13, table lue depuis le schéma), Umur_nu=Min(Umur0;2,5) §3.2.1, Upb_tab §3.2.2.1 (p.17), Upb0 §3.2.2.2 (p.20), Uph_tab §3.2.3.1 (p.21, variantes combles/terrasse), Uph0=2,5 §3.2.3. Fenêtres : valeurs simplifiées V1 dérivées des tables Uw §3.3.2 (voir notes).",
+    "date_accessed": "2026-07-04",
+    "notes": "Periods follow the 3CL brackets ('<=74 ou inconnu', 75-77, 78-82, 83-88, 89-00, 01-05, 06-12, '>=13'). The 3CL rule 'Si année de construction <=74 alors année d'isolation = 75-77' is implemented in envelope.py. V1 simplification (documented): a single wall table per zone group H1/H2/H3 (zone letters a/b/c collapse onto their group). Window defaults are a V1 simplification: representative Uw per glazing type, mid-range of the official Uw tables (§3.3.2) across frame materials — the app's simplified journey does not ask for frame material; deviation documented in docs/deviations.md.",
+    "units": "W/(m2.K)"
+  },
+  "period_keys": ["before_1948", "1948_1974", "1975_1977", "1978_1982", "1983_1988", "1989_2000", "2001_2005", "2006_2012", "after_2013"],
+  "uninsulated_defaults": {
+    "wall_u_nu": 2.5,
+    "roof_u0": 2.5,
+    "floor_u0": 2.0
+  },
+  "wall_insulated_by_period": {
+    "note": "Umur_tab. 'before_1948' and '1948_1974' rows equal the '<=74 ou inconnu' column (2,5) — in practice envelope.py maps pre-1975 construction to the 75-77 insulation row when the wall is insulated at an unknown date.",
+    "H1": {
+      "joule":  { "before_1948": 2.5, "1948_1974": 2.5, "1975_1977": 1.0,  "1978_1982": 0.8,  "1983_1988": 0.7,  "1989_2000": 0.45, "2001_2005": 0.4, "2006_2012": 0.36, "after_2013": 0.23 },
+      "others": { "before_1948": 2.5, "1948_1974": 2.5, "1975_1977": 1.0,  "1978_1982": 1.0,  "1983_1988": 0.8,  "1989_2000": 0.5,  "2001_2005": 0.4, "2006_2012": 0.36, "after_2013": 0.23 }
+    },
+    "H2": {
+      "joule":  { "before_1948": 2.5, "1948_1974": 2.5, "1975_1977": 1.05, "1978_1982": 0.84, "1983_1988": 0.74, "1989_2000": 0.47, "2001_2005": 0.4, "2006_2012": 0.36, "after_2013": 0.23 },
+      "others": { "before_1948": 2.5, "1948_1974": 2.5, "1975_1977": 1.05, "1978_1982": 1.05, "1983_1988": 0.84, "1989_2000": 0.53, "2001_2005": 0.4, "2006_2012": 0.36, "after_2013": 0.23 }
+    },
+    "H3": {
+      "joule":  { "before_1948": 2.5, "1948_1974": 2.5, "1975_1977": 1.11, "1978_1982": 0.89, "1983_1988": 0.78, "1989_2000": 0.5,  "2001_2005": 0.47, "2006_2012": 0.4, "after_2013": 0.25 },
+      "others": { "before_1948": 2.5, "1948_1974": 2.5, "1975_1977": 1.11, "1978_1982": 1.11, "1983_1988": 0.89, "1989_2000": 0.56, "2001_2005": 0.47, "2006_2012": 0.4, "after_2013": 0.25 }
+    }
+  },
+  "floor_insulated_by_period": {
+    "note": "Upb_tab (plancher bas donnant sur l'extérieur ou local non chauffé).",
+    "H1": {
+      "joule":  { "before_1948": 2.0, "1948_1974": 2.0, "1975_1977": 0.9,  "1978_1982": 0.8,  "1983_1988": 0.55, "1989_2000": 0.55, "2001_2005": 0.3,  "2006_2012": 0.27, "after_2013": 0.23 },
+      "others": { "before_1948": 2.0, "1948_1974": 2.0, "1975_1977": 0.9,  "1978_1982": 0.9,  "1983_1988": 0.8,  "1989_2000": 0.5,  "2001_2005": 0.3,  "2006_2012": 0.27, "after_2013": 0.23 }
+    },
+    "H2": {
+      "joule":  { "before_1948": 2.0, "1948_1974": 2.0, "1975_1977": 0.95, "1978_1982": 0.84, "1983_1988": 0.58, "1989_2000": 0.58, "2001_2005": 0.3,  "2006_2012": 0.27, "after_2013": 0.23 },
+      "others": { "before_1948": 2.0, "1948_1974": 2.0, "1975_1977": 0.95, "1978_1982": 0.95, "1983_1988": 0.74, "1989_2000": 0.63, "2001_2005": 0.3,  "2006_2012": 0.27, "after_2013": 0.23 }
+    },
+    "H3": {
+      "joule":  { "before_1948": 2.0, "1948_1974": 2.0, "1975_1977": 1.0,  "1978_1982": 0.89, "1983_1988": 0.78, "1989_2000": 0.5,  "2001_2005": 0.47, "2006_2012": 0.4,  "after_2013": 0.25 },
+      "others": { "before_1948": 2.0, "1948_1974": 2.0, "1975_1977": 1.0,  "1978_1982": 1.0,  "1983_1988": 0.89, "1989_2000": 0.56, "2001_2005": 0.47, "2006_2012": 0.4,  "after_2013": 0.25 }
+    }
+  },
+  "roof_insulated_by_period": {
+    "note": "Uph_tab, variante 'Combles'. La variante 'Terrasse' est encodée séparément.",
+    "combles": {
+      "H1": {
+        "joule":  { "before_1948": 2.5, "1948_1974": 2.5, "1975_1977": 0.5,  "1978_1982": 0.4,  "1983_1988": 0.3,  "1989_2000": 0.25, "2001_2005": 0.23, "2006_2012": 0.2,  "after_2013": 0.14 },
+        "others": { "before_1948": 2.5, "1948_1974": 2.5, "1975_1977": 0.5,  "1978_1982": 0.5,  "1983_1988": 0.3,  "1989_2000": 0.25, "2001_2005": 0.23, "2006_2012": 0.2,  "after_2013": 0.14 }
+      },
+      "H2": {
+        "joule":  { "before_1948": 2.5, "1948_1974": 2.5, "1975_1977": 0.53, "1978_1982": 0.42, "1983_1988": 0.32, "1989_2000": 0.26, "2001_2005": 0.23, "2006_2012": 0.2,  "after_2013": 0.14 },
+        "others": { "before_1948": 2.5, "1948_1974": 2.5, "1975_1977": 0.53, "1978_1982": 0.53, "1983_1988": 0.32, "1989_2000": 0.26, "2001_2005": 0.23, "2006_2012": 0.2,  "after_2013": 0.14 }
+      },
+      "H3": {
+        "joule":  { "before_1948": 2.5, "1948_1974": 2.5, "1975_1977": 0.56, "1978_1982": 0.44, "1983_1988": 0.33, "1989_2000": 0.3,  "2001_2005": 0.3,  "2006_2012": 0.25, "after_2013": 0.14 },
+        "others": { "before_1948": 2.5, "1948_1974": 2.5, "1975_1977": 0.56, "1978_1982": 0.56, "1983_1988": 0.33, "1989_2000": 0.3,  "2001_2005": 0.3,  "2006_2012": 0.25, "after_2013": 0.14 }
+      }
+    },
+    "terrasse": {
+      "H1": {
+        "joule":  { "before_1948": 2.5, "1948_1974": 2.5, "1975_1977": 0.75, "1978_1982": 0.7,  "1983_1988": 0.4,  "1989_2000": 0.35, "2001_2005": 0.3,  "2006_2012": 0.27, "after_2013": 0.14 },
+        "others": { "before_1948": 2.5, "1948_1974": 2.5, "1975_1977": 0.75, "1978_1982": 0.75, "1983_1988": 0.55, "1989_2000": 0.4,  "2001_2005": 0.3,  "2006_2012": 0.27, "after_2013": 0.14 }
+      },
+      "H2": {
+        "joule":  { "before_1948": 2.5, "1948_1974": 2.5, "1975_1977": 0.79, "1978_1982": 0.74, "1983_1988": 0.42, "1989_2000": 0.37, "2001_2005": 0.3,  "2006_2012": 0.27, "after_2013": 0.14 },
+        "others": { "before_1948": 2.5, "1948_1974": 2.5, "1975_1977": 0.79, "1978_1982": 0.79, "1983_1988": 0.58, "1989_2000": 0.42, "2001_2005": 0.3,  "2006_2012": 0.27, "after_2013": 0.14 }
+      },
+      "H3": {
+        "joule":  { "before_1948": 2.5, "1948_1974": 2.5, "1975_1977": 0.83, "1978_1982": 0.78, "1983_1988": 0.44, "1989_2000": 0.39, "2001_2005": 0.3,  "2006_2012": 0.27, "after_2013": 0.14 },
+        "others": { "before_1948": 2.5, "1948_1974": 2.5, "1975_1977": 0.83, "1978_1982": 0.83, "1983_1988": 0.61, "1989_2000": 0.44, "2001_2005": 0.3,  "2006_2012": 0.27, "after_2013": 0.14 }
+      }
+    }
+  },
+  "window_defaults": {
+    "note": "V1 simplified representative Uw (W/(m2.K)) and solar factor Sw per glazing type, mid-range across frame materials of the official §3.3.2 Uw and §6.2.1 Sw tables (fenêtre battante). Simple vitrage: Ug=5,8 -> Uw bois/PVC ~4,6-5,4. Documented deviation.",
+    "single_glazing": { "u_w_per_m2k": 4.8, "solar_factor": 0.56 },
+    "double_glazing_old": { "u_w_per_m2k": 3.1, "solar_factor": 0.5 },
+    "double_glazing_recent": { "u_w_per_m2k": 1.8, "solar_factor": 0.48 },
+    "double_glazing_low_e": { "u_w_per_m2k": 1.4, "solar_factor": 0.43 },
+    "triple_glazing": { "u_w_per_m2k": 1.0, "solar_factor": 0.4 }
+  }
+}

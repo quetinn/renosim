@@ -1,0 +1,39 @@
+{
+  "_meta": {
+    "description": "Conventional occupancy constants of the 3CL-DPE 2021 method: heating setpoints, equivalent-adult formulas (Nadeq), DHW draw-off, internal gains, monthly occupied days.",
+    "source": "Annexe 1 (méthode 3CL-DPE 2021) de l'arrêté du 31 mars 2021 modifié : consignes 19°C/21°C §9 (p.57) et §13.2.1.2, Nmax/Nadeq maison individuelle §11.1 (p.70-71), Becs = 1,163*Nadeq*V*(40-Tefs)*nj §11.1 (p.72), jours d'occupation §11.1, apports internes 3,18+0,34 W/m² et 90 W/adulte * 132/168 §6.1 (p.43), facteur d'utilisation Fj par inertie §6.1 (p.42).",
+    "date_accessed": "2026-07-04",
+    "notes": "The 'personalized' mode of RénoSim reuses this structure with user overrides (setpoint, occupants, DHW volume); the 3CL 'dépensier' values are kept as documented bounds. 1,163 Wh/(l.K) is the volumetric heat capacity of water."
+  },
+  "heating_setpoint_c": { "conventional": 19, "spendthrift": 21 },
+  "nadeq_house": {
+    "nmax": [
+      { "when_shmoy_below_m2": 30, "formula": "1" },
+      { "when_shmoy_below_m2": 70, "formula": "1.75 - 0.01875*(70 - Shmoy)" },
+      { "otherwise": true, "formula": "0.025 * Shmoy" }
+    ],
+    "nadeq": [
+      { "when_nmax_below": 1.75, "formula": "Nmax" },
+      { "otherwise": true, "formula": "1.75 + 0.3*(Nmax - 1.75)" }
+    ]
+  },
+  "dhw": {
+    "liters_per_day_per_adult_at_40c": { "conventional": 56, "spendthrift": 79 },
+    "water_heat_capacity_wh_per_l_k": 1.163,
+    "target_temperature_c": 40,
+    "occupied_days_per_month": { "1": 31, "2": 28, "3": 31, "4": 30, "5": 31, "6": 30, "7": 31, "8": 31, "9": 30, "10": 31, "11": 30, "12": 24 }
+  },
+  "internal_gains": {
+    "equipment_plus_lighting_w_per_m2": 3.52,
+    "per_adult_w": 90,
+    "occupancy_fraction": 0.7857,
+    "note": "3,18 (équipements moyens hebdo) + 0,34 (éclairage moyen annuel) = 3,52 W/m² ; occupants : 90 W * 132h/168h."
+  },
+  "utilization_factor_inertia_exponents": {
+    "formula": "Fj = (Xj - Xj^n) / (1 - Xj^n) avec Xj = (Asj + Aij) / (GV * DHj)",
+    "heavy_very_heavy": 3.6,
+    "medium": 2.9,
+    "light": 2.5,
+    "v1_default_inertia": "medium"
+  }
+}
