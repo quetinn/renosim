@@ -30,6 +30,9 @@ jobs:
           pip install build
           python -m build --wheel engine --outdir app/public/wheels/
 
+      - name: Generate wheel manifest for the Pyodide loader
+        run: node app/scripts/make-wheel-manifest.mjs
+
       - uses: actions/setup-node@v4
         with:
           node-version: 22

@@ -1,21 +1,29 @@
-// Phase 0 placeholder — the guided form, results and scenario screens arrive in Phase 4.
+import { useState } from "react";
+import { Wizard } from "./components/form/Wizard";
+import { Landing } from "./components/landing/Landing";
+import { Footer } from "./components/layout/Footer";
+import { Header } from "./components/layout/Header";
+import { MethodPanel } from "./components/layout/MethodPanel";
+import { ResultsScreen } from "./components/results/ResultsScreen";
+import { ScenariosScreen } from "./components/scenarios/ScenariosScreen";
+import { useAppState } from "./state/AppState";
+
 function App() {
+  const { view } = useAppState();
+  const [methodOpen, setMethodOpen] = useState(false);
+
   return (
-    <main className="shell">
-      <h1>RénoSim</h1>
-      <p className="tagline">Simulateur de rénovation énergétique pour maisons individuelles</p>
-      <p>
-        🚧 Application en construction. Le moteur de calcul (méthode 3CL-DPE 2021 simplifiée) et le
-        parcours de simulation arrivent bientôt.
-      </p>
-      <p className="disclaimer">
-        Outil pédagogique — ne remplace ni un DPE officiel ni un audit énergétique.{" "}
-        <a href="https://france-renov.gouv.fr" target="_blank" rel="noreferrer">
-          France Rénov'
-        </a>
-      </p>
-      <p className="privacy">🔒 Vos données restent dans votre navigateur : aucun serveur.</p>
-    </main>
+    <div className="flex min-h-dvh flex-col">
+      <Header onOpenMethod={() => setMethodOpen(true)} />
+      <main className="flex-1">
+        {view === "landing" && <Landing onOpenMethod={() => setMethodOpen(true)} />}
+        {view === "form" && <Wizard />}
+        {view === "results" && <ResultsScreen />}
+        {view === "scenarios" && <ScenariosScreen />}
+      </main>
+      <Footer />
+      <MethodPanel open={methodOpen} onClose={() => setMethodOpen(false)} />
+    </div>
   );
 }
 

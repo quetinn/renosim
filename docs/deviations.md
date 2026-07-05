@@ -149,6 +149,23 @@ Format : un écart = une entrée. Statut : `décidé` (au niveau du brief, pas e
   en volume habitable avec pièces contiguës (Rd = 0,93, valeur officielle §11.5.1).
 - **Impact :** biais CEP global ramené à +7,8 kWhep/m²/an sur 11 624 maisons.
 
+## D-17 — Parcours applicatif : géométrie reconstituée et états d'isolation
+
+- **Statut :** codé (`engine/renosim/bridge.py`, consommé par l'app via Pyodide)
+- **3CL officielle :** métrés réels des parois, baies et linéaires saisis par le diagnostiqueur.
+- **RénoSim :** le parcours guidé ne demande ni métrés ni plans. Le bridge JSON reconstruit la
+  géométrie avec les conventions **calibrées en phase 3** (choix M-1/M-6/M-7 de
+  `validation/mapping.py`) : emprise carrée `Sh/niveaux`, murs = périmètre exposé × 2,5 m ×
+  niveaux − baies, baies = `Sh/6`, toiture = plancher = emprise ; mitoyenneté = −25 % de
+  périmètre exposé par façade partagée ; plancher bas sur terre-plein via la table Ue officielle
+  (b = Ue/Upb) ; murs anciens non isolés à U = 2,0 (médiane Umur0 officielle). Les états
+  d'isolation du formulaire (« non isolé / d'origine / rénové / R connu ») sélectionnent les
+  lignes des tables U officielles (rénové → ligne ≥ 2013 ; R connu → 1/(1/U0 + R)).
+- **Justification :** mêmes hypothèses que la campagne de validation — les métriques publiées
+  (90,8 % à ±1 classe) restent donc représentatives de ce que produit l'app.
+- **Impact :** incertitude géométrique de l'ordre de ±10-15 % sur les surfaces déperditives pour
+  les maisons de forme atypique.
+
 ---
 
 *Les choix de mapping de la validation (M-1 à M-7, dont le coefficient Ue des planchers sur

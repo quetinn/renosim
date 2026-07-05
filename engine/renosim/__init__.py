@@ -36,7 +36,7 @@ from renosim.renovation import (
 )
 from renosim.simulation import SimulationResult, simulate
 
-__version__ = "0.3.0"
+__version__ = "0.4.0"
 
 #: Version of the JSON input/output schema exchanged with the front end.
 #: Bumped on any breaking change to the interface (CLAUDE.md §3.2).

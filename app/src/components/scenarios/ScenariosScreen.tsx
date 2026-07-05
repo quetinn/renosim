@@ -1,0 +1,535 @@
+import { motion } from "motion/react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  BrickWall,
+  Check,
+  Droplets,
+  Fan,
+  Flame,
+  Blinds,
+  Home,
+  Info,
+  Lightbulb,
+  Loader2,
+} from "lucide-react";
+import type { ReactNode } from "react";
+import {
+  CartesianGrid,
+  Cell,
+  LabelList,
+  ResponsiveContainer,
+  Scatter,
+  ScatterChart,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
+import { BUNDLE_LABELS, GLAZING_LABELS, MEASURE_LABELS, VENTILATION_LABELS } from "../../i18n/fr";
+import { useEngine } from "../../pyodide/PyodideContext";
+import { useAppState } from "../../state/AppState";
+import type { MeasureType, ScenarioOutput } from "../../types/schema";
+import {
+  formatEuroRange,
+  formatEuros,
+  formatInt,
+  formatKgCo2,
+  formatPayback,
+} from "../../utils/format";
+import { Button } from "../ui/Button";
+import { InfoTip } from "../ui/InfoTip";
+import { DpeBadge } from "../results/DpeScale";
+
+const MEASURE_ICONS: Record<MeasureType, ReactNode> = {
+  roof_insulation: <Home size={20} aria-hidden />,
+  wall_insulation: <BrickWall size={20} aria-hidden />,
+  window_replacement: <Blinds size={20} aria-hidden />,
+  heating_replacement: <Flame size={20} aria-hidden />,
+  dhw_upgrade: <Droplets size={20} aria-hidden />,
+  ventilation_upgrade: <Fan size={20} aria-hidden />,
+};
+
+const CARD_ORDER: MeasureType[] = [
+  "roof_insulation",
+  "wall_insulation",
+  "window_replacement",
+  "heating_replacement",
+  "dhw_upgrade",
+  "ventilation_upgrade",
+];
+
+function scenarioTitle(id: string): string {
+  if (id === "bouquet") return "Votre bouquet";
+  return MEASURE_LABELS[id as MeasureType]?.title ?? id;
+}
+
+/** Compact names for the chart labels, where the full titles overlap. */
+const SHORT_TITLES: Record<string, string> = {
+  roof_insulation: "Combles",
+  wall_insulation: "Murs",
+  window_replacement: "Fenêtres",
+  heating_replacement: "Chauffage",
+  dhw_upgrade: "Eau chaude",
+  ventilation_upgrade: "VMC",
+  bouquet: "Votre bouquet",
+};
+
+const selectClass =
+  "mt-2 w-full cursor-pointer rounded-xl border border-line bg-surface px-3 py-2 text-xs font-medium text-ink outline-none focus:border-pine";
+
+export function ScenariosScreen() {
+  const { status } = useEngine();
+  const {
+    output,
+    activeMeasures,
+    toggleMeasure,
+    applyBundle,
+    clearMeasures,
+    params,
+    updateParams,
+    occupancy,
+    setView,
+    simulationError,
+  } = useAppState();
+
+  if (!output || status !== "ready") {
+    return (
+      <div className="mx-auto flex max-w-xl flex-col items-center gap-4 px-4 py-28 text-center">
+        <Loader2 size={32} className="animate-spin text-pine" aria-hidden />
+        <p className="text-sm text-ink-soft">
+          {simulationError ?? "Chargement du moteur de calcul…"}
+        </p>
+      </div>
+    );
+  }
+
+  const isPerso = occupancy.mode === "personalized";
+  const baseline = output.baseline.conventional;
+  const scenarios = output.scenarios;
+  const bouquet = scenarios.find((s) => s.id === "bouquet");
+  const singles = scenarios.filter((s) => s.id !== "bouquet");
+  const sumSingleSavings = singles.reduce(
+    (acc, s) => acc + assessment(s, isPerso).annual_savings_eur,
+    0,
+  );
+
+  return (
+    <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: [0.22, 0.65, 0.3, 1] }}
+      >
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <h1 className="font-display text-3xl font-semibold sm:text-4xl">Mes scénarios</h1>
+            <p className="mt-1.5 max-w-2xl text-sm leading-relaxed text-ink-soft">
+              Activez des gestes un par un, ou partez d'un bouquet type. Situation de départ :
+              étiquette{" "}
+              {baseline.label && <DpeBadge label={baseline.label} />} —{" "}
+              {formatInt(baseline.primary_energy_kwh_m2)} kWhep/m²·an.
+            </p>
+          </div>
+          <Button variant="ghost" onClick={() => setView("results")}>
+            <ArrowLeft size={16} aria-hidden />
+            Ma situation
+          </Button>
+        </div>
+
+        {/* Predefined bundles */}
+        <div className="mt-7 flex flex-wrap gap-2.5" role="group" aria-label="Bouquets prédéfinis">
+          {Object.entries(output.bundles).map(([key, measures]) => {
+            const label = BUNDLE_LABELS[key];
+            if (!label) return null;
+            return (
+              <button
+                key={key}
+                type="button"
+                onClick={() => applyBundle(measures)}
+                title={label.description}
+                className="min-h-11 cursor-pointer rounded-full border border-pine/40 bg-pine-mist px-5 py-2 text-sm font-semibold text-pine-deep transition-all hover:border-pine hover:bg-pine-soft"
+              >
+                {label.title}
+              </button>
+            );
+          })}
+          {activeMeasures.size > 0 && (
+            <button
+              type="button"
+              onClick={clearMeasures}
+              className="min-h-11 cursor-pointer rounded-full px-4 py-2 text-sm font-medium text-ink-faint transition-colors hover:text-clay"
+            >
+              Tout désactiver
+            </button>
+          )}
+        </div>
+
+        {/* Measure cards */}
+        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {CARD_ORDER.map((type, i) => {
+            const active = activeMeasures.has(type);
+            const cost = output.measure_costs[type];
+            const info = MEASURE_LABELS[type];
+            return (
+              <motion.div
+                key={type}
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.05, duration: 0.4 }}
+                className={`relative rounded-3xl border p-5 transition-all duration-300 ${
+                  active
+                    ? "border-pine bg-pine-mist shadow-lift"
+                    : "border-line bg-surface shadow-card hover:-translate-y-0.5 hover:shadow-lift"
+                }`}
+              >
+                <button
+                  type="button"
+                  aria-pressed={active}
+                  onClick={() => toggleMeasure(type)}
+                  className="flex w-full cursor-pointer items-start gap-3 text-left"
+                >
+                  <span
+                    className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl transition-colors ${
+                      active ? "bg-pine text-white" : "bg-pine-soft text-pine"
+                    }`}
+                  >
+                    {MEASURE_ICONS[type]}
+                  </span>
+                  <span className="flex-1">
+                    <span className="flex items-center justify-between gap-2">
+                      <span className="text-sm font-semibold">{info.title}</span>
+                      <span
+                        aria-hidden
+                        className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 transition-all ${
+                          active ? "border-pine bg-pine text-white" : "border-line-strong bg-surface"
+                        }`}
+                      >
+                        {active && <Check size={13} />}
+                      </span>
+                    </span>
+                    <span className="mt-1 block text-xs leading-relaxed text-ink-soft">
+                      {info.description}
+                    </span>
+                    <span className="mt-2 block text-xs font-semibold text-amber-deep tabular">
+                      {formatEuroRange(cost.low_eur, cost.high_eur)}
+                    </span>
+                  </span>
+                </button>
+
+                {active && (
+                  <div className="mt-3 border-t border-pine/20 pt-1">
+                    {type === "window_replacement" && (
+                      <label className="block text-xs font-medium text-ink-soft">
+                        Vitrage cible
+                        <select
+                          className={selectClass}
+                          value={params.windowGlazing}
+                          onChange={(e) =>
+                            updateParams({
+                              windowGlazing: e.target.value as typeof params.windowGlazing,
+                            })
+                          }
+                        >
+                          <option value="double_glazing_low_e">
+                            {GLAZING_LABELS.double_glazing_low_e}
+                          </option>
+                          <option value="triple_glazing">{GLAZING_LABELS.triple_glazing}</option>
+                        </select>
+                      </label>
+                    )}
+                    {type === "heating_replacement" && (
+                      <label className="block text-xs font-medium text-ink-soft">
+                        Nouveau générateur
+                        <select
+                          className={selectClass}
+                          value={params.heatingTarget}
+                          onChange={(e) =>
+                            updateParams({
+                              heatingTarget: e.target.value as typeof params.heatingTarget,
+                            })
+                          }
+                        >
+                          <option value="heat_pump_air_water">Pompe à chaleur air/eau</option>
+                          <option value="condensing_boiler">Chaudière gaz à condensation</option>
+                          <option value="wood_pellet_stove">Poêle à granulés</option>
+                        </select>
+                      </label>
+                    )}
+                    {type === "ventilation_upgrade" && (
+                      <label className="block text-xs font-medium text-ink-soft">
+                        Nouvelle VMC
+                        <select
+                          className={selectClass}
+                          value={params.ventilationTarget}
+                          onChange={(e) =>
+                            updateParams({
+                              ventilationTarget: e.target.value as typeof params.ventilationTarget,
+                            })
+                          }
+                        >
+                          <option value="exhaust_only_hygro_b">
+                            {VENTILATION_LABELS.exhaust_only_hygro_b}
+                          </option>
+                          <option value="balanced_heat_recovery">
+                            {VENTILATION_LABELS.balanced_heat_recovery}
+                          </option>
+                        </select>
+                      </label>
+                    )}
+                    {(type === "roof_insulation" || type === "wall_insulation") && (
+                      <label className="block text-xs font-medium text-ink-soft">
+                        Résistance ajoutée (m²·K/W)
+                        <select
+                          className={selectClass}
+                          value={type === "roof_insulation" ? params.roofAddedR : params.wallAddedR}
+                          onChange={(e) =>
+                            updateParams(
+                              type === "roof_insulation"
+                                ? { roofAddedR: Number(e.target.value) }
+                                : { wallAddedR: Number(e.target.value) },
+                            )
+                          }
+                        >
+                          {(type === "roof_insulation" ? [6, 7, 8, 10] : [3, 3.7, 4.5, 6]).map(
+                            (r) => (
+                              <option key={r} value={r}>
+                                R = {r.toLocaleString("fr-FR")}
+                                {r ===
+                                (type === "roof_insulation" ? 7 : 3.7)
+                                  ? " (recommandé)"
+                                  : ""}
+                              </option>
+                            ),
+                          )}
+                        </select>
+                      </label>
+                    )}
+                    {type === "dhw_upgrade" && (
+                      <p className="text-xs text-ink-faint">
+                        Remplace l'eau chaude actuelle par un chauffe-eau thermodynamique.
+                      </p>
+                    )}
+                  </div>
+                )}
+              </motion.div>
+            );
+          })}
+        </div>
+
+        {scenarios.length === 0 ? (
+          <div className="mt-10 rounded-3xl border border-dashed border-line-strong bg-surface p-10 text-center">
+            <Lightbulb size={28} className="mx-auto text-amber" aria-hidden />
+            <p className="mt-3 font-medium">Activez au moins un geste pour voir son impact.</p>
+            <p className="mt-1 text-sm text-ink-soft">
+              Astuce : commencez par un bouquet prédéfini ci-dessus, puis affinez.
+            </p>
+          </div>
+        ) : (
+          <>
+            {/* Comparison table */}
+            <section aria-label="Comparaison des scénarios" className="mt-10">
+              <div className="flex items-center gap-2">
+                <h2 className="font-display text-2xl font-semibold">Comparaison</h2>
+                <InfoTip
+                  text={
+                    isPerso
+                      ? "Économies calculées avec vos réglages personnalisés ; les étiquettes restent conventionnelles (règle du DPE)."
+                      : "Calcul en mode conventionnel DPE : 19 °C, occupation standard, tarifs réglementés."
+                  }
+                />
+              </div>
+              <div className="mt-4 overflow-x-auto rounded-3xl border border-line bg-surface shadow-card">
+                <table className="w-full min-w-[760px] text-sm">
+                  <thead>
+                    <tr className="border-b border-line text-left text-xs text-ink-faint">
+                      <th scope="col" className="px-5 py-3.5 font-semibold">Scénario</th>
+                      <th scope="col" className="px-4 py-3.5 font-semibold">Étiquette</th>
+                      <th scope="col" className="px-4 py-3.5 text-right font-semibold">
+                        Conso après
+                        <span className="block font-normal">kWhep/m²·an</span>
+                      </th>
+                      <th scope="col" className="px-4 py-3.5 text-right font-semibold">
+                        Économies
+                        <span className="block font-normal">€/an</span>
+                      </th>
+                      <th scope="col" className="px-4 py-3.5 text-right font-semibold">
+                        CO₂ évité
+                        <span className="block font-normal">par an</span>
+                      </th>
+                      <th scope="col" className="px-4 py-3.5 text-right font-semibold">
+                        Travaux
+                        <span className="block font-normal">fourchette</span>
+                      </th>
+                      <th scope="col" className="px-4 py-3.5 text-right font-semibold">
+                        Retour
+                        <span className="block font-normal">simple</span>
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {[...singles, ...(bouquet ? [bouquet] : [])].map((s) => {
+                      const a = assessment(s, isPerso);
+                      const conv = s.conventional;
+                      const isBouquet = s.id === "bouquet";
+                      return (
+                        <tr
+                          key={s.id}
+                          className={`border-b border-line last:border-0 ${
+                            isBouquet ? "bg-pine-mist font-medium" : ""
+                          }`}
+                        >
+                          <th scope="row" className="px-5 py-3.5 text-left font-medium">
+                            {scenarioTitle(s.id)}
+                            {isBouquet && (
+                              <span className="ml-2 rounded-full bg-pine px-2 py-0.5 text-[10px] font-bold text-white uppercase">
+                                {s.measures.length} gestes
+                              </span>
+                            )}
+                          </th>
+                          <td className="px-4 py-3.5">
+                            <span className="inline-flex items-center gap-1.5">
+                              {baseline.label && (
+                                <span className="opacity-45">
+                                  <DpeBadge label={baseline.label} />
+                                </span>
+                              )}
+                              <ArrowRight size={13} className="text-ink-faint" aria-hidden />
+                              {conv.after.label && <DpeBadge label={conv.after.label} />}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3.5 text-right tabular">
+                            {formatInt(conv.after.primary_energy_kwh_m2)}
+                          </td>
+                          <td className="px-4 py-3.5 text-right font-semibold text-pine tabular">
+                            {formatEuros(a.annual_savings_eur)}
+                          </td>
+                          <td className="px-4 py-3.5 text-right tabular">
+                            {formatKgCo2(a.annual_co2_savings_kg)}
+                          </td>
+                          <td className="px-4 py-3.5 text-right tabular">
+                            {formatEuroRange(a.investment_low_eur, a.investment_high_eur)}
+                          </td>
+                          <td className="px-4 py-3.5 text-right tabular">
+                            {a.payback_years_low === null
+                              ? "> 30 ans"
+                              : `${formatPayback(a.payback_years_low)} – ${formatPayback(a.payback_years_high)}`}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+
+              {bouquet && singles.length >= 2 && (
+                <p className="mt-4 flex items-start gap-2 rounded-2xl bg-amber-soft px-5 py-4 text-sm leading-relaxed text-ink-soft">
+                  <Info size={16} className="mt-0.5 shrink-0 text-amber-deep" aria-hidden />
+                  <span>
+                    <strong className="text-ink">Les gestes interagissent :</strong> votre bouquet
+                    économise {formatEuros(assessment(bouquet, isPerso).annual_savings_eur)}/an,
+                    alors que la somme des gestes pris isolément donnerait{" "}
+                    {formatEuros(sumSingleSavings)}/an. Une fois la maison isolée, le chauffage a
+                    moins à fournir — chaque kWh ne peut être économisé qu'une fois. D'où l'intérêt
+                    de penser enveloppe d'abord, systèmes ensuite.
+                  </span>
+                </p>
+              )}
+            </section>
+
+            {/* Cost vs gain chart */}
+            <section
+              aria-label="Coût des travaux contre économies annuelles"
+              className="mt-8 rounded-3xl border border-line bg-surface p-6 shadow-card sm:p-8"
+            >
+              <div className="flex items-center gap-2">
+                <h2 className="font-display text-xl font-semibold">Coût vs gain</h2>
+                <InfoTip text="Chaque point est un scénario : plus il est haut à gauche, plus il rapporte par euro investi (investissement = milieu de la fourchette)." />
+              </div>
+              <ResponsiveContainer width="100%" height={320}>
+                <ScatterChart margin={{ top: 28, right: 36, bottom: 12, left: 8 }}>
+                  <CartesianGrid stroke="var(--color-line)" strokeDasharray="4 6" />
+                  <XAxis
+                    type="number"
+                    dataKey="investment"
+                    name="Investissement"
+                    tickFormatter={(v) => `${formatInt((v as number) / 1000)} k€`}
+                    label={{
+                      value: "Investissement (milieu de fourchette)",
+                      position: "insideBottom",
+                      offset: -6,
+                      style: { fill: "var(--color-ink-faint)", fontSize: 12 },
+                    }}
+                  />
+                  <YAxis
+                    type="number"
+                    dataKey="savings"
+                    name="Économies"
+                    tickFormatter={(v) => `${formatInt(v as number)} €`}
+                    label={{
+                      value: "Économies (€/an)",
+                      angle: -90,
+                      position: "insideLeft",
+                      style: { fill: "var(--color-ink-faint)", fontSize: 12 },
+                    }}
+                  />
+                  <Tooltip
+                    cursor={{ strokeDasharray: "4 4" }}
+                    formatter={(value, name) => [
+                      name === "Investissement"
+                        ? formatEuros(value as number)
+                        : `${formatEuros(value as number)}/an`,
+                      name,
+                    ]}
+                  />
+                  <Scatter
+                    data={[...singles, ...(bouquet ? [bouquet] : [])].map((s) => {
+                      const a = assessment(s, isPerso);
+                      return {
+                        name: SHORT_TITLES[s.id] ?? scenarioTitle(s.id),
+                        investment: (a.investment_low_eur + a.investment_high_eur) / 2,
+                        savings: a.annual_savings_eur,
+                        bouquet: s.id === "bouquet",
+                      };
+                    })}
+                    isAnimationActive={false}
+                  >
+                    {[...singles, ...(bouquet ? [bouquet] : [])].map((s) => (
+                      <Cell
+                        key={s.id}
+                        fill={s.id === "bouquet" ? "var(--color-amber)" : "var(--color-pine)"}
+                        r={s.id === "bouquet" ? 10 : 7}
+                      />
+                    ))}
+                    <LabelList
+                      dataKey="name"
+                      position="top"
+                      style={{ fill: "var(--color-ink-soft)", fontSize: 11, fontWeight: 600 }}
+                    />
+                  </Scatter>
+                </ScatterChart>
+              </ResponsiveContainer>
+            </section>
+          </>
+        )}
+
+        <p className="mt-8 text-center text-xs leading-relaxed text-ink-faint">
+          Coûts en fourchettes, hors aides financières (MaPrimeRénov', CEE…). Pour connaître vos
+          aides, rendez-vous sur{" "}
+          <a
+            href="https://france-renov.gouv.fr"
+            target="_blank"
+            rel="noreferrer"
+            className="font-medium text-pine hover:underline"
+          >
+            France Rénov'
+          </a>
+          . Outil pédagogique — ne remplace ni un DPE officiel ni un audit énergétique.
+        </p>
+      </motion.div>
+    </div>
+  );
+}
+
+function assessment(scenario: ScenarioOutput, isPerso: boolean) {
+  return isPerso && scenario.personalized ? scenario.personalized : scenario.conventional;
+}

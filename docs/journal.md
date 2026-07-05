@@ -139,3 +139,50 @@ repérées), tests d'invariants (bouquet ≥ meilleur geste, non-additivité).
 2. Phase 1 : encoder les tables §5 (sources arrêté DPE 2021 à vérifier au moment du codage),
    puis `models.py` → `envelope.py` → `needs.py` → `systems.py` → `outputs.py` → `occupancy.py`,
    tests d'abord (valeurs calculées à la main).
+
+---
+
+## 2026-07-05 — Phase 4 : application React + Pyodide
+
+**Fait :**
+
+- `engine/renosim/bridge.py` : pont JSON versionné (`SCHEMA_VERSION` 0.1) — unique point
+  d'entrée `run_simulation(payload_json)` appelé depuis JS. Le bridge possède le mapping
+  formulaire → `Building` (géométrie M-1, U par états d'isolation M-2/M-6, plancher bas Ue
+  M-7 — conventions identiques à la validation, ajoutées aux tables avec sources). Écart
+  documenté D-17. 22 tests (`tests/test_bridge.py`), moteur v0.4.0, couverture 93,8 %.
+- Pipeline wheel : `npm run wheel` (build + `make-wheel-manifest.mjs`), manifest généré aussi
+  dans `deploy.yml` ; les .whl restent ignorés par git.
+- App complète (Vite + React + TS + Tailwind 4 + Recharts + motion + lucide) :
+  - Direction design « éco-tech premium » (fond papier chaud, vert pin, accent ambre,
+    Fraunces + Inter), tokens dans `index.css`, thème clair uniquement.
+  - Landing : hero animé (maison SVG + échelle DPE F→B, particules de chaleur), stats de
+    validation animées (11 624 DPE, 90,8 %), sections méthode/transparence, CTA.
+  - Écran 1 : stepper 4 étapes (localisation → général → enveloppe → systèmes), code postal →
+    zone climatique (table Légifrance R172-4 chap. IV sourcée dans `data/climateZones.ts`),
+    défauts dérivés de l'époque, aides contextuelles partout.
+  - Écran 2 : étiquette DPE animée (double seuil affiché), tuiles chiffres clés, répartition
+    par usage, graphique « par où part la chaleur », toggle conventionnel/personnalisé
+    (consigne, occupants, prix) — l'étiquette reste conventionnelle, expliqué dans l'UI ;
+    toggle convention EP 2021/2026 (D-13).
+  - Écran 3 : 6 cartes gestes paramétrables (coûts en fourchettes), 3 bouquets prédéfinis
+    (définis par le moteur), tableau comparatif, message pédagogique de non-additivité chiffré,
+    graphique coût vs gain.
+  - Transverse : panneau « Comment est-ce calculé ? », avertissements DPE/France Rénov',
+    « vos données restent chez vous », responsive 375→1440, `prefers-reduced-motion` respecté,
+    focus visibles, alternative tabulaire sr-only pour le graphique.
+- Pyodide : chargement CDN dès l'arrivée (masqué par la landing), micropip + wheel local via
+  manifest, fallback d'erreur avec lien dépôt.
+
+**État des tests :** moteur 90/90 verts (couverture 93,8 % ≥ 85 %), ruff + format + mypy strict
+OK, `npm run build` OK. Test navigateur bout en bout : maison 1948-74 fioul non isolée (69003)
+→ G (415 kWhep/m², 3 817 €/an) ; bouquet rénovation globale → B (85 kWhep/m², 3 135 €/an
+d'économies, non-additivité visible vs 4 281 €/an en sommant les gestes) ; mode personnalisé
+21 °C → 495 kWh/m² affichés, étiquette inchangée.
+
+**Prochaines étapes (Phase 5) :**
+
+1. Captures d'écran + badge CI dans le README, section « ce que cet outil n'est pas ».
+2. Mise en forme finale de la note de validation, billet de blog (al-folio).
+3. Envisager le code-splitting du bundle (795 kB minifié) : import dynamique de Recharts.
+4. Tag `v1.0` après revue complète.
