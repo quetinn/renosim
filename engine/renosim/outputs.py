@@ -180,10 +180,7 @@ def annual_energy_cost_eur(final_energy_by_carrier: dict[EnergyCarrier, float]) 
             for bracket in brackets[key]:
                 max_kwh = bracket["max_kwh"]
                 if max_kwh is None or kwh < float(max_kwh):
-                    fixed = bracket["fixed_eur"]
-                    total += (float(fixed) if fixed is not None else 94.0) + float(
-                        bracket["rate_eur_per_kwh"]
-                    ) * kwh
+                    total += float(bracket["fixed_eur"]) + float(bracket["rate_eur_per_kwh"]) * kwh
                     break
         else:
             total += float(flat[_flat_key[carrier]]) * kwh

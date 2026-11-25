@@ -1,0 +1,70 @@
+{
+  "_meta": {
+    "description": "Engine-wide conventions and calibrated parameters that are not a single 3CL table row: default geometry, Phase 3 calibrated coefficients, default measure parameters and the generator-age -> installation-period mapping. Moved out of the Python modules on 2026-11-25 (audit §4.11, CLAUDE.md §9 rule 3); values unchanged.",
+    "source": "Per entry (field 'source').",
+    "date": "2026-11-25"
+  },
+  "geometry": {
+    "default_ceiling_height_m": {
+      "value": 2.5,
+      "source": "Hauteur sous plafond conventionnelle quand elle n'est pas déclarée (convention V1, D-17 ; valeur usuelle des DPE sans relevé)."
+    }
+  },
+  "calibrated": {
+    "thermal_bridge_surcharge": {
+      "value": 0.08,
+      "source": "Majoration forfaitaire des déperditions surfaciques pour les ponts thermiques des maisons (D-03), conservée par la calibration Phase 3 (validation/report/note_validation.md)."
+    },
+    "solar_orientation_shading_coefficient": {
+      "value": 0.5,
+      "source": "Coefficient orientation x masques appliqué à Σ A·Sw pour la surface sud équivalente (D-06), niveau absolu calibré Phase 3."
+    }
+  },
+  "boiler_seasonal_blend": {
+    "full_load_weight": {
+      "value": 0.3,
+      "source": "Poids du rendement à pleine charge dans Rg ≈ 0,3·Rpn + 0,7·Rpint (D-08), approximation des pondérations de profil de charge §13.2.1.1 de l'annexe 1 3CL."
+    }
+  },
+  "renovation_defaults": {
+    "roof_added_r_m2k_per_w": {
+      "value": 7.0,
+      "source": "Résistance ajoutée par défaut du geste combles/toiture, niveau « performant » usuel (CLAUDE.md §4.3)."
+    },
+    "wall_added_r_m2k_per_w": {
+      "value": 3.7,
+      "source": "Résistance ajoutée par défaut du geste murs, niveau « performant » usuel (CLAUDE.md §4.3)."
+    }
+  },
+  "generator_age_brackets": {
+    "reference_year": 2026,
+    "note": "The guided form asks for a generator AGE; the 3CL tables are keyed by INSTALLATION PERIOD. Ages are converted with reference_year as the implicit current year: the thresholds below must be shifted by one each year (or the form should ask for the installation year — audit §4.9). Rules are evaluated top-down: first min_age_years <= age wins.",
+    "heat_pump_scop": {
+      "unknown": "2008_2014",
+      "rules": [
+        { "min_age_years": 18, "bracket": "before_2008" },
+        { "min_age_years": 11, "bracket": "2008_2014" },
+        { "min_age_years": 9, "bracket": "2015_2016" },
+        { "min_age_years": 0, "bracket": "after_2017" }
+      ]
+    },
+    "pellet_stove_rg": {
+      "unknown": "after_2020_label",
+      "rules": [
+        { "min_age_years": 15, "bracket": "before_2012_or_no_label" },
+        { "min_age_years": 7, "bracket": "2012_2019_label" },
+        { "min_age_years": 0, "bracket": "after_2020_label" }
+      ]
+    },
+    "standard_boiler_derating": {
+      "unknown": null,
+      "rules": [
+        { "min_age_years": 45, "bracket": "before_1980" },
+        { "min_age_years": 35, "bracket": "1981_1990" },
+        { "min_age_years": 0, "bracket": null }
+      ]
+    },
+    "condensing_boiler_recent_max_age_years": 10,
+    "no_thermostatic_valves_min_age_years": 25
+  }
+}

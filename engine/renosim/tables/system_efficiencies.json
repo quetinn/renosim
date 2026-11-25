@@ -52,6 +52,13 @@
       "condensing_pre_2016": { "rpn": "91 + 1*log10(Pn)", "rpint": "97 + 1*log10(Pn)" },
       "condensing_2016_plus_le_70kw": { "rpn": "91 + 3*log10(Pn)", "rpint": "103 + 2.5*log10(Pn)" }
     },
+    "log10_pn_coefficients": {
+      "note": "Same formulas as 'gas_and_oil', machine-readable: R = a + b*log10(Pn[kW]) in % PCI, [a, b].",
+      "standard": { "rpn": [84.0, 2.0], "rpint": [80.0, 3.0] },
+      "low_temperature": { "rpn": [87.5, 1.5], "rpint": [87.5, 1.5] },
+      "condensing_pre_2016": { "rpn": [91.0, 1.0], "rpint": [97.0, 1.0] },
+      "condensing_2016_plus_le_70kw": { "rpn": [91.0, 3.0], "rpint": [103.0, 2.5] }
+    },
     "old_boiler_derating": {
       "note": "V1: pre-1991 'classique' boilers use the standard formulas (identical per the annexe); higher standby losses Qp0 (4%/2%/1.5% of Pn by age) are approximated by an extra multiplicative derating.",
       "before_1980": 0.93,
@@ -123,6 +130,8 @@
     "distribution_rd_individual": { "production_in_living_space_adjacent_rooms": 0.93, "production_in_living_space_distant_rooms": 0.87, "production_outside_living_space": 0.83 },
     "electric_storage_losses": {
       "formula": "Qg,w [Wh/an] = 8592 * (45/24) * Vs * Cr ; Rs = 1 / (1 + Qg,w*Rd/Becs) (1,08 au numérateur pour catégorie C/3*)",
+      "standby_hours_per_year_h": 8592,
+      "storage_temperature_difference_c": 45,
       "default_volume_l": 200,
       "cr_vertical_unknown_by_volume": { "le_100": 0.32, "100_200": 0.23, "200_300": 0.22, "gt_300": 0.22 }
     },

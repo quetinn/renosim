@@ -32,8 +32,12 @@ from renosim.tables_io import load_table
 
 #: Default added thermal resistances (m2.K/W), usual "performant" levels
 #: (CLAUDE.md §4.3): R=7 for roof/attic, R=3.7 for walls.
-DEFAULT_ROOF_ADDED_R = 7.0
-DEFAULT_WALL_ADDED_R = 3.7
+DEFAULT_ROOF_ADDED_R = float(
+    load_table("conventions")["renovation_defaults"]["roof_added_r_m2k_per_w"]["value"]
+)
+DEFAULT_WALL_ADDED_R = float(
+    load_table("conventions")["renovation_defaults"]["wall_added_r_m2k_per_w"]["value"]
+)
 
 #: Carrier implied by each replacement generator type.
 _GENERATOR_CARRIER = {

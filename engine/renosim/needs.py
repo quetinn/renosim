@@ -32,7 +32,9 @@ from renosim.tables_io import load_table
 #: modulated by :func:`solar_orientation_modifier` (3CL C1 ratios, §18.5) and
 #: :func:`solar_shading_factor` (3CL Fe2, §6.2.2.2.1); the neutral defaults
 #: reproduce the calibrated behaviour exactly.
-SOLAR_ORIENTATION_SHADING_COEFFICIENT = 0.5
+SOLAR_ORIENTATION_SHADING_COEFFICIENT = float(
+    load_table("conventions")["calibrated"]["solar_orientation_shading_coefficient"]["value"]
+)
 
 _ALTITUDE_KEY = {
     AltitudeClass.LOW: "low",

@@ -21,12 +21,16 @@ from renosim.models import (
 )
 from renosim.tables_io import load_table
 
-#: V1 flat thermal-bridge surcharge applied to surface losses (deviation D-03).
-#: Candidate for calibration against the ADEME dataset in Phase 3.
-THERMAL_BRIDGE_SURCHARGE = 0.08
+#: V1 flat thermal-bridge surcharge applied to surface losses (deviation D-03,
+#: calibrated in Phase 3; tables/conventions.json).
+THERMAL_BRIDGE_SURCHARGE = float(
+    load_table("conventions")["calibrated"]["thermal_bridge_surcharge"]["value"]
+)
 
 #: Conventional average ceiling height (m) when none is declared.
-DEFAULT_CEILING_HEIGHT_M = 2.5
+DEFAULT_CEILING_HEIGHT_M = float(
+    load_table("conventions")["geometry"]["default_ceiling_height_m"]["value"]
+)
 
 
 def ceiling_height_m(building: Building) -> float:

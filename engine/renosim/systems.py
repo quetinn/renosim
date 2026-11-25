@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
+from typing import Any
 
 from renosim.envelope import ceiling_height_m, conventional_airflows, envelope_heat_loss
 from renosim.models import (
@@ -27,8 +28,30 @@ from renosim.tables_io import load_table
 
 #: Weight of the full-load efficiency in the V1 seasonal blend (0.3 Rpn + 0.7
 #: Rpint): residential load profiles are dominated by part-load operation
-#: (3CL §13.2.1.1 load-profile weights). Deviation D-08.
-FULL_LOAD_WEIGHT = 0.3
+#: (3CL §13.2.1.1 load-profile weights). Deviation D-08, tables/conventions.json.
+FULL_LOAD_WEIGHT = float(
+    load_table("conventions")["boiler_seasonal_blend"]["full_load_weight"]["value"]
+)
+
+
+def _age_conventions() -> dict[str, Any]:
+    conventions: dict[str, Any] = load_table("conventions")["generator_age_brackets"]
+    return conventions
+
+
+def _bracket_by_age(name: str, age_years: float | None) -> Any:
+    """Installation-period key for a generator age (tables/conventions.json).
+
+    Rules are ordered by decreasing ``min_age_years``; the first match wins and
+    an unknown age returns the table's ``unknown`` entry (audit §4.9).
+    """
+    rules = _age_conventions()[name]
+    if age_years is None:
+        return rules["unknown"]
+    for rule in rules["rules"]:
+        if age_years >= float(rule["min_age_years"]):
+            return rule["bracket"]
+    raise ValueError(f"negative generator age: {age_years}")  # pragma: no cover
 
 
 @dataclass(frozen=True, slots=True)
@@ -76,15 +99,7 @@ def _i0(i0_table: dict[str, dict[str, float]], emitter_key: str, building: Build
 
 def _age_bracket_pac(age_years: float | None) -> str:
     """Installation-period bracket for heat pumps from the generator age."""
-    if age_years is None:
-        return "2008_2014"  # conservative middle bracket when unknown
-    if age_years >= 18:
-        return "before_2008"
-    if age_years >= 11:
-        return "2008_2014"
-    if age_years >= 9:
-        return "2015_2016"
-    return "after_2017"
+    return str(_bracket_by_age("heat_pump_scop", age_years))
 
 
 def _boiler_seasonal_rg(building: Building) -> float:
@@ -95,29 +110,27 @@ def _boiler_seasonal_rg(building: Building) -> float:
     gtype = building.heating_system.generator_type
     age = building.heating_system.generator_age_years
 
+    recent_max_age = float(_age_conventions()["condensing_boiler_recent_max_age_years"])
     if gtype is HeatingGeneratorType.LOW_TEMPERATURE_BOILER:
-        rpn = rpint = 87.5 + 1.5 * log_pn
+        family = "low_temperature"
     elif gtype is HeatingGeneratorType.CONDENSING_BOILER:
-        if age is not None and age < 10:
-            rpn = 91.0 + 3.0 * log_pn
-            rpint = 103.0 + 2.5 * log_pn
-        else:
-            rpn = 91.0 + 1.0 * log_pn
-            rpint = 97.0 + 1.0 * log_pn
+        recent = age is not None and age < recent_max_age
+        family = "condensing_2016_plus_le_70kw" if recent else "condensing_pre_2016"
     else:  # standard / classique
-        rpn = 84.0 + 2.0 * log_pn
-        rpint = 80.0 + 3.0 * log_pn
+        family = "standard"
+    coefs = table["log10_pn_coefficients"][family]
+    rpn = float(coefs["rpn"][0]) + float(coefs["rpn"][1]) * log_pn
+    rpint = float(coefs["rpint"][0]) + float(coefs["rpint"][1]) * log_pn
 
     rg = (FULL_LOAD_WEIGHT * rpn + (1.0 - FULL_LOAD_WEIGHT) * rpint) / 100.0
 
     derating = load_table("system_efficiencies")["boiler_efficiency_formulas"][
         "old_boiler_derating"
     ]
-    if gtype is HeatingGeneratorType.STANDARD_BOILER and age is not None:
-        if age >= 45:
-            rg *= float(derating["before_1980"])
-        elif age >= 35:
-            rg *= float(derating["1981_1990"])
+    if gtype is HeatingGeneratorType.STANDARD_BOILER:
+        bracket = _bracket_by_age("standard_boiler_derating", age)
+        if bracket is not None:
+            rg *= float(derating[bracket])
     return rg
 
 
@@ -141,7 +154,9 @@ def heating_system_efficiency(building: Building) -> HeatingEfficiency:
     i0_t = eff["intermittence"]["i0_house_individual"]
     gtype = building.heating_system.generator_type
     age = building.heating_system.generator_age_years
-    old_system = age is not None and age >= 25
+    old_system = age is not None and age >= float(
+        _age_conventions()["no_thermostatic_valves_min_age_years"]
+    )
 
     if gtype is HeatingGeneratorType.ELECTRIC_JOULE:
         # Conventional assumption (calibration iteration 6): installed electric
@@ -159,12 +174,7 @@ def heating_system_efficiency(building: Building) -> HeatingEfficiency:
         HeatingGeneratorType.WOOD_BOILER,
     ):
         stoves = eff["stoves_rg"]["wood_pellet_stove"]
-        if age is None or age < 7:
-            rg = float(stoves["after_2020_label"])
-        elif age < 15:
-            rg = float(stoves["2012_2019_label"])
-        else:
-            rg = float(stoves["before_2012_or_no_label"])
+        rg = float(stoves[str(_bracket_by_age("pellet_stove_rg", age))])
         return HeatingEfficiency(
             generation=rg,
             emission=float(re_t["other_equipment"]),
@@ -267,7 +277,10 @@ def dhw_consumption(building: Building, dhw_needs_kwh: float) -> UseConsumption:
     storage = eff["electric_storage_losses"]
     volume_l = float(storage["default_volume_l"])
     cr = float(storage["cr_vertical_unknown_by_volume"]["100_200"])
-    qgw_kwh = 8592.0 * (45.0 / 24.0) * volume_l * cr / 1000.0
+    hours_h = float(storage["standby_hours_per_year_h"])
+    delta_t_c = float(storage["storage_temperature_difference_c"])
+    # Cr is a 24 h loss coefficient -> delta_t / 24 per standby hour.
+    qgw_kwh = hours_h * (delta_t_c / 24.0) * volume_l * cr / 1000.0
     rs = 1.0 / (1.0 + qgw_kwh * rd / dhw_needs_kwh) if dhw_needs_kwh > 0 else 1.0
 
     if gtype is DHWGeneratorType.ELECTRIC_STORAGE:

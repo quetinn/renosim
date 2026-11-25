@@ -27,7 +27,7 @@
       { "max_kwh": 2500, "fixed_eur": 149, "rate_eur_per_kwh": 0.14066 },
       { "max_kwh": 5000, "fixed_eur": 122, "rate_eur_per_kwh": 0.15176 },
       { "max_kwh": 15000, "fixed_eur": 94, "rate_eur_per_kwh": 0.15735 },
-      { "max_kwh": null, "fixed_eur": null, "rate_eur_per_kwh": 0.15989, "note": "fixed part per annexe formula 7500*T4e-7500*T5e; V1 uses fixed 94 EUR continuation — negligible for houses (rare > 15 MWh)" }
+      { "max_kwh": null, "fixed_eur": 94, "rate_eur_per_kwh": 0.15989, "note": "fixed part per annexe formula 7500*T4e-7500*T5e; V1 uses the fixed 94 EUR of the previous bracket (continuation) — negligible for houses (rare > 15 MWh). To re-check when the tariff table is updated (audit §3.3)." }
     ]
   }
 }

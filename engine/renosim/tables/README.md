@@ -20,3 +20,4 @@ Planned files (Phase 1+):
 | `solar_orientation.json` | Heating-season C1 averages per zone × orientation + Fe2 shading factors | Annexe 1 3CL-DPE 2021 §18.5 (C1) et §6.2.2.2.1 (Fe2) |
 | `summer_comfort.json` | Passive summer-comfort indicator decision grid (3 levels) | Annexe 9 de l'arrêté DPE habitation du 31/03/2021 consolidé, §1.2 |
 | `cooling.json` | Cooling chain parameters (SEER/EER, intermittence, Cin per inertia, 28 °C setpoint) | Annexe 1 3CL-DPE 2021 §10 |
+| `conventions.json` | Engine conventions and calibrated parameters: default ceiling height, thermal-bridge surcharge (D-03), solar coefficient (D-06), boiler seasonal blend (D-08), default measure R, generator age → installation-period rules | Per entry; moved out of Python on 2026-11-25 (audit §4.11), values unchanged |
