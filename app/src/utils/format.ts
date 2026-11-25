@@ -35,3 +35,9 @@ export function formatKgCo2(value: number): string {
   if (abs >= 1000) return `${nf1.format(value / 1000)} t CO₂`;
   return `${nf0.format(Math.round(value))} kg CO₂`;
 }
+
+/** "2026-09" -> "septembre 2026". */
+export function formatMonth(period: string): string {
+  const [year, month] = period.split("-").map(Number);
+  return new Date(year, month - 1, 1).toLocaleDateString("fr-FR", { month: "long", year: "numeric" });
+}

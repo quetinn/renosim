@@ -304,6 +304,8 @@ export interface SimulationOutput {
     regulation_vintage: RegulationVintage;
     electricity_primary_energy_factor: number;
     energy_prices: { label: string; date_reference: string; date_in_force: string };
+    /** Works costs are indexed to this month with the INSEE BT01 index. */
+    renovation_costs: { index: string; reference_period: string };
   };
   baseline: {
     conventional: SimulationResult;

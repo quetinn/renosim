@@ -89,6 +89,8 @@ class TestSchema:
         prices = run(payload())["conventions"]["energy_prices"]
         assert prices["date_in_force"] == "2024-07-01"
         assert "25 mars 2024" in prices["label"]
+        costs = run(payload())["conventions"]["renovation_costs"]
+        assert costs == {"index": "BT01", "reference_period": "2026-09"}
 
 
 class TestGeometry:

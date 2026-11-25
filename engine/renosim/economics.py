@@ -40,15 +40,29 @@ class ScenarioAssessment:
     payback_years_high: float
 
 
+def cost_index_factor(confidence: str) -> float:
+    """BT01 indexation factor from a cost source's price year to the reference date.
+
+    ``reference_value / base_value`` from ``_meta.indexation`` of
+    tables/renovation_costs.json (INSEE BT01, base 2010; audit §3.3).
+    """
+    indexation = load_table("renovation_costs")["_meta"]["indexation"]
+    base = float(indexation["base_by_confidence"][confidence]["value"])
+    return float(indexation["reference"]["value"]) / base
+
+
 def measure_cost_range(building: Building, measure: RenovationMeasure) -> tuple[float, float]:
     """Investment cost range (low, high) in EUR for one measure on this building.
 
     Unit costs come from tables/renovation_costs.json: per m2 of the relevant
-    surface for envelope measures, lump sums for systems.
+    surface for envelope measures, lump sums for systems; each range is
+    indexed from its source price year to the reference date (BT01).
     """
-    entry = load_table("renovation_costs")["measures"][measure.cost_key]
+    table = load_table("renovation_costs")
+    entry = table["measures"][measure.cost_key]
     unit = str(entry["unit"])
-    low, high = float(entry["low"]), float(entry["high"])
+    factor = cost_index_factor(str(entry["confidence"]))
+    low, high = float(entry["low"]) * factor, float(entry["high"]) * factor
     if unit == "eur_per_m2_wall":
         area = sum(w.area_m2 for w in building.walls)
     elif unit == "eur_per_m2_roof":

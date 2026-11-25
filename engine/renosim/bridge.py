@@ -758,6 +758,7 @@ def _conventions_to_json(vintage: RegulationVintage) -> dict[str, Any]:
     """Conventions applied to this run, for display (vintage, PE factor, prices)."""
     factors = load_table("emission_factors")["primary_energy_factor"][vintage]
     prices = load_table("energy_prices")["_meta"]
+    indexation = load_table("renovation_costs")["_meta"]["indexation"]
     return {
         "regulation_vintage": vintage,
         "electricity_primary_energy_factor": float(factors["electricity"]),
@@ -765,6 +766,10 @@ def _conventions_to_json(vintage: RegulationVintage) -> dict[str, Any]:
             "label": str(prices["source_label_fr"]),
             "date_reference": str(prices["date_reference"]),
             "date_in_force": str(prices["date_in_force"]),
+        },
+        "renovation_costs": {
+            "index": "BT01",
+            "reference_period": str(indexation["reference"]["period"]),
         },
     }
 

@@ -40,6 +40,7 @@ import {
   formatEuros,
   formatInt,
   formatKgCo2,
+  formatMonth,
   formatPayback,
 } from "../../utils/format";
 import { Button } from "../ui/Button";
@@ -578,7 +579,9 @@ export function ScenariosScreen() {
         )}
 
         <p className="mt-8 text-center text-xs leading-relaxed text-ink-faint">
-          Coûts en fourchettes, hors aides financières (MaPrimeRénov', CEE…). Pour connaître vos
+          Coûts en fourchettes, hors aides financières (MaPrimeRénov', CEE…)
+          {output && <>, actualisés à {formatMonth(output.conventions.renovation_costs.reference_period)} (indice
+          INSEE {output.conventions.renovation_costs.index})</>}. Pour connaître vos
           aides, rendez-vous sur{" "}
           <a
             href="https://france-renov.gouv.fr"
