@@ -528,3 +528,35 @@ scénario G → G (430 kWhep/m², 1 393 €/an).
 
 **Prochaines étapes :** Sprint 1 de l'audit (prix de l'énergie à jour, échantillon test
 indépendant, note de validation v2).
+
+## 2026-11-25 (suite 2) — PR #1 fusionnée, Sprint 1 de l'audit (branche `feat/sprint1-prices-validation`)
+
+**Fait :**
+1. **Prix de l'énergie** : barème officiel de l'annexe 7 de l'arrêté du 25 mars 2024 (en
+   vigueur au 01/07/2024, aucune modification ultérieure) à la place du barème 2021. Valeurs lues
+   en texte intégral dans le texte du ministère et concordantes avec le JO, sauf les granulés
+   (0,09897 au JO contre 0,10701 dans le projet) : à confirmer sur l'extrait authentifié du JO.
+2. **Convention 2027** : coefficient électricité **1,7 au 1er janvier 2027** (arrêté publié au JO
+   le 31/08/2026, communiqué du ministère ; NOR à compléter). Calendrier daté dans
+   `emission_factors.json` : sans choix explicite, la convention du jour s'applique. L'app
+   propose « En vigueur / DPE 2026 / DPE 2021-2025 » et affiche le coefficient appliqué et la
+   source des prix. D-13 réécrit.
+3. **Coûts de travaux indexés** sur l'indice INSEE BT01 (sept. 2026 = 139,1 ; moyennes 2019 =
+   111,05 et 2025 = 133,01, relevées sur insee.fr) : ×1,253 (ONRE) et ×1,046 (guides).
+4. **Validation v5** : échantillon **test indépendant** tiré au hasard (`sort=_rand`), disjoint
+   de la calibration (11 549 lignes) ; bootstrap à 1 000 tirages ; repondération selon les
+   effectifs ADEME par strate (4,7 M DPE de maisons). **Le critère n'est pas atteint au test :
+   ±1 classe 86,7 % [86,1 ; 87,4]**, contre 90,2 % en calibration ; repondéré, 71,4 %. Cause
+   principale : l'échantillon de calibration contenait 61 % de DPE de 2026 ; sur les DPE de
+   2022-2025, le moteur surestime d'environ +40 kWhep/m² dans les deux échantillons ; segments
+   faibles : électricité et bâti d'avant 1975. Note de validation v2, et chiffres de l'app et du
+   README remplacés par ceux du test.
+5. Moteur 0.6.0, wheel régénéré.
+
+**État :** 202/202 tests, couverture 96,3 %, ruff/format/mypy OK, `npm run build` OK.
+Vérifié dans le navigateur (landing, convention, facture, coûts indexés).
+
+**Prochaines étapes :** télécharger `version_dpe` et analyser le biais par version de méthode ;
+tirer un nouvel échantillon de calibration aléatoire ; ne jamais régler sur le test v1 ;
+électricité poste par poste ; leviers v1.1 sur le bâti ancien ; mention « A0 » (arrêté du
+11/06/2026, à partir du 01/01/2027).
