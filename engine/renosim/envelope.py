@@ -12,15 +12,32 @@ import math
 from dataclasses import dataclass
 from typing import cast
 
-from renosim.models import Building, ClimateZone, ConstructionPeriod, VentilationType
+from renosim.models import (
+    Building,
+    ClimateZone,
+    ConstructionPeriod,
+    DwellingType,
+    VentilationType,
+)
 from renosim.tables_io import load_table
 
-#: V1 flat thermal-bridge surcharge applied to surface losses (deviation D-03).
-#: Candidate for calibration against the ADEME dataset in Phase 3.
-THERMAL_BRIDGE_SURCHARGE = 0.08
+#: V1 flat thermal-bridge surcharge applied to surface losses (deviation D-03,
+#: calibrated in Phase 3; tables/conventions.json).
+THERMAL_BRIDGE_SURCHARGE = float(
+    load_table("conventions")["calibrated"]["thermal_bridge_surcharge"]["value"]
+)
 
-#: Default average ceiling height (m), used for infiltration and intermittence.
-DEFAULT_CEILING_HEIGHT_M = 2.5
+#: Conventional average ceiling height (m) when none is declared.
+DEFAULT_CEILING_HEIGHT_M = float(
+    load_table("conventions")["geometry"]["default_ceiling_height_m"]["value"]
+)
+
+
+def ceiling_height_m(building: Building) -> float:
+    """Average ceiling height Hsp (m): declared value or the convention."""
+    if building.ceiling_height_m is not None:
+        return building.ceiling_height_m
+    return DEFAULT_CEILING_HEIGHT_M
 
 
 @dataclass(frozen=True, slots=True)
@@ -137,8 +154,17 @@ def default_u_values(
     return DefaultUValues(wall=wall, roof=roof, floor=floor)
 
 
-def _q4pa_conv_per_m2(period: ConstructionPeriod) -> float:
-    """Conventional envelope airtightness Q4Pa-conv/m2 for a house, per period."""
+def _q4pa_conv_per_m2(period: ConstructionPeriod, dwelling_type: DwellingType) -> float:
+    """Conventional airtightness Q4Pa-conv/m2 per period (3CL §4 table p.39)."""
+    if dwelling_type is DwellingType.APARTMENT:
+        table = load_table("ventilation")["q4pa_conv_apartment_by_period"]
+        if period is ConstructionPeriod.BEFORE_1948:
+            return float(table["before_1948"])
+        if period is ConstructionPeriod.Y1948_1974:
+            return float(table["1948_1974"])
+        if period is ConstructionPeriod.AFTER_2013:
+            return float(table["after_2012"])
+        return float(table["1975_2012"])
     table = load_table("ventilation")["q4pa_conv_house_by_period"]
     if period in (ConstructionPeriod.BEFORE_1948,):
         return float(table["before_1948"])
@@ -264,22 +290,36 @@ def envelope_heat_loss(building: Building) -> EnvelopeLosses:
         for w in building.windows
     )
     surface = walls + roof + floor + windows
-    bridges = THERMAL_BRIDGE_SURCHARGE * surface
+    # Thermal bridges: flat house surcharge (D-03); apartments use the higher
+    # calibrated surcharge (refend x facade junctions, table note).
+    if building.dwelling_type is DwellingType.APARTMENT:
+        surcharge = float(
+            load_table("u_values_default")["apartment_reconstruction"]["thermal_bridge_surcharge"]
+        )
+    else:
+        surcharge = THERMAL_BRIDGE_SURCHARGE
+    bridges = surcharge * surface
 
     qvarep, qvasouf, smea = conventional_airflows(building)
     sh = building.living_area_m2
     hvent = 0.34 * qvarep * sh
 
     # Infiltration (3CL §4): n50 from conventional Q4Pa, wind exposure e/f.
-    shelter = load_table("ventilation")["shelter_coefficients"]["several_exposed_facades"]
-    e_coef, f_coef = float(shelter["e"]), float(shelter["f"])
-    hsp = DEFAULT_CEILING_HEIGHT_M
-    sdep = (
-        sum(w.area_m2 for w in building.walls)
-        + building.roof.area_m2
-        + sum(w.area_m2 for w in building.windows)
+    shelter_key = (
+        "single_exposed_facade" if building.single_exposed_facade else "several_exposed_facades"
     )
-    q4pa_env = _q4pa_conv_per_m2(building.construction_period) * sdep
+    shelter = load_table("ventilation")["shelter_coefficients"][shelter_key]
+    e_coef, f_coef = float(shelter["e"]), float(shelter["f"])
+    hsp = ceiling_height_m(building)
+    # Sdep = deperditive areas excluding the ground floor (§4); elements fully
+    # adjacent to heated spaces (b = 0, apartment party walls/ceilings) are not
+    # deperditive and do not leak.
+    sdep = (
+        sum(w.area_m2 for w in building.walls if w.unheated_space_reduction_coefficient > 0)
+        + (building.roof.area_m2 if building.roof.unheated_space_reduction_coefficient > 0 else 0)
+        + sum(w.area_m2 for w in building.windows if w.unheated_space_reduction_coefficient > 0)
+    )
+    q4pa_env = _q4pa_conv_per_m2(building.construction_period, building.dwelling_type) * sdep
     q4pa = q4pa_env + 0.45 * smea * sh
     n50 = q4pa / ((4.0 / 50.0) ** (2.0 / 3.0) * hsp * sh)
     unbalance = (qvasouf - qvarep) / (hsp * n50)

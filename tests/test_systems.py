@@ -33,8 +33,15 @@ from renosim.models import (
     EnergyCarrier,
     HeatingGeneratorType,
     HeatingSystem,
+    InertiaClass,
 )
-from renosim.systems import dhw_consumption, heating_consumption, heating_system_efficiency
+from renosim.systems import (
+    dhw_auxiliary_kwh,
+    dhw_consumption,
+    heating_auxiliary_kwh,
+    heating_consumption,
+    heating_system_efficiency,
+)
 from tests.test_envelope import _bare_house_kwargs
 from tests.test_models import make_reference_building
 
@@ -136,3 +143,108 @@ def test_consumption_strictly_positive() -> None:
     building = _house()
     assert heating_consumption(building, heating_needs_kwh=1.0).final_energy_kwh > 0
     assert dhw_consumption(building, dhw_needs_kwh=1.0).final_energy_kwh > 0
+
+
+class TestHeatingAuxiliaries:
+    """§15 auxiliaries, hand-computed on the bare reference house (GV=994.83,
+    Sh=100, H1a low altitude):
+
+    Circulator (§15.2.1): Tbase = -9.5 -> Pnc = 0.99483*29.5 = 29.3475 kW
+      qv = 29.3475/(1.163*7.5) = 3.3646 m3/h
+      Lem = 5*0.802*(1+sqrt(100)) = 44.11 m ; dP = 0.15*44.11+10 = 16.6165 kPa
+      Pcirc = 6.44*(16.6165*3.3646)^0.676 = 6.44*15.180 = 97.76 W
+    With 1000 h of heating: Caux_dist = 97.76 kWh.
+
+    Generation (§15.1, oil boiler, Pn = 24 kW): Paux = 20+1.6*24 = 58.4 W
+    With Bch = 12000 kWh: Qaux_g = 58.4*12000/24/1000 = 29.2 kWh.
+    """
+
+    def test_circulator_hand_computed(self) -> None:
+        building = _house(
+            heating_system=HeatingSystem(
+                generator_type=HeatingGeneratorType.STANDARD_BOILER,
+                energy_carrier=EnergyCarrier.FUEL_OIL,
+                generator_age_years=50,
+            )
+        )
+        # Zero needs isolate the circulator term (generation aux scales on Bch).
+        aux = heating_auxiliary_kwh(building, heating_needs_kwh=0.0, heating_hours_h=1000.0)
+        assert aux == pytest.approx(97.76, rel=2e-3)
+
+    def test_generation_aux_hand_computed(self) -> None:
+        building = _house(
+            heating_system=HeatingSystem(
+                generator_type=HeatingGeneratorType.STANDARD_BOILER,
+                energy_carrier=EnergyCarrier.FUEL_OIL,
+                generator_age_years=50,
+            )
+        )
+        with_needs = heating_auxiliary_kwh(building, 12000.0, heating_hours_h=1000.0)
+        without = heating_auxiliary_kwh(building, 0.0, heating_hours_h=1000.0)
+        assert with_needs - without == pytest.approx(29.2, rel=1e-3)
+
+    def test_divided_systems_have_no_heating_aux(self) -> None:
+        joule = _house(
+            heating_system=HeatingSystem(
+                generator_type=HeatingGeneratorType.ELECTRIC_JOULE,
+                energy_carrier=EnergyCarrier.ELECTRICITY,
+            )
+        )
+        assert heating_auxiliary_kwh(joule, 12000.0, 5000.0) == 0.0
+
+    def test_heat_pump_has_circulator_but_no_generation_aux(self) -> None:
+        pac = _house(
+            heating_system=HeatingSystem(
+                generator_type=HeatingGeneratorType.HEAT_PUMP_AIR_WATER,
+                energy_carrier=EnergyCarrier.ELECTRICITY,
+                generator_age_years=0,
+            )
+        )
+        # Same value with and without needs: only the circulator term remains.
+        assert heating_auxiliary_kwh(pac, 12000.0, 1000.0) == pytest.approx(
+            heating_auxiliary_kwh(pac, 0.0, 1000.0)
+        )
+        assert heating_auxiliary_kwh(pac, 0.0, 1000.0) > 0
+
+    def test_dhw_aux_only_for_boiler_coupled_production(self) -> None:
+        coupled = _house(
+            heating_system=HeatingSystem(
+                generator_type=HeatingGeneratorType.STANDARD_BOILER,
+                energy_carrier=EnergyCarrier.FUEL_OIL,
+                generator_age_years=50,
+            ),
+            dhw_system=DHWSystem(
+                generator_type=DHWGeneratorType.COUPLED_TO_HEATING_SYSTEM,
+                energy_carrier=EnergyCarrier.FUEL_OIL,
+            ),
+        )
+        electric = _house(
+            dhw_system=DHWSystem(
+                generator_type=DHWGeneratorType.ELECTRIC_STORAGE,
+                energy_carrier=EnergyCarrier.ELECTRICITY,
+            )
+        )
+        # Paux = 58.4 W, Becs = 2400 kWh -> 58.4*2400/24/1000 = 5.84 kWh
+        assert dhw_auxiliary_kwh(coupled, 2400.0) == pytest.approx(5.84, rel=1e-3)
+        assert dhw_auxiliary_kwh(electric, 2400.0) == 0.0
+
+
+class TestInertiaIntermittence:
+    def test_heavy_inertia_raises_i0(self) -> None:
+        # §8 table: central radiator I0 = 0.87 (light/medium) vs 0.89 (heavy).
+        light = _house(inertia=InertiaClass.MEDIUM)
+        heavy = _house(inertia=InertiaClass.HEAVY)
+        assert heating_system_efficiency(light).intermittence_i0 == pytest.approx(0.87)
+        assert heating_system_efficiency(heavy).intermittence_i0 == pytest.approx(0.89)
+
+
+def test_intermittence_uses_declared_ceiling_height() -> None:
+    # Bare house GV = 994.83 W/K (test_envelope). G = GV/(Hsp*Sh):
+    #   Hsp 2.5 -> G = 3.9793 -> INT = I0/(1 + 0.1*2.9793) = I0/1.29793
+    #   Hsp 3.0 -> G = 3.3161 -> INT = I0/(1 + 0.1*2.3161) = I0/1.23161
+    # Ratio INT(3.0)/INT(2.5) = 1.29793/1.23161 = 1.05385
+    from renosim.systems import intermittence_factor
+
+    low = intermittence_factor(_house(), 1.0)
+    high = intermittence_factor(_house(ceiling_height_m=3.0), 1.0)
+    assert high / low == pytest.approx(1.05385, rel=1e-4)

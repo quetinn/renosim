@@ -1,0 +1,133 @@
+{
+ "_meta": {
+  "description": "Heating-season (October-April) averages of the 3CL C1 orientation coefficients for vertical glazing, per climate zone and orientation, plus simplified distant-mask shading factors (Fe2). The engine only uses the RATIOS between orientations to modulate the globally calibrated solar coefficient (deviation D-06): modifier = c1[orientation] / mean of the four orientations; the 'unknown' orientation maps to a modifier of 1.0 (balanced glazing).",
+  "source": "Annexe 1 (méthode 3CL-DPE 2021) de l'arrêté du 31 mars 2021 modifié, version consolidée rt-re-batiment.developpement-durable.gouv.fr : coefficients C1 §18.5 (p.144-147, colonne inclinaison >= 75° (parois verticales), moyenne octobre->avril calculée); facteurs de masques lointains Fe2 §6.2.2.2.1 (p.50, obstacle d'environnement homogène).",
+  "date_accessed": "2026-07-06",
+  "notes": "shading_factors: Fe2 averaged over facade orientations — obstacle 15-30°: S 0,8 / E-O 0,77 / N 0,82 -> 0,8 retained; obstacle 30-60°: S 0,3 / E-O 0,4 / N 0,5 -> 0,4 retained. 'clear_or_unknown' = 1.0: the calibrated D-06 coefficient already embeds an average masking level, so only explicitly declared masks reduce the gains. Hand check H1a south: (1,84+1,74+1,59+1,67+1,78+1,99+2,39)/7 = 1,857.",
+  "notes_cooling": "c1_cooling_season_vertical (added 2026-07-11, #16 brique 2): June-September average of the VERTICAL (inclinaison >= 75 deg) C1 column per orientation, plus the single horizontal column, from the same 18.5 tables. c1_heating_season_vertical_mean: October-April average of the vertical column, averaged over the four orientations - used to rebase the calibrated winter solar coefficient (D-06) onto the official summer C1 level: sse_fr = aperture x 0.5 x c1_cooling[orientation] / c1_heating_season_vertical_mean[zone] x Fe2.",
+  "notes_correction": "2026-07-11: the table initially averaged the TILTED column (75deg > incl >= 25deg) of 18.5 by mistake (e.g. H1a south 1.857 instead of the vertical 1.000); replaced by the vertical (>= 75deg) column averages, correct for windows. Only the RATIOS between orientations feed the engine; the ADEME validation sample carries no glazing orientation (modifier = 1.0 everywhere), so the calibrated D-06 level and the published campaign metrics are unaffected (verified by re-running the v4 campaign bit-identical). The mean of the four vertical orientations per zone equals c1_heating_season_vertical_mean, used by the summer rebase."
+ },
+ "c1_heating_season_vertical": {
+  "H1a": {
+   "south": 1.0,
+   "west": 0.521,
+   "north": 0.347,
+   "east": 0.53
+  },
+  "H1b": {
+   "south": 1.0,
+   "west": 0.597,
+   "north": 0.37,
+   "east": 0.506
+  },
+  "H1c": {
+   "south": 1.0,
+   "west": 0.536,
+   "north": 0.35,
+   "east": 0.553
+  },
+  "H2a": {
+   "south": 1.0,
+   "west": 0.53,
+   "north": 0.337,
+   "east": 0.531
+  },
+  "H2b": {
+   "south": 1.0,
+   "west": 0.561,
+   "north": 0.354,
+   "east": 0.547
+  },
+  "H2c": {
+   "south": 1.0,
+   "west": 0.561,
+   "north": 0.354,
+   "east": 0.539
+  },
+  "H2d": {
+   "south": 1.0,
+   "west": 0.54,
+   "north": 0.256,
+   "east": 0.44
+  },
+  "H3": {
+   "south": 1.0,
+   "west": 0.557,
+   "north": 0.254,
+   "east": 0.443
+  }
+ },
+ "shading_factors": {
+  "clear_or_unknown": 1.0,
+  "partial": 0.8,
+  "heavy": 0.4
+ },
+ "c1_cooling_season_vertical": {
+  "H1a": {
+   "south": 1.0,
+   "west": 1.0,
+   "north": 0.598,
+   "east": 0.955,
+   "horizontal": 1.745
+  },
+  "H1b": {
+   "south": 1.0,
+   "west": 1.025,
+   "north": 0.605,
+   "east": 0.89,
+   "horizontal": 1.712
+  },
+  "H1c": {
+   "south": 1.0,
+   "west": 1.083,
+   "north": 0.632,
+   "east": 0.967,
+   "horizontal": 1.882
+  },
+  "H2a": {
+   "south": 1.0,
+   "west": 0.96,
+   "north": 0.608,
+   "east": 1.02,
+   "horizontal": 2.253
+  },
+  "H2b": {
+   "south": 1.0,
+   "west": 1.01,
+   "north": 0.557,
+   "east": 0.975,
+   "horizontal": 1.877
+  },
+  "H2c": {
+   "south": 1.0,
+   "west": 1.03,
+   "north": 0.615,
+   "east": 1.058,
+   "horizontal": 1.963
+  },
+  "H2d": {
+   "south": 1.0,
+   "west": 1.18,
+   "north": 0.552,
+   "east": 1.075,
+   "horizontal": 2.138
+  },
+  "H3": {
+   "south": 1.0,
+   "west": 1.22,
+   "north": 0.565,
+   "east": 0.932,
+   "horizontal": 2.112
+  }
+ },
+ "c1_heating_season_vertical_mean": {
+  "H1a": 0.6,
+  "H1b": 0.618,
+  "H1c": 0.61,
+  "H2a": 0.6,
+  "H2b": 0.616,
+  "H2c": 0.614,
+  "H2d": 0.559,
+  "H3": 0.564
+ }
+}

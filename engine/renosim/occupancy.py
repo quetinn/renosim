@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from renosim.models import DwellingType
 from renosim.tables_io import load_table
 
 #: Bounds accepted for a personalized heating setpoint (degC). The conventional
@@ -64,12 +65,17 @@ class OccupancyScenario:
 CONVENTIONAL = OccupancyScenario(is_conventional=True)
 
 
-def equivalent_adults(living_area_m2: float, scenario: OccupancyScenario) -> float:
+def equivalent_adults(
+    living_area_m2: float,
+    scenario: OccupancyScenario,
+    dwelling_type: DwellingType = DwellingType.HOUSE,
+) -> float:
     """Number of equivalent adults (Nadeq) for DHW needs and internal gains.
 
-    Follows 3CL-DPE 2021 §11.1 for a single-family house (Nblgt = 1) in
-    conventional mode; in personalized mode the user-provided occupant count is
-    used directly.
+    Follows 3CL-DPE 2021 §11.1 with Nblgt = 1: the "logements individuels"
+    thresholds (30/70 m², slope 0.025) for a house, the "logements collectifs"
+    ones (10/50 m², slope 0.035) for an apartment. In personalized mode the
+    user-provided occupant count is used directly.
 
     Parameters
     ----------
@@ -77,6 +83,8 @@ def equivalent_adults(living_area_m2: float, scenario: OccupancyScenario) -> flo
         Living area (surface habitable) in square metres.
     scenario
         Active occupancy scenario.
+    dwelling_type
+        House (default) or apartment.
 
     Returns
     -------
@@ -89,13 +97,17 @@ def equivalent_adults(living_area_m2: float, scenario: OccupancyScenario) -> flo
     # Constants from tables/occupancy_conventional.json (§11.1); the formulas are
     # structural to the method, the table documents their source.
     _ = load_table("occupancy_conventional")
-    sh_moy = living_area_m2  # Nblgt = 1 for a single-family house
-    if sh_moy < 30.0:
-        n_max = 1.0
-    elif sh_moy < 70.0:
-        n_max = 1.75 - 0.01875 * (70.0 - sh_moy)
+    sh_moy = living_area_m2  # Nblgt = 1 (one dwelling)
+    if dwelling_type is DwellingType.APARTMENT:
+        low, high, slope = 10.0, 50.0, 0.035
     else:
-        n_max = 0.025 * sh_moy
+        low, high, slope = 30.0, 70.0, 0.025
+    if sh_moy < low:
+        n_max = 1.0
+    elif sh_moy < high:
+        n_max = 1.75 - 0.01875 * (high - sh_moy)
+    else:
+        n_max = slope * sh_moy
 
     if n_max < 1.75:
         return n_max

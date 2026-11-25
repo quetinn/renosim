@@ -1,40 +1,222 @@
-:root {
-  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  line-height: 1.6;
-  color-scheme: light dark;
+@import "tailwindcss";
+
+/* ── RénoSim design tokens — éco-tech premium, light theme ──────────────────
+   Warm paper background, deep pine green primary, amber energy accent,
+   Fraunces display + Inter body. DPE ramp colors follow the ADEME label
+   visual (decorative only: every class is always written as a letter too). */
+@theme {
+  --font-display: "Fraunces", ui-serif, Georgia, serif;
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+
+  --color-paper: #faf7f2;
+  --color-cream: #f3eee4;
+  --color-surface: #ffffff;
+  --color-ink: #16241c;
+  --color-ink-soft: #4b5b50;
+  --color-ink-faint: #7d8a80;
+  --color-line: #e7e1d4;
+  --color-line-strong: #d6cebc;
+
+  --color-pine: #1c5d3f;
+  --color-pine-deep: #12402b;
+  --color-pine-ink: #0c2b1d;
+  --color-pine-soft: #e3efe6;
+  --color-pine-mist: #f0f6f1;
+  /* Text/icon color sitting ON a pine or amber background (flips in dark mode). */
+  --color-on-pine: #ffffff;
+  --color-on-amber: #ffffff;
+
+  --color-amber: #d98324;
+  --color-amber-deep: #b0661a;
+  --color-amber-soft: #fbeedd;
+
+  --color-clay: #bb4d2c;
+  --color-clay-soft: #f9e8e1;
+
+  /* "Par où part la chaleur" bar chart ramp (re-tuned for dark mode below). */
+  --color-loss-walls: #1c5d3f;
+  --color-loss-roof: #2e7d54;
+  --color-loss-windows: #d98324;
+  --color-loss-floor: #6b8f78;
+  --color-loss-bridges: #bb4d2c;
+  --color-loss-ventilation: #4c7ea8;
+  --color-loss-infiltration: #8aa9c0;
+
+  --color-dpe-a: #00a06d;
+  --color-dpe-b: #52b153;
+  --color-dpe-c: #a8ca45;
+  --color-dpe-d: #f1e44c;
+  --color-dpe-e: #f0b349;
+  --color-dpe-f: #eb8235;
+  --color-dpe-g: #d7221f;
+
+  --shadow-card: 0 1px 2px rgb(22 36 28 / 0.05), 0 8px 24px -12px rgb(22 36 28 / 0.12);
+  --shadow-lift: 0 2px 4px rgb(22 36 28 / 0.06), 0 20px 44px -16px rgb(22 36 28 / 0.22);
+}
+
+/* ── Dark theme (#6) — the same tokens re-declared for prefers-color-scheme.
+   `screen and` keeps printing on the light palette. Deliberately untouched:
+   the DPE ramp (official label visual, always paired with the letter) and
+   --color-pine-ink (the landing CTA panel stays a deep green in both themes).
+   pine/amber become lighter for text contrast on dark surfaces, so the text
+   sitting ON them switches to dark ink via --color-on-pine / --color-on-amber. */
+@media screen and (prefers-color-scheme: dark) {
+  :root {
+    --color-paper: #101612;
+    --color-cream: #1b241e;
+    --color-surface: #161e19;
+    --color-ink: #e9efe9;
+    --color-ink-soft: #b1bdb3;
+    --color-ink-faint: #839186;
+    --color-line: #28322b;
+    --color-line-strong: #3b473e;
+
+    --color-pine: #5fbb8b;
+    --color-pine-deep: #83d2a9;
+    --color-pine-soft: #1e3529;
+    --color-pine-mist: #18271f;
+    --color-on-pine: #0a2417;
+    --color-on-amber: #241503;
+
+    --color-amber: #e2a457;
+    --color-amber-deep: #edbc7e;
+    --color-amber-soft: #2e2214;
+
+    --color-clay: #e28b69;
+    --color-clay-soft: #33211b;
+
+    --color-loss-walls: #4ea87c;
+    --color-loss-roof: #63bd91;
+    --color-loss-windows: #e2a457;
+    --color-loss-floor: #8fb49c;
+    --color-loss-bridges: #e28b69;
+    --color-loss-ventilation: #74a3c9;
+    --color-loss-infiltration: #a3bed4;
+
+    --shadow-card: 0 1px 2px rgb(0 0 0 / 0.35), 0 8px 24px -12px rgb(0 0 0 / 0.55);
+    --shadow-lift: 0 2px 4px rgb(0 0 0 / 0.4), 0 20px 44px -16px rgb(0 0 0 / 0.65);
+  }
+}
+
+html {
+  scroll-behavior: smooth;
+}
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
 }
 
 body {
   margin: 0;
-  display: flex;
-  min-height: 100vh;
-  align-items: center;
-  justify-content: center;
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  font-feature-settings: "cv11";
 }
 
-.shell {
-  max-width: 40rem;
-  padding: 2rem;
-  text-align: center;
+h1,
+h2,
+h3 {
+  text-wrap: balance;
 }
 
-h1 {
-  font-size: 3rem;
-  margin-bottom: 0.25rem;
+/* Numbers in results and tables must not jiggle. */
+.tabular {
+  font-variant-numeric: tabular-nums;
 }
 
-.tagline {
-  font-size: 1.15rem;
-  opacity: 0.8;
-  margin-top: 0;
+::selection {
+  background: var(--color-pine);
+  color: var(--color-on-pine);
 }
 
-.disclaimer {
-  font-size: 0.9rem;
-  opacity: 0.7;
+:focus-visible {
+  outline: 2px solid var(--color-pine);
+  outline-offset: 2px;
+  border-radius: 4px;
 }
 
-.privacy {
-  font-size: 0.9rem;
-  opacity: 0.7;
+/* ── Ambient motion (all gated behind prefers-reduced-motion) ─────────────── */
+@keyframes float-slow {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-14px) rotate(1.2deg);
+  }
+}
+@keyframes drift {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  33% {
+    transform: translate(28px, -20px) scale(1.06);
+  }
+  66% {
+    transform: translate(-18px, 14px) scale(0.97);
+  }
+}
+@keyframes heat-rise {
+  0% {
+    transform: translateY(0);
+    opacity: 0;
+  }
+  15% {
+    opacity: 0.9;
+  }
+  100% {
+    transform: translateY(-46px);
+    opacity: 0;
+  }
+}
+@keyframes dash-flow {
+  to {
+    stroke-dashoffset: -24;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .animate-float-slow {
+    animation: float-slow 7s ease-in-out infinite;
+  }
+  .animate-drift {
+    animation: drift 18s ease-in-out infinite;
+  }
+  .animate-heat-rise {
+    animation: heat-rise 3.2s ease-out infinite;
+  }
+  .animate-dash-flow {
+    animation: dash-flow 1.6s linear infinite;
+  }
+}
+
+/* Recharts text inherits our palette. */
+.recharts-text {
+  fill: var(--color-ink-soft);
+  font-size: 12px;
+}
+
+/* ── Print report (backlog #3) ──────────────────────────────────────────────
+   The situation and scenarios screens double as a printable report: the app
+   chrome is hidden with Tailwind's print:hidden variant; here we keep the DPE
+   label colors (browsers strip backgrounds by default) and lighten the page. */
+@media print {
+  * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  body {
+    background: #fff;
+  }
+  section,
+  table {
+    break-inside: avoid;
+  }
+  a {
+    text-decoration: none;
+  }
 }

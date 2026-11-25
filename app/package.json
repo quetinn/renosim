@@ -6,11 +6,17 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "wheel": "python -m build --wheel ../engine --outdir public/wheels && node scripts/make-wheel-manifest.mjs"
   },
   "dependencies": {
+    "@tailwindcss/vite": "^4.3.2",
+    "lucide-react": "^1.23.0",
+    "motion": "^12.42.2",
     "react": "^19.1.0",
-    "react-dom": "^19.1.0"
+    "react-dom": "^19.1.0",
+    "recharts": "^3.9.2",
+    "tailwindcss": "^4.3.2"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",

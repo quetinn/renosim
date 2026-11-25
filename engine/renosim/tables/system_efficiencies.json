@@ -52,6 +52,13 @@
       "condensing_pre_2016": { "rpn": "91 + 1*log10(Pn)", "rpint": "97 + 1*log10(Pn)" },
       "condensing_2016_plus_le_70kw": { "rpn": "91 + 3*log10(Pn)", "rpint": "103 + 2.5*log10(Pn)" }
     },
+    "log10_pn_coefficients": {
+      "note": "Same formulas as 'gas_and_oil', machine-readable: R = a + b*log10(Pn[kW]) in % PCI, [a, b].",
+      "standard": { "rpn": [84.0, 2.0], "rpint": [80.0, 3.0] },
+      "low_temperature": { "rpn": [87.5, 1.5], "rpint": [87.5, 1.5] },
+      "condensing_pre_2016": { "rpn": [91.0, 1.0], "rpint": [97.0, 1.0] },
+      "condensing_2016_plus_le_70kw": { "rpn": [91.0, 3.0], "rpint": [103.0, 2.5] }
+    },
     "old_boiler_derating": {
       "note": "V1: pre-1991 'classique' boilers use the standard formulas (identical per the annexe); higher standby losses Qp0 (4%/2%/1.5% of Pn by age) are approximated by an extra multiplicative derating.",
       "before_1980": 0.93,
@@ -84,12 +91,47 @@
       "central_radiator": { "light_medium": 0.87, "heavy": 0.89 },
       "central_heated_floor": { "light_medium": 0.89, "heavy": 0.91 },
       "blown_air": { "light_medium": 0.85, "heavy": 0.87 }
+    },
+    "i0_apartment_individual": {
+      "note": "Immeuble collectif avec chauffage individuel (§8, p.56), même convention d'équipement 'central sans minimum de température', avec régulation pièce par pièce ; cette table officielle ne distingue pas l'inertie. Air soufflé divisé retenu (PAC air/air).",
+      "divided_radiator_convector": 0.89,
+      "central_radiator": 0.92,
+      "central_heated_floor": 0.94,
+      "blown_air": 0.89
+    }
+  },
+  "auxiliaries": {
+    "note": "§15 de l'annexe 1 (version consolidée, rt-re-batiment.developpement-durable.gouv.fr, consultée le 2026-07-10) : Paux_g = G + H*Pn (§15.1, tableau p.97), Qaux_g = Paux_g * B_g / Pn (§15.1.1-15.1.2), circulateur §15.2.1-15.2.2, Tbase §18.1 (p.121). Simplifications V1 (D-11) : radiateurs non-monotube (ΔPem 10 kPa), Fcot 'autre' 0.802, δθdim 7.5 °C (réseau basse/moyenne température, cohérent avec la ligne Rd retenue), Niv_inst_ch = 1, rat = 1 ; Qaux_g nul pour PAC (inclus au SCOP), réseau urbain (convention §15.1), effet Joule et poêles (pas de génération centrale) ; chaudière bois traitée en tirage naturel (atmosphérique).",
+    "generation_power_w": {
+      "formula": "Paux_g [W] = G + H * Pn [kW] ; Qaux_g [Wh] = Paux_g * B_g / Pn",
+      "gas_or_oil_boiler": { "g_w": 20, "h_w_per_kw": 1.6 },
+      "wood_boiler_atmospheric": { "g_w": 0, "h_w_per_kw": 0 },
+      "wood_boiler_fan_assisted": { "g_w": 73.3, "h_w_per_kw": 10.5 },
+      "gas_water_heater": { "g_w": 0, "h_w_per_kw": 0 }
+    },
+    "circulator": {
+      "formula": "Pcirc = max(30 ; 6.44*(ΔPem_nom * qv / max(1;Sh/400))^0.676 * max(1;Sh/400)) ; ΔPem_nom = 0.15*Lem + ΔPem ; Lem = 5*Fcot*[Niv + (Sh/Niv)^0.5] ; qv [m3/h] = Pnc*rat/(1.163*δθdim) ; Pnc [kW] = GV*(20-Tbase)/1000 ; Caux_dist_ch [Wh] = Pcirc * Nref",
+      "linear_pressure_loss_kpa_per_m": 0.15,
+      "emitter_pressure_loss_kpa": { "radiators": 10, "radiators_monotube": 30, "heated_floor_ceiling": 15, "other": 35 },
+      "fcot": { "floor": 0.156, "other": 0.802 },
+      "delta_theta_dim_c": { "low_medium_temp": 7.5, "high_temp": 15 },
+      "min_power_w": 30,
+      "power_coefficient": 6.44,
+      "power_exponent": 0.676,
+      "sh_norm_m2": 400
+    },
+    "base_temperature_c": {
+      "H1": { "low": -9.5, "medium": -11.5, "high": -13.5 },
+      "H2": { "low": -6.5, "medium": -8.5, "high": -10.5 },
+      "H3": { "low": -3.5, "medium": -5.5, "high": -7.5 }
     }
   },
   "dhw": {
     "distribution_rd_individual": { "production_in_living_space_adjacent_rooms": 0.93, "production_in_living_space_distant_rooms": 0.87, "production_outside_living_space": 0.83 },
     "electric_storage_losses": {
       "formula": "Qg,w [Wh/an] = 8592 * (45/24) * Vs * Cr ; Rs = 1 / (1 + Qg,w*Rd/Becs) (1,08 au numérateur pour catégorie C/3*)",
+      "standby_hours_per_year_h": 8592,
+      "storage_temperature_difference_c": 45,
       "default_volume_l": 200,
       "cr_vertical_unknown_by_volume": { "le_100": 0.32, "100_200": 0.23, "200_300": 0.22, "gt_300": 0.22 }
     },

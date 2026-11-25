@@ -9,8 +9,41 @@
   "period_keys": ["before_1948", "1948_1974", "1975_1977", "1978_1982", "1983_1988", "1989_2000", "2001_2005", "2006_2012", "after_2013"],
   "uninsulated_defaults": {
     "wall_u_nu": 2.5,
+    "wall_u_nu_traditional": 2.0,
+    "wall_u_nu_traditional_note": "Mid-range of the official Umur0 table (annexe 1 §3.2.1, p.12) for traditional uninsulated walls (pierre 40-55 cm: 2.05-2.3, briques pleines >= 34 cm: <= 1.65) instead of the 2.5 cap that assumes the worst masonry. Retained by ADEME calibration iteration 3 (choice M-6, validation/mapping.py); reused by the app bridge (bridge.py).",
     "roof_u0": 2.5,
     "floor_u0": 2.0
+  },
+  "ground_contact_ue": {
+    "note": "Official Ue values (W/(m2.K)) replacing Upb for floors on vide sanitaire or sous-sol non chauffé, annexe 1 §3.2.2 table p.18, row 2S/P = 5 (typical detached-house footprint/perimeter ratio). Columns are Upb values; linear interpolation in between. Applied as b = Ue/Upb clamped to [0.15, 1] (choice M-7, validation/mapping.py; reused by bridge.py). Also the default when the floor type is unknown — this keeps the Phase 3 ADEME calibration unchanged.",
+    "upb_w_per_m2k": [3.33, 1.43, 0.83, 0.45, 0.41, 0.37, 0.34, 0.31],
+    "ue_w_per_m2k": [0.38, 0.36, 0.34, 0.32, 0.3, 0.28, 0.26, 0.25]
+  },
+  "ground_contact_ue_terre_plein": {
+    "note": "Official Ue values (W/(m2.K)) for floors on terre-plein, annexe 1 §3.2.2 tables p.19, row 2S/P = 5. Two tables per construction period (avant 2001 / à partir de 2001). Same b = Ue/Upb treatment as ground_contact_ue.",
+    "pre_2001": {
+      "upb_w_per_m2k": [3.4, 1.5, 0.85, 0.59, 0.46],
+      "ue_w_per_m2k": [0.6, 0.46, 0.38, 0.32, 0.27]
+    },
+    "post_2001": {
+      "upb_w_per_m2k": [3.4, 1.5, 0.85, 0.6, 0.46, 0.37, 0.31],
+      "ue_w_per_m2k": [0.58, 0.5, 0.42, 0.34, 0.29, 0.25, 0.22]
+    }
+  },
+  "floor_b_unheated_space": {
+    "note": "Forfait b for a floor over an unheated space (garage, cellier) : annexe 1 §3.1 b table p.10, UV,ue = 3 (garage/cellier maison individuelle), Aiu/Aue <= 1,00, parois du local non chauffé non isolées -> b = 0,95. The floor then keeps its Upb (no Ue substitution).",
+    "b": 0.95
+  },
+  "apartment_reconstruction": {
+    "note": "Conventions de reconstruction des appartements, calibrées sur la campagne ADEME appartements du 2026-07-11 (8 895 DPE « appartement individuel », comparaison poste à poste avec les colonnes deperditions_*) — analogues aux choix M-1/M-6 des maisons. wall_area_factor : la convention 1-2 façades d'un logement carré sous-estime les murs déperditifs réels (pignons, refends sur locaux non chauffés, façades multiples) d'un facteur ~1,85 ; unknown_position_*_b : espérance de déperdition plafond/plancher quand la position dans l'immeuble est inconnue (parts RDC / dernier étage / planchers sur parkings) ; thermal_bridge_surcharge : les ponts thermiques d'appartement (liaisons refends x façades, about de plancher) pèsent bien plus que le forfait maison de 8 %.",
+    "wall_area_factor": 1.85,
+    "unknown_position_roof_b": 0.45,
+    "unknown_position_floor_b": 0.1,
+    "thermal_bridge_surcharge": 0.25
+  },
+  "wall_b_common_circulation": {
+    "note": "Forfait b for an apartment wall facing an unheated common circulation : annexe 1 §3.1 b table p.10, UV,ue = 0 (circulation sans ouverture directe sur l'extérieur, p.9), parois du local non chauffé non isolées, Aiu/Aue 10-25 (couloir profond, configuration conventionnelle) -> b = 0,35. Used by bridge.py / mapping.py for the non-through apartment layout (D-18).",
+    "b": 0.35
   },
   "wall_insulated_by_period": {
     "note": "Umur_tab. 'before_1948' and '1948_1974' rows equal the '<=74 ou inconnu' column (2,5) — in practice envelope.py maps pre-1975 construction to the 75-77 insulation row when the wall is insulated at an unknown date.",

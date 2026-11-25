@@ -1,0 +1,210 @@
+{
+ "sample_rows": 11057,
+ "rejected": {
+  "surface_hors_bornes": 118,
+  "methode_non_supportee": 2042,
+  "surface_manquante": 2
+ },
+ "mapped": 8895,
+ "simulation_errors": {},
+ "evaluated": 8895,
+ "cep_bias_kwhep_m2": -0.2,
+ "cep_mae_kwhep_m2": 57.9,
+ "cep_mape_pct": 29.9,
+ "label_exact_agreement": 0.45,
+ "label_within_one_class": 0.879,
+ "confusion_matrix_obs_rows_pred_cols": {
+  "A": {
+   "A": 44,
+   "B": 80,
+   "C": 59,
+   "D": 4,
+   "E": 0,
+   "F": 0,
+   "G": 0
+  },
+  "B": {
+   "A": 22,
+   "B": 237,
+   "C": 368,
+   "D": 31,
+   "E": 1,
+   "F": 1,
+   "G": 1
+  },
+  "C": {
+   "A": 11,
+   "B": 306,
+   "C": 1953,
+   "D": 741,
+   "E": 175,
+   "F": 39,
+   "G": 15
+  },
+  "D": {
+   "A": 0,
+   "B": 35,
+   "C": 715,
+   "D": 1099,
+   "E": 486,
+   "F": 161,
+   "G": 66
+  },
+  "E": {
+   "A": 0,
+   "B": 2,
+   "C": 114,
+   "D": 502,
+   "E": 440,
+   "F": 207,
+   "G": 70
+  },
+  "F": {
+   "A": 0,
+   "B": 0,
+   "C": 17,
+   "D": 149,
+   "E": 224,
+   "F": 141,
+   "G": 61
+  },
+  "G": {
+   "A": 0,
+   "B": 0,
+   "C": 6,
+   "D": 36,
+   "E": 87,
+   "F": 100,
+   "G": 89
+  }
+ },
+ "by_stratum": {
+  "periode": {
+   "1948-1974": {
+    "n": 978,
+    "exact": 0.383,
+    "within1": 0.827
+   },
+   "1975-1977": {
+    "n": 837,
+    "exact": 0.37,
+    "within1": 0.857
+   },
+   "1978-1982": {
+    "n": 918,
+    "exact": 0.447,
+    "within1": 0.881
+   },
+   "1983-1988": {
+    "n": 828,
+    "exact": 0.463,
+    "within1": 0.9
+   },
+   "1989-2000": {
+    "n": 928,
+    "exact": 0.472,
+    "within1": 0.887
+   },
+   "2001-2005": {
+    "n": 734,
+    "exact": 0.571,
+    "within1": 0.946
+   },
+   "2006-2012": {
+    "n": 926,
+    "exact": 0.538,
+    "within1": 0.934
+   },
+   "2013-2021": {
+    "n": 956,
+    "exact": 0.531,
+    "within1": 0.951
+   },
+   "après 2021": {
+    "n": 677,
+    "exact": 0.51,
+    "within1": 0.929
+   },
+   "avant 1948": {
+    "n": 1113,
+    "exact": 0.285,
+    "within1": 0.732
+   }
+  },
+  "zone": {
+   "H1a": {
+    "n": 1042,
+    "exact": 0.426,
+    "within1": 0.854
+   },
+   "H1b": {
+    "n": 1278,
+    "exact": 0.465,
+    "within1": 0.89
+   },
+   "H1c": {
+    "n": 1232,
+    "exact": 0.459,
+    "within1": 0.893
+   },
+   "H2a": {
+    "n": 866,
+    "exact": 0.46,
+    "within1": 0.857
+   },
+   "H2b": {
+    "n": 944,
+    "exact": 0.47,
+    "within1": 0.867
+   },
+   "H2c": {
+    "n": 1283,
+    "exact": 0.458,
+    "within1": 0.888
+   },
+   "H2d": {
+    "n": 1059,
+    "exact": 0.415,
+    "within1": 0.881
+   },
+   "H3": {
+    "n": 1191,
+    "exact": 0.445,
+    "within1": 0.886
+   }
+  },
+  "energie": {
+   "Bois – Bûches": {
+    "n": 1871,
+    "exact": 0.424,
+    "within1": 0.864
+   },
+   "Bois – Granulés (pellets) ou briquettes": {
+    "n": 1609,
+    "exact": 0.434,
+    "within1": 0.925
+   },
+   "Fioul domestique": {
+    "n": 1887,
+    "exact": 0.394,
+    "within1": 0.853
+   },
+   "Gaz naturel": {
+    "n": 1479,
+    "exact": 0.633,
+    "within1": 0.956
+   },
+   "Électricité": {
+    "n": 2049,
+    "exact": 0.406,
+    "within1": 0.823
+   }
+  }
+ },
+ "success_criteria": {
+  "exact_target": 0.6,
+  "within1_target": 0.9,
+  "exact_met": false,
+  "within1_met": false
+ }
+}

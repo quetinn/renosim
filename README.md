@@ -1,8 +1,8 @@
 # RénoSim — Simulateur de rénovation énergétique résidentielle
 
-> ⚠️ **Projet en construction (Phase 1 terminée — moteur cœur).** Les gestes de rénovation, la
-> validation ADEME et l'application arrivent dans les phases suivantes (feuille de route ci-dessous).
-> Démo en ligne (placeholder) : <https://quetinn.github.io/renosim/>
+> ⚠️ **Projet en construction (Phase 4 terminée — application web complète).** Reste la
+> consolidation finale (phase 5, feuille de route ci-dessous).
+> Démo en ligne : <https://quetinn.github.io/renosim/>
 
 **RénoSim** est un simulateur open-source de rénovation énergétique pour maisons individuelles
 françaises. Décrivez votre logement, obtenez une estimation de sa performance (consommation,
@@ -44,9 +44,10 @@ pip install -e "engine[dev]"
 pytest
 ruff check . && mypy engine/renosim
 
-# App
+# App (nécessite le wheel du moteur dans app/public/wheels/)
 cd app
 npm install
+npm run wheel   # construit le wheel renosim + manifest pour le chargeur Pyodide
 npm run dev
 ```
 
@@ -57,7 +58,9 @@ npm run dev
 - [x] **Phase 2** — Gestes de rénovation & économie
 - [x] **Phase 3** — Validation contre la base DPE ADEME + note technique
       (11 624 maisons : biais +7,8 kWhep/m²/an, 90,8 % d'accord à ±1 classe — [note](validation/report/note_validation.md))
-- [ ] **Phase 4** — App React + Pyodide (3 écrans)
+- [x] **Phase 4** — App React + Pyodide : landing, parcours guidé (4 étapes), situation
+      (étiquette animée, déperditions, mode conventionnel/personnalisé), scénarios (6 gestes,
+      3 bouquets, comparateur coût/gain), panneau « Comment est-ce calculé ? »
 - [ ] **Phase 5** — Consolidation, docs, v1.0
 
 **Hors périmètre V1** (extensions futures) : appartements et collectif, calcul des aides

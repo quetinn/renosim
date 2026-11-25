@@ -4,7 +4,7 @@
     "source_co2": "Annexe 4 partie 1.1 de l'arrêté du 15 septembre 2006 modifié par l'arrêté du 31 mars 2021 modifiant diverses dispositions relatives au DPE (JORFTEXT000043353421), en vigueur au 1er juillet 2021. Valeur électricité-chauffage 0,079 également confirmée par CE, 9 août 2023, n°441166.",
     "source_primary_energy": "Convention DPE 2021 : coefficient électricité 2,3 (arrêtés du 31 mars 2021, applicable du 01/07/2021 au 31/12/2025) ; abaissé à 1,9 par l'arrêté du 13 août 2025 (JORFTEXT000052134589) à compter du 01/01/2026. Autres énergies : 1,0.",
     "date_accessed": "2026-07-04",
-    "notes": "The engine exposes a 'regulation_vintage' switch: 'dpe_2021' (electricity PE factor 2.3, matches DPEs issued 2021-2025 and thus the ADEME validation dataset) or 'dpe_2026' (1.9, current regulation since 2026-01-01). V1 defaults to dpe_2021 for consistency with the validation campaign; documented in docs/deviations.md. District heating CO2 content is network-specific (annexe 13 renvoie aux contenus CO2 publiés par réseau); the value here is a placeholder average that MUST be overridden when the actual network is known.",
+    "notes": "The engine exposes a 'regulation_vintage' switch: 'dpe_2021' (electricity PE factor 2.3, matches DPEs issued 2021-2025 and thus the ADEME validation dataset) or 'dpe_2026' (1.9, current regulation since 2026-01-01). Default since 2026-11-25: dpe_2026 (see default_regulation_vintage); the validation campaign selects the vintage per DPE date. Documented in docs/deviations.md (D-13). District heating CO2 content is network-specific (annexe 13 renvoie aux contenus CO2 publiés par réseau); the value here is a placeholder average that MUST be overridden when the actual network is known.",
     "units": { "co2": "kgCO2eq per kWh final energy (PCI)", "primary_energy": "kWh primary per kWh final" }
   },
   "co2_kg_per_kwh": {
@@ -19,6 +19,11 @@
       "value": 0.15,
       "warning": "Placeholder national-average proxy (order of magnitude, réseaux de chaleur français ~0.10-0.15 selon enquête SNCU); the DPE requires the specific network's published CO2 content. Override whenever known."
     }
+  },
+  "default_regulation_vintage": {
+    "value": "dpe_2026",
+    "note": "Convention applied when the caller does not choose one (app, bridge, simulate). dpe_2026 = regulation in force since 2026-01-01 (arrêté du 13 août 2025). The ADEME validation always passes the vintage matching each DPE's issue date (validation/mapping.py), so this default does not affect the published metrics.",
+    "date_set": "2026-11-25"
   },
   "primary_energy_factor": {
     "dpe_2021": { "electricity": 2.3, "default_other": 1.0 },

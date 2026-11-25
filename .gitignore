@@ -49,3 +49,6 @@ Thumbs.db
 # Local environment
 .env
 .env.*
+
+# Local shortcuts (e.g. to copyrighted regulation PDFs — never committed)
+*.lnk

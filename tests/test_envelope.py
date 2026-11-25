@@ -118,3 +118,40 @@ def test_insulation_never_increases_gv() -> None:
     )
     insulated = make_reference_building(**kwargs)
     assert envelope_heat_loss(insulated).gv_w_per_k < envelope_heat_loss(building).gv_w_per_k
+
+
+class TestCeilingHeight:
+    """Declared ceiling height vs the 3CL §4 infiltration (audit 2026-11-25 §4.10).
+
+    In the 3CL formula Hsp cancels out: n50 = Q4Pa/((4/50)^(2/3)*Hsp*Sh), so
+    Hsp*n50 and therefore both the unbalance term and Qvinf = Hsp*Sh*n50*e/...
+    do not depend on Hsp. The declared height only acts on intermittence
+    (test_systems.py).
+    """
+
+    def test_unset_equals_conventional_2_5_m(self) -> None:
+        unset = envelope_heat_loss(make_reference_building(**_bare_house_kwargs()))
+        explicit = envelope_heat_loss(
+            make_reference_building(**_bare_house_kwargs(), ceiling_height_m=2.5)
+        )
+        assert unset == explicit
+
+    @pytest.mark.parametrize(
+        "ventilation",
+        [VentilationType.NATURAL, VentilationType.EXHAUST_ONLY_MANUAL],
+    )
+    def test_infiltration_is_height_independent(self, ventilation: VentilationType) -> None:
+        vmc = VentilationSystem(ventilation_type=ventilation)
+        low = envelope_heat_loss(
+            make_reference_building(**_bare_house_kwargs(), ventilation_system=vmc)
+        )
+        high = envelope_heat_loss(
+            make_reference_building(
+                **_bare_house_kwargs(), ventilation_system=vmc, ceiling_height_m=3.0
+            )
+        )
+        assert high.infiltration_w_per_k == pytest.approx(low.infiltration_w_per_k)
+
+    def test_nonpositive_height_rejected(self) -> None:
+        with pytest.raises(ValueError, match="ceiling_height_m"):
+            make_reference_building(**_bare_house_kwargs(), ceiling_height_m=0.0)

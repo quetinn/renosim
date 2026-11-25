@@ -35,6 +35,34 @@ M-7  (calibration iteration 4) Ground floors: houses overwhelmingly sit on a
      smaller Ue (ground buffering; annexe 1 §3.2.2, table p.18). We encode the
      official Ue row for 2S/P = 5 (typical house footprint/perimeter ratio) via
      the element's b coefficient: b = Ue(Upb)/Upb, clamped to [0.15, 1].
+M-8  (campaign v3, 2026-07-11) Building inertia: the ADEME field
+     ``classe_inertie_batiment`` maps onto InertiaClass (Légère -> light,
+     Moyenne -> medium, Lourde/Très lourde -> heavy, missing -> unknown =
+     medium), feeding both the utilization-factor exponent and the I0 column.
+M-9  (campaign v3) Apartments: only ``dpe appartement individuel`` rows are
+     kept (building-generated and RT2012-study DPEs are rejected — different
+     input pedigree). Geometry mirrors the app bridge (D-18): square footprint
+     of Sh, one level; ``logement_traversant`` selects 2 opposite exposed
+     facades (50 % of the perimeter) vs 1 exposed + 1 on the common
+     circulation (official b = 0.35); ``position_logement_dans_immeuble``
+     drives the ceiling/floor adjacency (b = 0 to heated dwellings; RDC uses
+     the M-7 ground treatment; missing position -> intermediate).
+M-10 (#16 brique 1) Summer-comfort fields: ``protection_solaire_exterieure``
+     is the official binary "all S/E/W/roof bays protected" flag -> FULL/NONE
+     (missing -> UNKNOWN, treated as FULL); ``presence_brasseur_air`` -> fixed
+     fans; ``logement_traversant`` -> through_dwelling (houses included;
+     missing -> engine default: through). Roof state: annexe 9 tests the
+     PRESENCE of roof insulation, while the ADEME quality label rates its
+     U-value — "moyenne"/"bonne"/"très bonne" imply an insulated roof, but
+     "insuffisante" is ambiguous (uninsulated, or insulated but poorly), so it
+     falls back — like a missing label — to the official annexe 9 pre/post-1975
+     default (mapping "insuffisante" to "not insulated" cost 5.5 points of
+     exact agreement on the 2025+ sub-sample: 90.0 % vs 95.5 %).
+M-11 (#16 brique 2) Cooling: a non-empty ``type_generateur_froid`` declares an
+     air conditioner; the installation period embedded in the label ("avant
+     2008", "entre 2008 et 2014", "à partir de 2015" / "entre 2015 et 2016" /
+     "après 2017") selects the SEER bracket; "autre système..." labels map to
+     the unknown period (recent bracket, D-20).
 """
 
 from __future__ import annotations
@@ -48,12 +76,16 @@ from renosim.models import (
     Building,
     ClimateZone,
     ConstructionPeriod,
+    CoolingPeriod,
     DHWGeneratorType,
     DHWSystem,
+    DwellingType,
     EnergyCarrier,
     HeatingGeneratorType,
     HeatingSystem,
+    InertiaClass,
     OpaqueEnvelopeElement,
+    SolarProtectionLevel,
     VentilationSystem,
     VentilationType,
     Window,
@@ -113,6 +145,21 @@ _GLAZING_BY_QUALITY = {
     "moyenne": "double_glazing_old",
     "bonne": "double_glazing_recent",
     "très bonne": "double_glazing_low_e",
+}
+
+#: M-8: ADEME classe_inertie_batiment -> engine InertiaClass.
+_INERTIA_MAP = {
+    "Légère": InertiaClass.LIGHT,
+    "Moyenne": InertiaClass.MEDIUM,
+    "Lourde": InertiaClass.HEAVY,
+    "Très lourde": InertiaClass.HEAVY,
+}
+
+#: M-9: ADEME position_logement_dans_immeuble -> internal position keys.
+_POSITION_MAP = {
+    "RDC": "ground",
+    "étage intermédiaire": "intermediate",
+    "dernier étage": "top",
 }
 
 
@@ -297,8 +344,15 @@ def map_row(row: dict[str, object]) -> MappingResult:
     def reject(reason: str) -> MappingResult:
         return MappingResult(building=None, reason=reason)
 
-    if str(row.get("methode_application_dpe") or "") != "dpe maison individuelle":
-        return reject("methode_non_maison")
+    methode = str(row.get("methode_application_dpe") or "")
+    if methode == "dpe maison individuelle":
+        dwelling = DwellingType.HOUSE
+    elif methode == "dpe appartement individuel":
+        dwelling = DwellingType.APARTMENT  # M-9
+    else:
+        # Building-generated apartment DPEs and RT2012-study DPEs have a
+        # different input pedigree; they are rejected rather than mapped.
+        return reject("methode_non_supportee")
     label = row.get("etiquette_dpe")
     cep = row.get("conso_5_usages_par_m2_ep")
     if not label or cep is None:
@@ -307,7 +361,8 @@ def map_row(row: dict[str, object]) -> MappingResult:
     if sh_raw is None:
         return reject("surface_manquante")
     sh = float(sh_raw)  # type: ignore[arg-type]
-    if not 30.0 <= sh <= 400.0:
+    low_bound, high_bound = (15.0, 200.0) if dwelling is DwellingType.APARTMENT else (30.0, 400.0)
+    if not low_bound <= sh <= high_bound:
         return reject("surface_hors_bornes")
 
     period_label = str(row.get("periode_construction") or "")
@@ -327,15 +382,31 @@ def map_row(row: dict[str, object]) -> MappingResult:
         return reject("chauffage_non_mappe")
     joule = heating.generator_type is HeatingGeneratorType.ELECTRIC_JOULE
 
-    # Choice M-1: reconstructed geometry
+    # Choice M-1 (houses) / M-9 (apartments): reconstructed geometry
     levels_raw = row.get("nombre_niveau_logement")
     levels = max(1, int(levels_raw)) if levels_raw else 1  # type: ignore[arg-type]
+    if dwelling is DwellingType.APARTMENT:
+        levels = 1
     hsp_raw = row.get("hauteur_sous_plafond")
     hsp = float(hsp_raw) if hsp_raw else 2.5  # type: ignore[arg-type]
     footprint = sh / levels
-    perimeter = 4.0 * math.sqrt(footprint)
+    full_perimeter = 4.0 * math.sqrt(footprint)
+    traversant_raw = row.get("logement_traversant")
+    declared_through = bool(int(traversant_raw)) if traversant_raw is not None else None  # type: ignore[arg-type]
+    if dwelling is DwellingType.APARTMENT:
+        traversant = declared_through if declared_through is not None else True
+        perimeter = full_perimeter * (0.5 if traversant else 0.25)
+    else:
+        traversant = True
+        perimeter = full_perimeter
     window_area = sh / 6.0
-    wall_area = max(10.0, perimeter * hsp * levels - window_area)
+    min_wall = 10.0 if dwelling is DwellingType.HOUSE else 5.0
+    wall_area = max(min_wall, perimeter * hsp * levels - window_area)
+    if dwelling is DwellingType.APARTMENT:
+        # M-9: calibrated deperditive-wall factor (see apartment_reconstruction).
+        wall_area *= float(
+            load_table("u_values_default")["apartment_reconstruction"]["wall_area_factor"]
+        )
 
     wall_u = _opaque_u(
         str(row.get("qualite_isolation_murs") or "") or None, period, zone.value, joule, "wall"
@@ -353,17 +424,87 @@ def map_row(row: dict[str, object]) -> MappingResult:
     glazing_key = _GLAZING_BY_QUALITY.get(glazing_quality, "double_glazing_old")
     win = load_table("u_values_default")["window_defaults"][glazing_key]
 
+    # M-8: building inertia from the ADEME field (missing -> medium behaviour).
+    inertia = _INERTIA_MAP.get(str(row.get("classe_inertie_batiment") or ""), InertiaClass.UNKNOWN)
+
+    # M-10 (#16 brique 1): summer-comfort inputs.
+    protection_raw = row.get("protection_solaire_exterieure")
+    if protection_raw is None:
+        protections = SolarProtectionLevel.UNKNOWN
+    elif int(protection_raw):  # type: ignore[arg-type]
+        protections = SolarProtectionLevel.FULL
+    else:
+        protections = SolarProtectionLevel.NONE
+    fans_raw = row.get("presence_brasseur_air")
+    fans = bool(int(fans_raw)) if fans_raw is not None else False  # type: ignore[arg-type]
+    roof_quality = _roof_quality(row)
+    # "insuffisante" is ambiguous for the annexe 9 presence test -> official
+    # period default, like a missing label (see M-10).
+    roof_insulated = True if roof_quality not in (None, "insuffisante") else None
+
+    # M-11: air conditioner and its SEER bracket from type_generateur_froid.
+    froid_label = str(row.get("type_generateur_froid") or "").lower()
+    has_ac = bool(froid_label)
+    if "avant 2008" in froid_label:
+        ac_period = CoolingPeriod.BEFORE_2008
+    elif "2008" in froid_label:
+        ac_period = CoolingPeriod.Y2008_2014
+    elif "2015" in froid_label or "2017" in froid_label:
+        ac_period = CoolingPeriod.FROM_2015
+    else:
+        ac_period = CoolingPeriod.UNKNOWN
+
+    walls: list[OpaqueEnvelopeElement] = [
+        OpaqueEnvelopeElement(area_m2=wall_area, u_value_w_per_m2k=wall_u)
+    ]
+    if dwelling is DwellingType.APARTMENT:
+        # M-9: position from the dedicated field, else floor number 0 -> RDC,
+        # else the calibrated expected-value b for an unknown position.
+        position = _POSITION_MAP.get(str(row.get("position_logement_dans_immeuble") or ""), "")
+        etage_raw = row.get("numero_etage_appartement")
+        if not position and etage_raw is not None and int(etage_raw) == 0:  # type: ignore[arg-type]
+            position = "ground"
+        recon = load_table("u_values_default")["apartment_reconstruction"]
+        if position == "top":
+            roof_b = 1.0
+        elif position == "":
+            roof_b = float(recon["unknown_position_roof_b"])
+        else:
+            roof_b = 0.0
+        if position == "ground":
+            floor_b = _ground_floor_b(floor_u)
+        elif position == "":
+            floor_b = float(recon["unknown_position_floor_b"])
+        else:
+            floor_b = 0.0
+        if not traversant:
+            circulation_b = float(load_table("u_values_default")["wall_b_common_circulation"]["b"])
+            walls.append(
+                OpaqueEnvelopeElement(
+                    area_m2=0.25 * full_perimeter * hsp,
+                    u_value_w_per_m2k=wall_u,
+                    unheated_space_reduction_coefficient=circulation_b,
+                )
+            )
+    else:
+        roof_b = 1.0
+        floor_b = _ground_floor_b(floor_u)
+
     building = Building(
         living_area_m2=sh,
         construction_period=period,
         climate_zone=zone,
         altitude_class=altitude,
-        walls=(OpaqueEnvelopeElement(area_m2=wall_area, u_value_w_per_m2k=wall_u),),
-        roof=OpaqueEnvelopeElement(area_m2=footprint, u_value_w_per_m2k=roof_u),
+        walls=tuple(walls),
+        roof=OpaqueEnvelopeElement(
+            area_m2=footprint,
+            u_value_w_per_m2k=roof_u,
+            unheated_space_reduction_coefficient=roof_b,
+        ),
         floor=OpaqueEnvelopeElement(
             area_m2=footprint,
             u_value_w_per_m2k=floor_u,
-            unheated_space_reduction_coefficient=_ground_floor_b(floor_u),
+            unheated_space_reduction_coefficient=floor_b,
         ),
         windows=(
             Window(
@@ -375,6 +516,15 @@ def map_row(row: dict[str, object]) -> MappingResult:
         heating_system=heating,
         dhw_system=_dhw_system(row, heating),
         ventilation_system=_ventilation(row),
+        inertia=inertia,
+        dwelling_type=dwelling,
+        single_exposed_facade=dwelling is DwellingType.APARTMENT and not traversant,
+        exterior_solar_protections=protections,
+        has_fixed_air_circulators=fans,
+        has_air_conditioning=has_ac,
+        air_conditioning_period=ac_period,
+        roof_insulated=roof_insulated,
+        through_dwelling=(traversant if dwelling is DwellingType.APARTMENT else declared_through),
     )
     ges = row.get("emission_ges_5_usages_par_m2")
     dpe_date = str(row.get("date_etablissement_dpe") or "")

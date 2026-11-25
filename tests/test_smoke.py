@@ -4,7 +4,7 @@ import renosim
 
 
 def test_package_imports_and_has_version() -> None:
-    assert renosim.__version__ == "0.3.0"
+    assert renosim.__version__ == "0.5.0"
 
 
 def test_engine_info_contract() -> None:

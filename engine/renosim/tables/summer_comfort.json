@@ -1,0 +1,28 @@
+{
+  "_meta": {
+    "table": "summer_comfort",
+    "description": "Decision grid of the official passive summer-comfort indicator (3 levels: insufficient / medium / good), displayed on every DPE since July 2021. Assessed WITHOUT active cooling, independently from the winter energy/climate label.",
+    "source": "Annexe 9 (Confort thermique en période estivale) de l'arrêté du 31 mars 2021 relatif au diagnostic de performance énergétique pour les bâtiments à usage d'habitation (JORFTEXT000043353335), version consolidée publiée sur rt-re-batiment.developpement-durable.gouv.fr (consolide_annexes_arrete_du_31_03_2021_relatif_au_dpe_habitation.pdf, pages 22-26), paragraphes 1.1 à 1.2.3, transcription verbatim.",
+    "date_accessed": "2026-07-11",
+    "notes": "The level is 'insufficient' when at least one S/E/W/roof bay lacks an exterior solar protection (small-bay exception below) OR when the dwelling has a deperditive ceiling and the roof/cover is not insulated; 'good' when neither insufficient condition holds AND at least good_level_min_favourable_criteria of the favourable criteria are met; 'medium' otherwise. The roof criterion is skipped for ground-floor/intermediate apartments without a deperditive ceiling ('Dans le cas d'un appartement en rez-de-chaussée ou en étage intermédiaire sans plancher haut déperditif, ce critère n'est pas pris en compte.'). V1 simplification (deviation D-19): the per-bay data (orientation, area) required by the small-bay exception and by the official through-dwelling test are not collected by the guided form - the user answers directly ('volets/BSO sur toutes les baies ? oui / partiellement / non'; apartments already declare traversant/mono-orienté, houses are assumed through)."
+  },
+  "levels": ["insufficient", "medium", "good"],
+  "unknown_roof_default": {
+    "uninsulated_periods": ["before_1948", "1948_1974"],
+    "quote": "Si l'état d'isolation de la toiture est inconnu, il sera considéré que les toitures des bâtiments construits avant 1975 sont non isolées et celles des bâtiments construits à partir de 1975 sont isolés."
+  },
+  "favourable_criteria": ["heavy_inertia", "through_dwelling", "fixed_air_circulators"],
+  "good_level_min_favourable_criteria": 2,
+  "heavy_inertia_quote": "L'inertie du logement est lourde ou très lourde",
+  "through_dwelling_definition": {
+    "max_bay_area_share_per_orientation": 0.75,
+    "quote": "Un logement est dit traversant si, pour chaque orientation (verticale nord, verticale est, verticale sud, verticale ouest, horizontale), la surface des baies est inférieure à 75% de la surface totale des baies.",
+    "note": "Documentation only in V1: the form asks the user directly (D-19)."
+  },
+  "small_bay_exception": {
+    "max_area_m2": 0.7,
+    "max_share_of_total_bay_area": 0.1,
+    "quote": "à l'exception des baies orientées au Sud, à l'Est et à l'Ouest dont la surface est strictement inférieure à 0,7 m² et si celles-ci représentent moins de 10% de la surface totale de baie",
+    "note": "Documentation only in V1: folded into the user's direct answer (D-19)."
+  }
+}

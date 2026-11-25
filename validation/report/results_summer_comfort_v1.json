@@ -1,0 +1,91 @@
+{
+ "sample_rows": 11709,
+ "rejected": {
+  "surface_hors_bornes": 79,
+  "indicateur_ete_manquant": 604
+ },
+ "evaluated": 11026,
+ "all_vintages": {
+  "n": 11026,
+  "exact_agreement": 0.821,
+  "within_one_level": 0.871,
+  "confusion_matrix_obs_rows_pred_cols": {
+   "insufficient": {
+    "insufficient": 4480,
+    "medium": 67,
+    "good": 251
+   },
+   "medium": {
+    "insufficient": 174,
+    "medium": 3869,
+    "good": 230
+   },
+   "good": {
+    "insufficient": 1173,
+    "medium": 76,
+    "good": 706
+   }
+  }
+ },
+ "current_grid_2025_plus": {
+  "n": 7943,
+  "exact_agreement": 0.955,
+  "within_one_level": 0.986,
+  "confusion_matrix_obs_rows_pred_cols": {
+   "insufficient": {
+    "insufficient": 4012,
+    "medium": 28,
+    "good": 28
+   },
+   "medium": {
+    "insufficient": 151,
+    "medium": 2913,
+    "good": 42
+   },
+   "good": {
+    "insufficient": 80,
+    "medium": 31,
+    "good": 658
+   }
+  }
+ },
+ "by_establishment_year": {
+  "2021": {
+   "n": 1229,
+   "exact_agreement": 0.172,
+   "within_one_level": 0.341
+  },
+  "2022": {
+   "n": 958,
+   "exact_agreement": 0.646,
+   "within_one_level": 0.7
+  },
+  "2023": {
+   "n": 525,
+   "exact_agreement": 0.691,
+   "within_one_level": 0.728
+  },
+  "2024": {
+   "n": 371,
+   "exact_agreement": 0.752,
+   "within_one_level": 0.795
+  },
+  "2025": {
+   "n": 831,
+   "exact_agreement": 0.941,
+   "within_one_level": 0.983
+  },
+  "2026": {
+   "n": 7112,
+   "exact_agreement": 0.956,
+   "within_one_level": 0.987
+  }
+ },
+ "input_availability_rate": {
+  "brasseur_air": 1.0,
+  "inertie": 0.898,
+  "protection_solaire": 1.0,
+  "toiture": 0.748,
+  "traversant": 1.0
+ }
+}

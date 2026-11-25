@@ -1,0 +1,92 @@
+{
+ "sample_rows": 11057,
+ "rejected": {
+  "surface_hors_bornes": 110,
+  "indicateur_ete_manquant": 2848,
+  "methode_non_supportee": 51
+ },
+ "evaluated": 8048,
+ "all_vintages": {
+  "n": 8048,
+  "exact_agreement": 0.805,
+  "within_one_level": 0.897,
+  "confusion_matrix_obs_rows_pred_cols": {
+   "insufficient": {
+    "insufficient": 1959,
+    "medium": 134,
+    "good": 226
+   },
+   "medium": {
+    "insufficient": 479,
+    "medium": 3592,
+    "good": 80
+   },
+   "good": {
+    "insufficient": 604,
+    "medium": 49,
+    "good": 925
+   }
+  }
+ },
+ "current_grid_2025_plus": {
+  "n": 4284,
+  "exact_agreement": 0.91,
+  "within_one_level": 0.983,
+  "confusion_matrix_obs_rows_pred_cols": {
+   "insufficient": {
+    "insufficient": 1180,
+    "medium": 73,
+    "good": 34
+   },
+   "medium": {
+    "insufficient": 226,
+    "medium": 2032,
+    "good": 7
+   },
+   "good": {
+    "insufficient": 40,
+    "medium": 4,
+    "good": 688
+   }
+  }
+ },
+ "by_establishment_year": {
+  "2021": {
+   "n": 697,
+   "exact_agreement": 0.373,
+   "within_one_level": 0.554
+  },
+  "2022": {
+   "n": 1688,
+   "exact_agreement": 0.73,
+   "within_one_level": 0.839
+  },
+  "2023": {
+   "n": 935,
+   "exact_agreement": 0.772,
+   "within_one_level": 0.863
+  },
+  "2024": {
+   "n": 444,
+   "exact_agreement": 0.813,
+   "within_one_level": 0.896
+  },
+  "2025": {
+   "n": 332,
+   "exact_agreement": 0.883,
+   "within_one_level": 0.979
+  },
+  "2026": {
+   "n": 3952,
+   "exact_agreement": 0.913,
+   "within_one_level": 0.983
+  }
+ },
+ "input_availability_rate": {
+  "brasseur_air": 1.0,
+  "inertie": 0.93,
+  "protection_solaire": 1.0,
+  "toiture": 0.668,
+  "traversant": 1.0
+ }
+}
