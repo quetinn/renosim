@@ -1,0 +1,627 @@
+{
+ "dpe_test_v1": {
+  "sample": "data/dpe_test_v1.jsonl",
+  "baseline_by_date": {
+   "n": 11496,
+   "cep_bias_kwhep_m2": 35.0,
+   "exact": 0.444,
+   "within1": 0.867
+  },
+  "implied_coefficient_by_year": {
+   "2021": {
+    "2.3": 314,
+    "1.0": 28
+   },
+   "2022": {
+    "2.3": 1843,
+    "1.0": 19
+   },
+   "2023": {
+    "2.3": 2316
+   },
+   "2024": {
+    "2.3": 2580,
+    "1.9": 1
+   },
+   "2025": {
+    "2.0": 10,
+    "2.3": 2500,
+    "2.2": 1
+   },
+   "2026": {
+    "1.9": 1884
+   }
+  },
+  "by_version": {
+   "1": {
+    "n": 174,
+    "cep_bias_kwhep_m2": 91.8,
+    "exact": 0.356,
+    "within1": 0.73
+   },
+   "1.1": {
+    "n": 117,
+    "cep_bias_kwhep_m2": 96.3,
+    "exact": 0.274,
+    "within1": 0.735
+   },
+   "2": {
+    "n": 216,
+    "cep_bias_kwhep_m2": 33.9,
+    "exact": 0.417,
+    "within1": 0.838
+   },
+   "2.1": {
+    "n": 1040,
+    "cep_bias_kwhep_m2": 40.9,
+    "exact": 0.441,
+    "within1": 0.865
+   },
+   "2.2": {
+    "n": 1824,
+    "cep_bias_kwhep_m2": 39.3,
+    "exact": 0.438,
+    "within1": 0.868
+   },
+   "2.3": {
+    "n": 2550,
+    "cep_bias_kwhep_m2": 38.1,
+    "exact": 0.443,
+    "within1": 0.86
+   },
+   "2.4": {
+    "n": 2782,
+    "cep_bias_kwhep_m2": 41.8,
+    "exact": 0.406,
+    "within1": 0.849
+   },
+   "2.5": {
+    "n": 908,
+    "cep_bias_kwhep_m2": 36.7,
+    "exact": 0.407,
+    "within1": 0.854
+   },
+   "2.6": {
+    "n": 1885,
+    "cep_bias_kwhep_m2": 3.7,
+    "exact": 0.551,
+    "within1": 0.936
+   }
+  },
+  "by_year_version": {
+   "2021 | v1": {
+    "n": 174,
+    "cep_bias_kwhep_m2": 91.8,
+    "exact": 0.356,
+    "within1": 0.73
+   },
+   "2021 | v1.1": {
+    "n": 114,
+    "cep_bias_kwhep_m2": 98.5,
+    "exact": 0.263,
+    "within1": 0.728
+   },
+   "2021 | v2": {
+    "n": 54,
+    "cep_bias_kwhep_m2": 54.1,
+    "exact": 0.389,
+    "within1": 0.815
+   },
+   "2022 | v2": {
+    "n": 162,
+    "cep_bias_kwhep_m2": 27.2,
+    "exact": 0.426,
+    "within1": 0.846
+   },
+   "2022 | v2.1": {
+    "n": 1040,
+    "cep_bias_kwhep_m2": 40.9,
+    "exact": 0.441,
+    "within1": 0.865
+   },
+   "2022 | v2.2": {
+    "n": 651,
+    "cep_bias_kwhep_m2": 42.7,
+    "exact": 0.421,
+    "within1": 0.86
+   },
+   "2023 | v2.2": {
+    "n": 1173,
+    "cep_bias_kwhep_m2": 37.3,
+    "exact": 0.448,
+    "within1": 0.873
+   },
+   "2023 | v2.3": {
+    "n": 1143,
+    "cep_bias_kwhep_m2": 41.4,
+    "exact": 0.431,
+    "within1": 0.858
+   },
+   "2024 | v2.3": {
+    "n": 1401,
+    "cep_bias_kwhep_m2": 35.5,
+    "exact": 0.451,
+    "within1": 0.862
+   },
+   "2024 | v2.4": {
+    "n": 1179,
+    "cep_bias_kwhep_m2": 40.3,
+    "exact": 0.429,
+    "within1": 0.856
+   },
+   "2025 | v2.4": {
+    "n": 1603,
+    "cep_bias_kwhep_m2": 42.9,
+    "exact": 0.389,
+    "within1": 0.844
+   },
+   "2025 | v2.5": {
+    "n": 908,
+    "cep_bias_kwhep_m2": 36.7,
+    "exact": 0.407,
+    "within1": 0.854
+   },
+   "2026 | v2.6": {
+    "n": 1884,
+    "cep_bias_kwhep_m2": 3.7,
+    "exact": 0.55,
+    "within1": 0.936
+   }
+  },
+  "per_use_by_energy": {
+   "Bois – Bûches": {
+    "chauffage": {
+     "n": 2393,
+     "engine_kwh_ef_m2": 146.7,
+     "dpe_kwh_ef_m2": 125.5,
+     "ratio": 1.169
+    },
+    "ecs": {
+     "n": 2393,
+     "engine_kwh_ef_m2": 19.3,
+     "dpe_kwh_ef_m2": 16.2,
+     "ratio": 1.19
+    },
+    "eclairage": {
+     "n": 2393,
+     "engine_kwh_ef_m2": 2.7,
+     "dpe_kwh_ef_m2": 1.9,
+     "ratio": 1.408
+    },
+    "auxiliaires": {
+     "n": 2393,
+     "engine_kwh_ef_m2": 4.3,
+     "dpe_kwh_ef_m2": 3.0,
+     "ratio": 1.425
+    }
+   },
+   "Bois – Granulés (pellets) ou briquettes": {
+    "chauffage": {
+     "n": 2376,
+     "engine_kwh_ef_m2": 136.1,
+     "dpe_kwh_ef_m2": 105.6,
+     "ratio": 1.289
+    },
+    "ecs": {
+     "n": 2376,
+     "engine_kwh_ef_m2": 19.4,
+     "dpe_kwh_ef_m2": 17.1,
+     "ratio": 1.133
+    },
+    "eclairage": {
+     "n": 2376,
+     "engine_kwh_ef_m2": 2.7,
+     "dpe_kwh_ef_m2": 1.9,
+     "ratio": 1.408
+    },
+    "auxiliaires": {
+     "n": 2376,
+     "engine_kwh_ef_m2": 2.5,
+     "dpe_kwh_ef_m2": 3.0,
+     "ratio": 0.823
+    }
+   },
+   "Fioul domestique": {
+    "chauffage": {
+     "n": 1979,
+     "engine_kwh_ef_m2": 176.2,
+     "dpe_kwh_ef_m2": 172.4,
+     "ratio": 1.022
+    },
+    "ecs": {
+     "n": 1979,
+     "engine_kwh_ef_m2": 20.7,
+     "dpe_kwh_ef_m2": 21.6,
+     "ratio": 0.963
+    },
+    "eclairage": {
+     "n": 1979,
+     "engine_kwh_ef_m2": 2.7,
+     "dpe_kwh_ef_m2": 1.9,
+     "ratio": 1.407
+    },
+    "auxiliaires": {
+     "n": 1979,
+     "engine_kwh_ef_m2": 4.5,
+     "dpe_kwh_ef_m2": 4.0,
+     "ratio": 1.134
+    }
+   },
+   "Gaz naturel": {
+    "chauffage": {
+     "n": 2370,
+     "engine_kwh_ef_m2": 148.0,
+     "dpe_kwh_ef_m2": 127.0,
+     "ratio": 1.165
+    },
+    "ecs": {
+     "n": 2370,
+     "engine_kwh_ef_m2": 25.2,
+     "dpe_kwh_ef_m2": 20.2,
+     "ratio": 1.25
+    },
+    "eclairage": {
+     "n": 2370,
+     "engine_kwh_ef_m2": 2.7,
+     "dpe_kwh_ef_m2": 1.9,
+     "ratio": 1.407
+    },
+    "auxiliaires": {
+     "n": 2370,
+     "engine_kwh_ef_m2": 5.7,
+     "dpe_kwh_ef_m2": 5.3,
+     "ratio": 1.068
+    }
+   },
+   "Électricité": {
+    "chauffage": {
+     "n": 2378,
+     "engine_kwh_ef_m2": 89.3,
+     "dpe_kwh_ef_m2": 76.5,
+     "ratio": 1.167
+    },
+    "ecs": {
+     "n": 2378,
+     "engine_kwh_ef_m2": 21.3,
+     "dpe_kwh_ef_m2": 18.4,
+     "ratio": 1.157
+    },
+    "eclairage": {
+     "n": 2378,
+     "engine_kwh_ef_m2": 2.7,
+     "dpe_kwh_ef_m2": 1.9,
+     "ratio": 1.406
+    },
+    "auxiliaires": {
+     "n": 2378,
+     "engine_kwh_ef_m2": 3.1,
+     "dpe_kwh_ef_m2": 3.6,
+     "ratio": 0.861
+    }
+   }
+  },
+  "metrics_with_implied_coefficient": {
+   "n": 11496,
+   "cep_bias_kwhep_m2": 35.0,
+   "exact": 0.444,
+   "within1": 0.867
+  }
+ },
+ "dpe_sample_v2": {
+  "sample": "data/dpe_sample_v2.jsonl",
+  "baseline_by_date": {
+   "n": 11625,
+   "cep_bias_kwhep_m2": 12.9,
+   "exact": 0.498,
+   "within1": 0.902
+  },
+  "implied_coefficient_by_year": {
+   "2021": {
+    "2.3": 1576,
+    "1.0": 32
+   },
+   "2022": {
+    "2.3": 1164,
+    "1.0": 14
+   },
+   "2023": {
+    "2.3": 525
+   },
+   "2024": {
+    "2.3": 370,
+    "?": 1
+   },
+   "2025": {
+    "2.3": 801,
+    "1.9": 24,
+    "2.0": 5,
+    "?": 1
+   },
+   "2026": {
+    "1.9": 7091,
+    "?": 20,
+    "2.3": 1
+   }
+  },
+  "by_version": {
+   "1": {
+    "n": 991,
+    "cep_bias_kwhep_m2": -21.0,
+    "exact": 0.469,
+    "within1": 0.903
+   },
+   "1.1": {
+    "n": 348,
+    "cep_bias_kwhep_m2": 14.1,
+    "exact": 0.434,
+    "within1": 0.856
+   },
+   "2": {
+    "n": 478,
+    "cep_bias_kwhep_m2": 16.3,
+    "exact": 0.483,
+    "within1": 0.933
+   },
+   "2.1": {
+    "n": 770,
+    "cep_bias_kwhep_m2": 12.3,
+    "exact": 0.538,
+    "within1": 0.936
+   },
+   "2.2": {
+    "n": 400,
+    "cep_bias_kwhep_m2": 23.7,
+    "exact": 0.492,
+    "within1": 0.9
+   },
+   "2.3": {
+    "n": 500,
+    "cep_bias_kwhep_m2": 33.7,
+    "exact": 0.458,
+    "within1": 0.89
+   },
+   "2.4": {
+    "n": 657,
+    "cep_bias_kwhep_m2": 42.8,
+    "exact": 0.381,
+    "within1": 0.816
+   },
+   "2.5": {
+    "n": 343,
+    "cep_bias_kwhep_m2": 40.7,
+    "exact": 0.417,
+    "within1": 0.845
+   },
+   "2.6": {
+    "n": 7116,
+    "cep_bias_kwhep_m2": 11.2,
+    "exact": 0.52,
+    "within1": 0.91
+   },
+   "None": {
+    "n": 22,
+    "cep_bias_kwhep_m2": 16.3,
+    "exact": 0.5,
+    "within1": 0.818
+   }
+  },
+  "by_year_version": {
+   "2021 | v1": {
+    "n": 991,
+    "cep_bias_kwhep_m2": -21.0,
+    "exact": 0.469,
+    "within1": 0.903
+   },
+   "2021 | v1.1": {
+    "n": 347,
+    "cep_bias_kwhep_m2": 14.2,
+    "exact": 0.432,
+    "within1": 0.856
+   },
+   "2021 | v2": {
+    "n": 264,
+    "cep_bias_kwhep_m2": 13.6,
+    "exact": 0.492,
+    "within1": 0.951
+   },
+   "2022 | v2": {
+    "n": 214,
+    "cep_bias_kwhep_m2": 19.5,
+    "exact": 0.472,
+    "within1": 0.911
+   },
+   "2022 | v2.1": {
+    "n": 765,
+    "cep_bias_kwhep_m2": 11.9,
+    "exact": 0.541,
+    "within1": 0.936
+   },
+   "2022 | v2.2": {
+    "n": 180,
+    "cep_bias_kwhep_m2": 27.3,
+    "exact": 0.444,
+    "within1": 0.883
+   },
+   "2023 | v2.2": {
+    "n": 220,
+    "cep_bias_kwhep_m2": 20.9,
+    "exact": 0.532,
+    "within1": 0.914
+   },
+   "2023 | v2.3": {
+    "n": 304,
+    "cep_bias_kwhep_m2": 39.4,
+    "exact": 0.444,
+    "within1": 0.875
+   },
+   "2024 | v2.3": {
+    "n": 177,
+    "cep_bias_kwhep_m2": 28.2,
+    "exact": 0.452,
+    "within1": 0.904
+   },
+   "2024 | v2.4": {
+    "n": 193,
+    "cep_bias_kwhep_m2": 46.2,
+    "exact": 0.383,
+    "within1": 0.808
+   },
+   "2025 | v2.4": {
+    "n": 463,
+    "cep_bias_kwhep_m2": 41.1,
+    "exact": 0.38,
+    "within1": 0.819
+   },
+   "2025 | v2.5": {
+    "n": 343,
+    "cep_bias_kwhep_m2": 40.7,
+    "exact": 0.417,
+    "within1": 0.845
+   },
+   "2026 | v2.6": {
+    "n": 7092,
+    "cep_bias_kwhep_m2": 11.0,
+    "exact": 0.52,
+    "within1": 0.91
+   }
+  },
+  "per_use_by_energy": {
+   "Bois – Bûches": {
+    "chauffage": {
+     "n": 2387,
+     "engine_kwh_ef_m2": 138.7,
+     "dpe_kwh_ef_m2": 112.7,
+     "ratio": 1.231
+    },
+    "ecs": {
+     "n": 2387,
+     "engine_kwh_ef_m2": 18.2,
+     "dpe_kwh_ef_m2": 14.6,
+     "ratio": 1.246
+    },
+    "eclairage": {
+     "n": 2387,
+     "engine_kwh_ef_m2": 2.7,
+     "dpe_kwh_ef_m2": 1.9,
+     "ratio": 1.415
+    },
+    "auxiliaires": {
+     "n": 2387,
+     "engine_kwh_ef_m2": 2.8,
+     "dpe_kwh_ef_m2": 2.5,
+     "ratio": 1.102
+    }
+   },
+   "Bois – Granulés (pellets) ou briquettes": {
+    "chauffage": {
+     "n": 2386,
+     "engine_kwh_ef_m2": 134.0,
+     "dpe_kwh_ef_m2": 104.3,
+     "ratio": 1.284
+    },
+    "ecs": {
+     "n": 2386,
+     "engine_kwh_ef_m2": 19.3,
+     "dpe_kwh_ef_m2": 16.7,
+     "ratio": 1.158
+    },
+    "eclairage": {
+     "n": 2386,
+     "engine_kwh_ef_m2": 2.7,
+     "dpe_kwh_ef_m2": 1.9,
+     "ratio": 1.412
+    },
+    "auxiliaires": {
+     "n": 2386,
+     "engine_kwh_ef_m2": 1.1,
+     "dpe_kwh_ef_m2": 2.3,
+     "ratio": 0.494
+    }
+   },
+   "Fioul domestique": {
+    "chauffage": {
+     "n": 2084,
+     "engine_kwh_ef_m2": 157.7,
+     "dpe_kwh_ef_m2": 166.2,
+     "ratio": 0.949
+    },
+    "ecs": {
+     "n": 2084,
+     "engine_kwh_ef_m2": 20.3,
+     "dpe_kwh_ef_m2": 21.6,
+     "ratio": 0.942
+    },
+    "eclairage": {
+     "n": 2084,
+     "engine_kwh_ef_m2": 2.7,
+     "dpe_kwh_ef_m2": 1.9,
+     "ratio": 1.408
+    },
+    "auxiliaires": {
+     "n": 2084,
+     "engine_kwh_ef_m2": 3.2,
+     "dpe_kwh_ef_m2": 3.4,
+     "ratio": 0.948
+    }
+   },
+   "Gaz naturel": {
+    "chauffage": {
+     "n": 2381,
+     "engine_kwh_ef_m2": 128.8,
+     "dpe_kwh_ef_m2": 121.8,
+     "ratio": 1.057
+    },
+    "ecs": {
+     "n": 2381,
+     "engine_kwh_ef_m2": 23.2,
+     "dpe_kwh_ef_m2": 19.9,
+     "ratio": 1.162
+    },
+    "eclairage": {
+     "n": 2381,
+     "engine_kwh_ef_m2": 2.7,
+     "dpe_kwh_ef_m2": 1.9,
+     "ratio": 1.409
+    },
+    "auxiliaires": {
+     "n": 2381,
+     "engine_kwh_ef_m2": 3.3,
+     "dpe_kwh_ef_m2": 5.0,
+     "ratio": 0.661
+    }
+   },
+   "Électricité": {
+    "chauffage": {
+     "n": 2365,
+     "engine_kwh_ef_m2": 75.4,
+     "dpe_kwh_ef_m2": 70.1,
+     "ratio": 1.075
+    },
+    "ecs": {
+     "n": 2365,
+     "engine_kwh_ef_m2": 20.0,
+     "dpe_kwh_ef_m2": 17.1,
+     "ratio": 1.169
+    },
+    "eclairage": {
+     "n": 2365,
+     "engine_kwh_ef_m2": 2.7,
+     "dpe_kwh_ef_m2": 1.9,
+     "ratio": 1.411
+    },
+    "auxiliaires": {
+     "n": 2365,
+     "engine_kwh_ef_m2": 1.1,
+     "dpe_kwh_ef_m2": 3.3,
+     "ratio": 0.349
+    }
+   }
+  },
+  "metrics_with_implied_coefficient": {
+   "n": 11625,
+   "cep_bias_kwhep_m2": 12.8,
+   "exact": 0.498,
+   "within1": 0.902
+  }
+ }
+}

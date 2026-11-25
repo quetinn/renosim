@@ -87,8 +87,9 @@ export function MethodPanel({ open, onClose }: { open: boolean; onClose: () => v
                   diagnostic officiel, 44 % exactement. La fiabilité est meilleure pour le gaz, le
                   fioul et les maisons construites entre 1975 et 2012 (environ 90 à 96 %), plus
                   faible pour le chauffage électrique et le bâti d'avant 1975, où le moteur tend à
-                  surestimer la consommation. La note technique complète (méthode, intervalles de
-                  confiance, limites) est publiée dans le dépôt.
+                  surestimer la consommation. Sur les seuls DPE établis avec la version actuelle de
+                  la méthode (2026), l'accord à ±1 classe atteint 93,6 %. La note technique complète
+                  (méthode, intervalles de confiance, limites) est publiée dans le dépôt.
                 </p>
               </section>
 

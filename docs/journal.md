@@ -560,3 +560,26 @@ Vérifié dans le navigateur (landing, convention, facture, coûts indexés).
 tirer un nouvel échantillon de calibration aléatoire ; ne jamais régler sur le test v1 ;
 électricité poste par poste ; leviers v1.1 sur le bâti ancien ; mention « A0 » (arrêté du
 11/06/2026, à partir du 01/01/2027).
+
+## 2026-11-25 (suite 3) — Analyse de l'écart 2022-2025 par version de méthode
+
+- Nouveaux scripts : `validation/enrich_sample.py` (version de méthode, date de modification et
+  consommations par usage en EF/EP, récupérées par `numero_dpe`) et `validation/analyze_bias.py` ;
+  résultats agrégés dans `validation/report/bias_analysis_v5.json`.
+- **Pas de recalcul rétroactif à 1,9** : le rapport EP/EF de l'éclairage vaut 2,3 pour les DPE
+  2021-2025 et 1,9 pour 2026. Le mapping par date est correct.
+- **La rupture suit `version_dpe`** : biais ≈ +40 pour les versions 2.1 à 2.5, +4 pour la 2.6.
+  Les déperditions (0,98-0,99) et le besoin de chauffage (1,03-1,05) du moteur collent aux DPE
+  dans toutes les versions : l'écart vient de la chaîne qui passe du besoin à la consommation
+  (chauffage et ECS ×1,19 en v2.4-2.5 contre ×1,04 en v2.6). L'effet n'est pas uniforme (stable
+  pour le gaz et le fioul, variable pour le bois et l'ECS) : analyse par type de générateur à
+  faire.
+- **DPE v2.6 du test indépendant** : ±1 classe 93,6 % [92,5 ; 94,7], biais +3,7 (n = 1 885) ;
+  repondéré 86,3 % [81,9 ; 90,2].
+- **Éclairage** : +41 % constant (2,7 contre 1,9 kWh_ef/m²), à vérifier contre §16 de l'annexe 1.
+- Note de validation v2.1 (§5.4) ; panneau méthode et README complétés. Aucun réglage du moteur
+  (le test reste vierge).
+
+**Prochaines étapes :** forfait d'éclairage ; annoncer la référence « version de méthode en
+vigueur » puis tirer un échantillon de calibration aléatoire limité à la v2.6 ; analyse par
+type de générateur (électricité, PAC, bois) ; leviers v1.1 sur le bâti ancien.

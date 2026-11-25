@@ -1,6 +1,6 @@
 # Note technique de validation — moteur RénoSim vs base DPE ADEME (v2)
 
-**Date :** 25 novembre 2026 · **Moteur :** `renosim` 0.5.0 (méthode 3CL-DPE 2021 simplifiée) ·
+**Date :** 25 novembre 2026 (v2.1 : analyse par version de méthode, §5.4) · **Moteur :** `renosim` 0.5.0 (méthode 3CL-DPE 2021 simplifiée) ·
 **Auteur :** Noé Quetin · **Version précédente :** v1 du 4 juillet 2026 (§9)
 
 > La v2 ajoute ce qui manquait à la v1 : un **échantillon de test indépendant** (jamais vu
@@ -24,10 +24,14 @@
    indépendantes.** Le chiffre publié en v1 (90,8 %), puis en v4 (90,2 %), était mesuré sur
    l'échantillon qui avait servi à calibrer, et son intervalle de confiance chevauchait déjà le
    seuil.
-2. L'écart vient surtout de **la composition des échantillons par année de DPE**. L'échantillon de
-   calibration, tiré « dans l'ordre du jeu de données », contient 61 % de DPE établis en 2026, sur
-   lesquels le moteur est bon (biais +11, ±1 classe 91 %). Sur les DPE de 2022 à 2025, le moteur
-   surestime d'environ **+40 kWhep/m²** dans **les deux** échantillons (§5.2).
+2. L'écart vient surtout de **la composition des échantillons par version de la méthode DPE**.
+   L'échantillon de calibration, tiré « dans l'ordre du jeu de données », contient 61 % de DPE
+   établis en 2026 (version de méthode 2.6), sur lesquels le moteur est bon. Sur les DPE des
+   versions 2.1 à 2.5 (2022-2025), le moteur surestime d'environ **+40 kWhep/m²** dans **les
+   deux** échantillons (§5.2, §5.4).
+   **Sur les DPE en version actuelle (2.6) du test indépendant, le critère est atteint :**
+   ±1 classe **93,6 %** [92,5 ; 94,7], exact 55,1 %, biais +3,7 (n = 1 885). Repondéré selon le
+   parc : 86,3 % [81,9 ; 90,2].
 3. Repondérés selon la répartition réelle des maisons diagnostiquées (58 % construites avant
    1975, 46 % chauffées à l'électricité), les résultats sont nettement moins bons, car ces
    segments sont justement les plus faibles du moteur.
@@ -150,12 +154,9 @@ systématique de surestimation, qui n'apparaît pas sur la calibration.
   différemment sur le test. **C'est la composition par année qui change le résultat global.**
 - Les DPE de 2026 (convention 1,9) sont bien reproduits ; ceux de 2022-2025 (convention 2,3)
   sont surestimés d'environ 40 kWhep/m².
-- **Test exploratoire, non retenu** : en appliquant 1,9 à tous les DPE du test, le biais
-  2022-2025 tombe à environ +24 et celui de l'électricité de +85 à +45, sans disparaître. Une
-  partie de l'écart pourrait venir de valeurs de la base mises à jour après coup, ou de
-  l'évolution des versions de la méthode entre 2021 et 2026. La base publie un champ
-  `version_dpe` qui n'est pas encore téléchargé : c'est la première piste d'analyse (§7).
-  L'année 2021 (n = 342 au test) est trop peu représentée pour conclure.
+- Deux explications étaient possibles : des valeurs de la base recalculées après coup au
+  coefficient 1,9, ou une évolution de la méthode entre versions. Le §5.4 tranche en faveur de
+  la seconde. L'année 2021 (n = 342 au test) est trop peu représentée pour conclure.
 
 ### 5.3 Par énergie et par époque (test)
 
@@ -178,6 +179,65 @@ systématique de surestimation, qui n'apparaît pas sur la calibration.
 C'est ce croisement qui explique les résultats repondérés : les segments les plus fréquents dans
 le parc (électricité, bâti ancien) sont ceux où le moteur est le moins fidèle.
 
+### 5.4 Analyse approfondie : version de méthode et usages (v2.1)
+
+Les deux échantillons ont été enrichis par `numero_dpe` (`validation/enrich_sample.py`) avec la
+version de méthode (`version_dpe`) et les consommations **par usage** en énergie finale et
+primaire. Analyse : `validation/analyze_bias.py`, résultats agrégés dans
+`validation/report/bias_analysis_v5.json`.
+
+**1. Pas de recalcul rétroactif.** Pour l'éclairage, toujours électrique, le rapport EP/EF publié
+donne le coefficient réellement appliqué : **2,3 pour les DPE de 2021 à 2025** et **1,9 pour
+ceux de 2026**, à quelques dizaines d'exceptions près sur ~23 000 (DPE 2021-2022 à 1,0, une
+quinzaine à 2,0, et 24 DPE de fin 2025 déjà à 1,9 dans la calibration). Le choix de la
+convention selon la date du DPE est donc correct : appliquer à chaque DPE son coefficient
+effectif ne change pas les métriques (test identique ; biais calibration 12,9 → 12,8).
+
+**2. La rupture suit la version de méthode.** Biais Cep sur le test :
+
+| Version | 1 / 1.1 (2021) | 2.1 | 2.2 | 2.3 | 2.4 | 2.5 | **2.6** (2026) |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| n | 291 | 1 040 | 1 824 | 2 550 | 2 782 | 908 | 1 885 |
+| Biais | +94 | +41 | +39 | +38 | +42 | +37 | **+4** |
+| ±1 classe | 73 % | 87 % | 87 % | 86 % | 85 % | 85 % | **94 %** |
+
+Le biais est stable de la v2.1 à la v2.5 et tombe à la v2.6. À l'intérieur d'une même année, le
+découpage par version donne les mêmes niveaux, et la calibration présente le même profil sur les
+versions 2.3 à 2.5 (+34 à +46).
+
+**3. L'enveloppe et les besoins ne sont pas en cause.** Rapport moteur/DPE sur le test :
+déperditions totales (GV vs `deperditions_enveloppe`) **0,98 à 0,99** et besoin de chauffage
+(vs `besoin_chauffage`) **1,03 à 1,05**, **identiques pour les versions 2.4, 2.5 et 2.6**. L'écart
+se loge dans la chaîne qui passe du besoin à la consommation :
+
+| Rapport moteur/DPE (énergie finale, test) | v2.4 | v2.5 | v2.6 |
+|---|---:|---:|---:|
+| Chauffage | 1,21 | 1,18 | 1,04 |
+| ECS | 1,19 | 1,19 | 1,04 |
+| Éclairage | 1,41 | 1,41 | 1,41 |
+| Auxiliaires | 1,06 | 1,00 | 0,99 |
+
+Pour un même besoin, les DPE des versions 2.4-2.5 publient environ 15 % de consommation de
+chauffage et d'ECS en moins que le moteur, ceux de la version 2.6 à peine 4 %. Le rapport
+consommation/besoin publié est stable pour le gaz (1,16-1,18) et le fioul (1,25-1,28) d'une
+version à l'autre, mais pas pour le bois (bûches 1,03-1,06 en v2.4-2.5 contre 1,19 en v2.6) ni
+pour l'ECS (1,47 contre 1,52). Ce n'est donc pas un coefficient global : il faut descendre au
+**type de générateur** (champ `type_generateur_chauffage_principal`) et à la composition des
+sous-populations (part des PAC dans « électricité », notamment).
+
+**4. Un écart indépendant de la version : l'éclairage.** Le moteur compte 2,7 kWh_ef/m² contre
+1,9 publié, dans toutes les versions et pour toutes les énergies (+41 %). L'enjeu absolu est
+faible (≈ 1,9 kWhep/m² à 2,3), mais la constance du rapport désigne un paramètre mal encodé dans
+le forfait d'éclairage (D-10 : heures de fonctionnement, puissance ou coefficient de commande).
+C'est à vérifier contre le §16 de l'annexe 1.
+
+**Lecture.** Le moteur a été calé, sans que ce soit voulu, sur des DPE de la version de méthode
+2.6 (2026), qui est la version en vigueur et donc **celle que l'outil doit reproduire**. Sur ces
+DPE, il tient le critère sur données indépendantes (échantillon équilibré). Les DPE établis
+avec les versions antérieures des logiciels ne sont pas reproduits aussi bien. Il reste une
+faiblesse réelle, qui ne dépend pas de la version : une fois repondérés selon le parc, même les
+DPE v2.6 restent sous le seuil (86,3 %), à cause du bâti ancien et de l'électricité.
+
 ## 6. Autres campagnes (juillet 2026, échantillons « ordre du jeu »)
 
 Ces campagnes n'ont **pas** encore d'échantillon test indépendant. Leurs chiffres sont donc à lire
@@ -194,24 +254,30 @@ comme des résultats de calibration.
 ## 7. Analyse et suites
 
 **Ce que la v5 change.** La calibration de juillet a été réglée sur un échantillon dominé par les
-DPE de 2026. Les forfaits calés dessus (surtout pour le bâti ancien et l'électricité) ne se
-généralisent pas aux DPE de 2021-2025. Le constat d'audit (« calibration et évaluation sur le même
-échantillon ») est confirmé par les chiffres.
+DPE de version 2.6. Elle reproduit bien cette version (en vigueur), moins bien les versions
+antérieures, et reste faible sur le bâti ancien et l'électricité une fois repondérée. Le constat
+d'audit (« calibration et évaluation sur le même échantillon ») est confirmé, et l'analyse par
+version (§5.4) en donne la cause.
+
+**Choix méthodologique proposé :** prendre comme **référence de validation les DPE de la version
+de méthode en vigueur** (2.6 aujourd'hui, la suivante à partir de 2027), puisque l'outil affiche
+l'étiquette selon la réglementation du jour. Les versions antérieures sont rapportées à titre
+d'information. Ce choix devra être annoncé dans la note avant la prochaine calibration, et pas
+choisi après coup selon les résultats.
 
 **Suites, par ordre de priorité :**
-1. **Télécharger `version_dpe` et `date_derniere_modification_dpe`** sur les deux échantillons,
-   et analyser le biais par version de méthode. Si l'écart 2022-2025 s'explique par la version,
-   le mapping doit en tenir compte.
-2. **Tirer un nouvel échantillon de calibration aléatoire** (`--random`, disjoint du test) pour
-   remplacer les échantillons « ordre du jeu ». Calibrer uniquement dessus, puis mesurer une seule
-   fois sur le test v1 ; tirer un test v2 si le test v1 a été trop consulté.
-3. **Électricité** : comparer poste par poste (chauffage, ECS, auxiliaires) avec les colonnes de
-   consommation par usage de la base. L'hypothèse joule NF et le volume du ballon ECS sont à
-   revoir.
-4. **Bâti d'avant 1975** : traiter les leviers v1.1 de l'audit (matériau des murs, ponts
-   thermiques linéiques, inertie Th-I), qui visent précisément ce segment.
-5. **Publier les deux chiffres** (calibration et test, brut et repondéré) dans le README et l'app,
-   au lieu du seul 90,8 %.
+1. **Éclairage** : vérifier le forfait §16 de l'annexe 1 (+41 % constant, §5.4-4).
+2. **Tirer un nouvel échantillon de calibration aléatoire, limité à la version en vigueur**
+   (`--random`, disjoint du test). Calibrer uniquement dessus, puis mesurer une seule fois sur le
+   sous-ensemble v2.6 du test v1 (et sur un test v2 tiré de la même façon).
+3. **Électricité et bâti d'avant 1975** : analyse par type de générateur (part des PAC, joule,
+   ECS électrique) et leviers v1.1 de l'audit (matériau des murs, ponts thermiques linéiques,
+   inertie Th-I).
+4. **Versions antérieures** : comprendre ce qui change dans la chaîne de génération entre les
+   versions 2.5 et 2.6 (notes de version des logiciels, contrôles de cohérence ADEME), pour
+   documenter l'écart plutôt que le corriger.
+5. **Publier les chiffres complets** (calibration, test, version en vigueur, brut et repondéré)
+   dans le README et l'app.
 
 **Critère exact (60 %).** Il reste hors d'atteinte (44 % au test). La v1 l'attribuait à un manque
 d'information du mapping, et cette explication tient toujours en partie. Mais le biais
@@ -230,6 +296,11 @@ python validation/stratum_counts.py              # effectifs du parc par strate 
 python validation/run_validation.py --sample data/dpe_test_v1.jsonl \
     --out validation/report/results_v5_test.json --bootstrap 1000 \
     --weights validation/report/stratum_counts_maisons.json --by-year
+
+# analyse par version de méthode et par usage (§5.4, ≈ 4 min d'enrichissement)
+python validation/enrich_sample.py data/dpe_test_v1.jsonl data/dpe_sample_v2.jsonl
+python validation/analyze_bias.py data/dpe_test_v1.jsonl data/dpe_sample_v2.jsonl \
+    --out validation/report/bias_analysis_v5.json
 ```
 
 Note : la base ADEME évolue (nouveaux DPE, mises à jour). Un nouveau tirage ne redonnera pas
@@ -241,3 +312,6 @@ exactement les mêmes lignes ; les fichiers de résultats committés font foi po
   critère déclaré atteint.
 - **v2 (25/11/2026)** : chapitres v2 à v4, échantillon test indépendant, bootstrap,
   repondération ; critère **non atteint** sur données indépendantes (86,7 %).
+- **v2.1 (25/11/2026)** : analyse par version de méthode et par usage ; pas de recalcul
+  rétroactif ; critère atteint sur les DPE en version actuelle (93,6 %, brut) mais pas une fois
+  repondéré (86,3 %) ; écart d'éclairage constant de +41 % identifié.
