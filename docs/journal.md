@@ -501,3 +501,30 @@ en dur, écart fenêtres non documenté.
 
 **Prochaines étapes :** décider de la feuille de route §9 du rapport (Sprint 0 sécurisation →
 prix/validation → Phase 5/v1.0 → v1.1 « conformité »).
+
+## 2026-11-25 (suite) — Sprint 0 de l'audit (branche `feat/v1-consolidation`)
+
+**Fait :**
+1. **Sécurisation** : le travail de juillet (79 fichiers) est commité ; `*.lnk` ignoré.
+2. **DPE 2026 par défaut** : clé `default_regulation_vintage` dans `emission_factors.json`, lue
+   par `simulate`, `assess_scenario`, le bridge et l'app (« En vigueur (2026) » /
+   « DPE 2021-2025 »). Validation inchangée (millésime par date de DPE). D-13 màj.
+3. **Bug ECS/poêle** : un générateur sans réseau hydraulique bascule l'ECS couplée sur un
+   ballon électrique (un CET explicite reste prioritaire) ; message sur la carte du geste.
+4. **HSP** : `Building.ceiling_height_m` (optionnel) alimente le facteur d'intermittence ;
+   les tests montrent que Hsp se simplifie dans l'infiltration §4.
+5. **Constantes métier → `tables/conventions.json`** (+ coefficients chaudières, pertes de
+   stockage ECS, part fixe électricité). Campagne v4 relancée : **bit-identique**.
+6. **Écarts** : D-01, D-03, D-05, D-17 mis à jour ; nouveaux D-21 (fenêtres) et D-22
+   (chaudière bois).
+
+**Non fait (reporté) :** correction de la chaudière bois — elle modifie les métriques (≈ 2 400
+maisons bois bûche, M-5) et exige les rendements du §13 de l'annexe 1 ⇒ v1.1 (D-22).
+
+**État des tests :** 199/199 verts, couverture 96,3 %, ruff/format/mypy strict (26 fichiers)
+OK, wheel 0.5.0 régénéré, `npm run build` OK. Vérif navigateur (lien de partage) : DPE 2026
+sélectionné par défaut, maison fioul 1970 → G (443 kWhep/m²), geste poêle → message ECS et
+scénario G → G (430 kWhep/m², 1 393 €/an).
+
+**Prochaines étapes :** Sprint 1 de l'audit (prix de l'énergie à jour, échantillon test
+indépendant, note de validation v2).
