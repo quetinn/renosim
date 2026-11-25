@@ -11,18 +11,20 @@ import {
 import { LOSS_LABELS } from "../../i18n/fr";
 import type { EnvelopeBreakdown } from "../../types/schema";
 
+// Theme tokens (index.css) so the ramp adapts to the dark palette.
 const COLORS: Record<string, string> = {
-  walls: "#1c5d3f",
-  roof: "#2e7d54",
-  windows: "#d98324",
-  floor: "#6b8f78",
-  thermal_bridges: "#bb4d2c",
-  ventilation: "#4c7ea8",
-  infiltration: "#8aa9c0",
+  walls: "var(--color-loss-walls)",
+  roof: "var(--color-loss-roof)",
+  windows: "var(--color-loss-windows)",
+  floor: "var(--color-loss-floor)",
+  thermal_bridges: "var(--color-loss-bridges)",
+  ventilation: "var(--color-loss-ventilation)",
+  infiltration: "var(--color-loss-infiltration)",
 };
 
-/** "Par où part la chaleur ?" — share of each loss path in the total GV. */
-export function LossesChart({ envelope }: { envelope: EnvelopeBreakdown }) {
+/** "Par où part la chaleur ?" — share of each loss path in the total GV
+ * (default export: lazy-loaded so recharts stays in its own chunk). */
+export default function LossesChart({ envelope }: { envelope: EnvelopeBreakdown }) {
   const entries = [
     ["walls", envelope.walls_w_per_k],
     ["roof", envelope.roof_w_per_k],
@@ -56,6 +58,12 @@ export function LossesChart({ envelope }: { envelope: EnvelopeBreakdown }) {
           />
           <Tooltip
             cursor={{ fill: "var(--color-cream)" }}
+            contentStyle={{
+              background: "var(--color-surface)",
+              border: "1px solid var(--color-line)",
+              borderRadius: 12,
+              color: "var(--color-ink)",
+            }}
             formatter={(value) => [`${(value as number).toFixed(1).replace(".", ",")} %`, "Part des pertes"]}
           />
           <Bar dataKey="share" radius={[0, 8, 8, 0]} isAnimationActive={false} barSize={22}>

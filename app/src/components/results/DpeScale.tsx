@@ -13,8 +13,10 @@ export const DPE_COLORS: Record<DpeClass, string> = {
   G: "var(--color-dpe-g)",
 };
 
-/** Dark text is needed on the light C/D swatches for contrast. */
+/** Dark text is needed on the light C/D swatches for contrast. Fixed literal
+ * (not --color-ink): the DPE ramp does not follow the dark theme. */
 const DARK_TEXT: DpeClass[] = ["C", "D"];
+const DARK_TEXT_CLASS = "text-[#16241c]";
 
 const CLASSES: DpeClass[] = ["A", "B", "C", "D", "E", "F", "G"];
 
@@ -54,7 +56,7 @@ export function DpeScale({
             >
               <span
                 className={`text-base font-extrabold ${
-                  DARK_TEXT.includes(cls) ? "text-ink" : "text-white"
+                  DARK_TEXT.includes(cls) ? DARK_TEXT_CLASS : "text-white"
                 }`}
               >
                 {cls}
@@ -86,7 +88,7 @@ export function DpeBadge({ label, size = "md" }: { label: DpeClass; size?: "md" 
   return (
     <span
       className={`inline-flex items-center justify-center rounded-lg font-extrabold ${
-        DARK_TEXT.includes(label) ? "text-ink" : "text-white"
+        DARK_TEXT.includes(label) ? DARK_TEXT_CLASS : "text-white"
       } ${size === "lg" ? "h-10 w-10 text-lg" : "h-8 w-8 text-sm"}`}
       style={{ background: DPE_COLORS[label] }}
     >

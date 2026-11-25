@@ -4,9 +4,9 @@ type Variant = "primary" | "accent" | "ghost" | "outline";
 
 const styles: Record<Variant, string> = {
   primary:
-    "bg-pine text-white hover:bg-pine-deep active:scale-[0.98] shadow-card",
+    "bg-pine text-on-pine hover:bg-pine-deep active:scale-[0.98] shadow-card",
   accent:
-    "bg-amber text-white hover:bg-amber-deep active:scale-[0.98] shadow-card",
+    "bg-amber text-on-amber hover:bg-amber-deep active:scale-[0.98] shadow-card",
   ghost: "text-pine hover:bg-pine-soft",
   outline: "border border-line-strong text-ink hover:border-pine hover:text-pine bg-surface",
 };

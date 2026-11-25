@@ -100,7 +100,7 @@ export function Segmented<T extends string>({
             aria-checked={selected}
             onClick={() => onChange(opt.value)}
             className={`min-h-9 cursor-pointer rounded-full px-4 py-1.5 text-sm font-medium transition-all duration-200 ${
-              selected ? "bg-pine text-white shadow-card" : "text-ink-soft hover:text-ink"
+              selected ? "bg-pine text-on-pine shadow-card" : "text-ink-soft hover:text-ink"
             }`}
           >
             {opt.label}

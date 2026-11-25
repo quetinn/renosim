@@ -17,6 +17,18 @@
       { "otherwise": true, "formula": "1.75 + 0.3*(Nmax - 1.75)" }
     ]
   },
+  "nadeq_apartment": {
+    "note": "Logements collectifs §11.1 (p.71) : seuils 10/50 m² et pente 0,035 au-delà de 50 m² ; Nblgt = 1 pour le traitement d'un appartement, Shmoy = Sh.",
+    "nmax": [
+      { "when_shmoy_below_m2": 10, "formula": "1" },
+      { "when_shmoy_below_m2": 50, "formula": "1.75 - 0.01875*(50 - Shmoy)" },
+      { "otherwise": true, "formula": "0.035 * Shmoy" }
+    ],
+    "nadeq": [
+      { "when_nmax_below": 1.75, "formula": "Nmax" },
+      { "otherwise": true, "formula": "1.75 + 0.3*(Nmax - 1.75)" }
+    ]
+  },
   "dhw": {
     "liters_per_day_per_adult_at_40c": { "conventional": 56, "spendthrift": 79 },
     "water_heat_capacity_wh_per_l_k": 1.163,
@@ -34,6 +46,6 @@
     "heavy_very_heavy": 3.6,
     "medium": 2.9,
     "light": 2.5,
-    "v1_default_inertia": "medium"
+    "default_when_unknown": "medium"
   }
 }

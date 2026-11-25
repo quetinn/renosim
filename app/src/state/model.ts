@@ -9,12 +9,20 @@ import {
   SCHEMA_VERSION,
   type AltitudeClass,
   type Adjacency,
+  type ApartmentPosition,
   type BuildingInput,
+  type CoolingPeriod,
+  type DwellingType,
   type ConstructionPeriod,
   type DHWGeneratorType,
   type EnergyCarrier,
+  type FloorType,
+  type GeometryOverrides,
   type Glazing,
+  type GlazingOrientation,
   type HeatingGeneratorType,
+  type InertiaClass,
+  type InsulationMaterial,
   type InsulationSpec,
   type MeasureInput,
   type MeasureType,
@@ -22,6 +30,8 @@ import {
   type RegulationVintage,
   type ScenarioInput,
   type SimulationPayload,
+  type SolarProtectionLevel,
+  type SolarShading,
   type VentilationType,
 } from "../types/schema";
 
@@ -63,28 +73,59 @@ export const HEATING_AGE_YEARS: Record<HeatingAgeChoice, number | null> = {
   unknown: null,
 };
 
-export type InsulationChoice = { state: "uninsulated" | "period_default" | "renovated" } | {
-  state: "known_r";
-  rValue: number;
-};
+export type InsulationChoice =
+  | { state: "uninsulated" | "period_default" | "renovated" }
+  | { state: "known_r"; material: InsulationMaterial; thicknessCm: number };
 
 // ── Form state ───────────────────────────────────────────────────────────────
+
+/** Optional user-known surfaces; null = derive from the M-1 reconstruction. */
+export interface GeometryState {
+  ceilingHeight: number | null;
+  wallArea: number | null;
+  windowArea: number | null;
+  roofArea: number | null;
+  floorArea: number | null;
+}
+
+export const EMPTY_GEOMETRY: GeometryState = {
+  ceilingHeight: null,
+  wallArea: null,
+  windowArea: null,
+  roofArea: null,
+  floorArea: null,
+};
 
 export interface FormState {
   postalCode: string;
   altitude: AltitudeClass;
   livingArea: number;
   period: ConstructionPeriod;
+  dwellingType: DwellingType;
+  apartmentPosition: ApartmentPosition;
+  apartmentTraversant: boolean;
   levels: number;
   adjacency: Adjacency;
+  geometry: GeometryState;
   wallInsulation: InsulationChoice;
   roofInsulation: InsulationChoice;
   floorInsulation: InsulationChoice;
+  floorType: FloorType;
   glazing: Glazing;
+  glazingOrientation: GlazingOrientation;
+  solarShading: SolarShading;
+  inertia: InertiaClass;
   heating: HeatingChoice;
   heatingAge: HeatingAgeChoice;
   dhw: DHWGeneratorType;
   ventilation: VentilationType;
+  /** Confort d'été (#16 brique 1) : volets/BSO, brasseurs d'air fixes, clim.
+   * "unknown" n'est pas proposé au formulaire (directement observable, D-19). */
+  solarProtections: Exclude<SolarProtectionLevel, "unknown">;
+  fixedAirCirculators: boolean;
+  airConditioning: boolean;
+  /** Période d'installation de la clim (tranche SEER §10.3, brique 2). */
+  airConditioningPeriod: CoolingPeriod;
 }
 
 export interface OccupancyState {
@@ -97,16 +138,22 @@ export interface OccupancyState {
 
 /** Per-measure adjustable parameters for the scenario cards. */
 export interface MeasureParams {
-  wallAddedR: number;
-  roofAddedR: number;
+  wallMaterial: InsulationMaterial;
+  wallThicknessCm: number;
+  roofMaterial: InsulationMaterial;
+  roofThicknessCm: number;
   windowGlazing: Glazing;
   ventilationTarget: VentilationType;
   heatingTarget: "heat_pump_air_water" | "condensing_boiler" | "wood_pellet_stove";
 }
 
+// Glass wool at λ=0.040: 15 cm ≈ R 3.75, 28 cm = R 7.0 — the usual
+// "performant" levels (matches the engine's default added R of 3.7 / 7).
 export const DEFAULT_MEASURE_PARAMS: MeasureParams = {
-  wallAddedR: 3.7,
-  roofAddedR: 7.0,
+  wallMaterial: "glass_wool",
+  wallThicknessCm: 15,
+  roofMaterial: "glass_wool",
+  roofThicknessCm: 28,
   windowGlazing: "double_glazing_low_e",
   ventilationTarget: "exhaust_only_hygro_b",
   heatingTarget: "heat_pump_air_water",
@@ -134,8 +181,22 @@ export const INITIAL_FORM: FormState = {
   altitude: "low",
   livingArea: 100,
   period: "1948_1974",
+  dwellingType: "house",
+  apartmentPosition: "unknown",
+  apartmentTraversant: true,
   levels: 1,
   adjacency: "detached",
+  geometry: EMPTY_GEOMETRY,
+  floorType: "unknown",
+  glazingOrientation: "unknown",
+  solarShading: "clear_or_unknown",
+  inertia: "unknown",
+  // Volets quasi systématiques sur l'habitat français : défaut « oui »,
+  // corrigeable en un clic (l'engin traite « unknown » comme « full », D-19).
+  solarProtections: "full",
+  fixedAirCirculators: false,
+  airConditioning: false,
+  airConditioningPeriod: "from_2015",
   ...(defaultsForPeriod("1948_1974") as Pick<
     FormState,
     | "wallInsulation"
@@ -161,9 +222,23 @@ export const INITIAL_OCCUPANCY: OccupancyState = {
 
 function insulationSpec(choice: InsulationChoice): InsulationSpec {
   if (choice.state === "known_r") {
-    return { state: "known_r", r_value_m2k_per_w: choice.rValue };
+    return { state: "known_r", material: choice.material, thickness_cm: choice.thicknessCm };
   }
   return { state: choice.state };
+}
+
+function geometryInput(geometry: GeometryState): GeometryOverrides | undefined {
+  // Empty or non-positive fields fall back to the engine's M-1 reconstruction.
+  const overrides: GeometryOverrides = {};
+  const set = (key: keyof GeometryOverrides, value: number | null) => {
+    if (value != null && value > 0) overrides[key] = value;
+  };
+  set("ceiling_height_m", geometry.ceilingHeight);
+  set("wall_area_m2", geometry.wallArea);
+  set("window_area_m2", geometry.windowArea);
+  set("roof_area_m2", geometry.roofArea);
+  set("floor_area_m2", geometry.floorArea);
+  return Object.keys(overrides).length > 0 ? overrides : undefined;
 }
 
 export function buildingInput(form: FormState): BuildingInput {
@@ -172,17 +247,32 @@ export function buildingInput(form: FormState): BuildingInput {
     throw new Error(`Code postal invalide ou hors métropole : ${form.postalCode}`);
   }
   const heating = HEATING_SYSTEMS[form.heating];
+  const geometry = geometryInput(form.geometry);
   return {
     living_area_m2: form.livingArea,
     levels: form.levels,
     construction_period: form.period,
     climate_zone: zone,
     altitude_class: form.altitude,
+    dwelling_type: form.dwellingType,
+    ...(form.dwellingType === "apartment"
+      ? {
+          apartment: {
+            position: form.apartmentPosition,
+            traversant: form.apartmentTraversant,
+          },
+        }
+      : {}),
     adjacency: form.adjacency,
+    ...(geometry ? { geometry } : {}),
     wall_insulation: insulationSpec(form.wallInsulation),
     roof_insulation: insulationSpec(form.roofInsulation),
     floor_insulation: insulationSpec(form.floorInsulation),
+    floor_type: form.floorType,
     glazing: form.glazing,
+    glazing_orientation: form.glazingOrientation,
+    solar_shading: form.solarShading,
+    inertia: form.inertia,
     heating: {
       generator: heating.generator,
       carrier: heating.carrier,
@@ -190,6 +280,12 @@ export function buildingInput(form: FormState): BuildingInput {
     },
     dhw: { generator: form.dhw },
     ventilation: { type: form.ventilation },
+    summer: {
+      solar_protections: form.solarProtections,
+      fixed_air_circulators: form.fixedAirCirculators,
+      air_conditioning: form.airConditioning,
+      air_conditioning_period: form.airConditioningPeriod,
+    },
   };
 }
 
@@ -212,9 +308,9 @@ export function occupancyInput(occupancy: OccupancyState, form: FormState): Occu
 export function measureInput(type: MeasureType, params: MeasureParams): MeasureInput {
   switch (type) {
     case "wall_insulation":
-      return { type, added_r_m2k_per_w: params.wallAddedR };
+      return { type, material: params.wallMaterial, thickness_cm: params.wallThicknessCm };
     case "roof_insulation":
-      return { type, added_r_m2k_per_w: params.roofAddedR };
+      return { type, material: params.roofMaterial, thickness_cm: params.roofThicknessCm };
     case "window_replacement":
       return { type, glazing: params.windowGlazing };
     case "ventilation_upgrade":
@@ -222,6 +318,8 @@ export function measureInput(type: MeasureType, params: MeasureParams): MeasureI
     case "heating_replacement":
       return { type, new_generator: params.heatingTarget };
     case "dhw_upgrade":
+      return { type };
+    case "solar_protection_installation":
       return { type };
   }
 }
@@ -233,7 +331,14 @@ export const MEASURE_ORDER: MeasureType[] = [
   "heating_replacement",
   "dhw_upgrade",
   "ventilation_upgrade",
+  "solar_protection_installation",
 ];
+
+/** Gestes explorés par la recherche d'étiquette cible (le geste « été pur »
+ * ne peut pas améliorer l'étiquette — il doublerait juste l'espace 2^n). */
+export const LABEL_TARGET_MEASURES: MeasureType[] = MEASURE_ORDER.filter(
+  (t) => t !== "solar_protection_installation",
+);
 
 /**
  * One scenario per active measure, plus a combined "bouquet" scenario when at
@@ -263,6 +368,7 @@ export function simulationPayload(
   active: ReadonlySet<MeasureType>,
   params: MeasureParams,
   vintage: RegulationVintage,
+  includeLabelTargets = false,
 ): SimulationPayload {
   return {
     schema_version: SCHEMA_VERSION,
@@ -270,5 +376,14 @@ export function simulationPayload(
     building: buildingInput(form),
     occupancy: occupancyInput(occupancy, form),
     scenarios: scenariosInput(active, params),
+    // Label-target search over the six energy measures with the current card
+    // params (63 combinations engine-side) — only on the scenarios screen.
+    ...(includeLabelTargets
+      ? {
+          label_targets: {
+            measures: LABEL_TARGET_MEASURES.map((t) => measureInput(t, params)),
+          },
+        }
+      : {}),
   };
 }

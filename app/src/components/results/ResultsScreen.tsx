@@ -1,3 +1,4 @@
+import { Suspense, lazy } from "react";
 import { motion } from "motion/react";
 import {
   AlertTriangle,
@@ -12,7 +13,7 @@ import {
   Zap,
 } from "lucide-react";
 import { climateZoneFromPostalCode } from "../../data/climateZones";
-import { HELP_TEXTS, USE_LABELS } from "../../i18n/fr";
+import { DWELLING_LABELS, HELP_TEXTS, USE_LABELS } from "../../i18n/fr";
 import { useEngine } from "../../pyodide/PyodideContext";
 import { useAppState } from "../../state/AppState";
 import { HEATING_SYSTEMS } from "../../state/model";
@@ -20,9 +21,16 @@ import type { SimulationResult } from "../../types/schema";
 import { formatInt } from "../../utils/format";
 import { Button } from "../ui/Button";
 import { InfoTip } from "../ui/InfoTip";
+import { PageActions } from "../ui/PageActions";
 import { Segmented, NumberInput } from "../form/fields";
 import { DpeBadge, DpeScale } from "./DpeScale";
-import { LossesChart } from "./LossesChart";
+import { HouseLossMap } from "./HouseLossMap";
+import { PrintHypotheses } from "./PrintHypotheses";
+import { ProjectsPanel } from "./ProjectsPanel";
+import { SummerComfortCard } from "./SummerComfortCard";
+
+// Recharts lives in its own lazy chunk: it is only fetched when a chart is shown.
+const LossesChart = lazy(() => import("./LossesChart"));
 
 function StatTile({
   icon,
@@ -111,25 +119,37 @@ export function ResultsScreen() {
               Votre situation actuelle
             </h1>
             <p className="mt-1.5 text-sm text-ink-soft">
-              Maison de {formatInt(form.livingArea)} m² — zone {zone} —{" "}
+              {DWELLING_LABELS[form.dwellingType]} de {formatInt(form.livingArea)} m² — zone{" "}
+              {zone} —{" "}
               <button
                 type="button"
                 onClick={() => setView("form")}
-                className="inline-flex cursor-pointer items-center gap-1 font-medium text-pine hover:underline"
+                className="inline-flex cursor-pointer items-center gap-1 font-medium text-pine hover:underline print:hidden"
               >
                 <Pencil size={13} aria-hidden />
                 modifier la description
               </button>
             </p>
           </div>
-          <Button size="lg" variant="accent" onClick={() => setView("scenarios")}>
-            Explorer les scénarios
-            <ArrowRight size={18} aria-hidden />
-          </Button>
+          <div className="flex items-center gap-2 print:hidden">
+            <PageActions />
+            <Button size="lg" variant="accent" onClick={() => setView("scenarios")}>
+              Explorer les scénarios
+              <ArrowRight size={18} aria-hidden />
+            </Button>
+          </div>
         </div>
 
+        {/* Print-only context line: mode and disclaimer travel with the paper copy. */}
+        <p className="mt-2 hidden text-xs leading-relaxed text-ink-soft print:block">
+          Simulation RénoSim du {new Date().toLocaleDateString("fr-FR")} — mode{" "}
+          {isPerso ? "personnalisé (l'étiquette reste conventionnelle)" : "conventionnel (DPE)"},
+          convention {vintage === "dpe_2026" ? "DPE 2026" : "DPE 2021"}. Outil pédagogique — ne
+          remplace ni un DPE officiel ni un audit énergétique.
+        </p>
+
         {/* Mode toggle */}
-        <div className="mt-8 rounded-3xl border border-line bg-surface p-5 shadow-card">
+        <div className="mt-8 rounded-3xl border border-line bg-surface p-5 shadow-card print:hidden">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-2">
               <Segmented
@@ -306,7 +326,9 @@ export function ResultsScreen() {
             <div className="rounded-2xl border border-line bg-surface p-5 shadow-card">
               <h3 className="text-sm font-semibold">Répartition par usage</h3>
               <ul className="mt-3 space-y-2.5">
-                {Object.entries(shown.final_energy_kwh_by_use).map(([use, kwh]) => {
+                {Object.entries(shown.final_energy_kwh_by_use)
+                  .filter(([, kwh]) => kwh > 0)
+                  .map(([use, kwh]) => {
                   const total = Object.values(shown.final_energy_kwh_by_use).reduce(
                     (a, b) => a + b,
                     0,
@@ -336,6 +358,11 @@ export function ResultsScreen() {
           </section>
         </div>
 
+        {/* Passive summer comfort (#16): shown beside the winter label, never merged. */}
+        <SummerComfortCard summer={output.summer_comfort} />
+
+        {conventional.label && <PassoireAlert label={conventional.label} />}
+
         {/* Losses */}
         <section
           aria-label="Par où part la chaleur"
@@ -349,10 +376,27 @@ export function ResultsScreen() {
             Déperditions totales : {formatInt(shown.envelope.total_w_per_k)} W/K. Les postes les
             plus hauts sont vos gisements d'économies prioritaires.
           </p>
-          <LossesChart envelope={shown.envelope} />
+          <div className="grid items-center gap-8 lg:grid-cols-2">
+            <HouseLossMap envelope={shown.envelope} />
+            <Suspense
+              fallback={
+                <div className="flex h-64 items-center justify-center text-sm text-ink-faint">
+                  Chargement du graphique…
+                </div>
+              }
+            >
+              <LossesChart envelope={shown.envelope} />
+            </Suspense>
+          </div>
         </section>
 
-        <div className="mt-8 flex items-center justify-between">
+        {/* Multi-project save & compare (#12) */}
+        <ProjectsPanel />
+
+        {/* Printed / PDF report: the inputs travel with the outputs (#11). */}
+        <PrintHypotheses form={form} />
+
+        <div className="mt-8 flex items-center justify-between print:hidden">
           <Button variant="ghost" onClick={() => setView("form")}>
             <ArrowLeft size={16} aria-hidden />
             Modifier ma description
@@ -364,6 +408,59 @@ export function ResultsScreen() {
         </div>
       </motion.div>
     </div>
+  );
+}
+
+/**
+ * Rental-ban calendar of the loi Climat & Résilience (art. L173-2 CCH). Purely
+ * informative; no financial-aid computation (out of scope). Only E/F/G are
+ * concerned. Sourced: service-public.fr / loi n°2021-1104.
+ */
+const RENTAL_BAN: Record<"E" | "F" | "G", { passoire: boolean; text: string }> = {
+  G: {
+    passoire: true,
+    text: "Depuis le 1er janvier 2025, les logements classés G ne peuvent plus être proposés à la location (nouvelles mises en location et renouvellements de bail).",
+  },
+  F: {
+    passoire: true,
+    text: "À partir du 1er janvier 2028, les logements classés F ne pourront plus être proposés à la location.",
+  },
+  E: {
+    passoire: false,
+    text: "À partir du 1er janvier 2034, les logements classés E ne pourront plus être proposés à la location.",
+  },
+};
+
+function PassoireAlert({ label }: { label: string }) {
+  const entry = RENTAL_BAN[label as "E" | "F" | "G"];
+  if (!entry) return null;
+  return (
+    <section
+      aria-label="Alerte réglementaire location"
+      className="mt-6 flex items-start gap-3 rounded-3xl border border-clay/30 bg-clay-soft px-5 py-4 sm:px-6"
+    >
+      <AlertTriangle size={20} className="mt-0.5 shrink-0 text-clay" aria-hidden />
+      <div className="text-sm leading-relaxed text-ink">
+        <p className="font-semibold">
+          {entry.passoire
+            ? `Logement classé ${label} : passoire énergétique`
+            : `Logement classé ${label} : bientôt concerné par l'interdiction de location`}
+        </p>
+        <p className="mt-1 text-ink-soft">
+          {entry.text} Ce calendrier de la loi Climat &amp; Résilience concerne la location ; il
+          ne s'applique pas aux logements occupés par leur propriétaire.{" "}
+          <a
+            href="https://france-renov.gouv.fr"
+            target="_blank"
+            rel="noreferrer"
+            className="font-medium text-pine hover:underline"
+          >
+            Conseils et parcours de rénovation sur France Rénov'
+          </a>
+          .
+        </p>
+      </div>
+    </section>
   );
 }
 

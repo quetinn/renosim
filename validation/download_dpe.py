@@ -1,16 +1,19 @@
-"""Download a stratified sample of the ADEME DPE database (single-family houses).
+"""Download a stratified sample of the ADEME DPE database (houses or apartments).
 
 Dataset: « DPE Logements existants (depuis juillet 2021) », data.ademe.fr,
-data-fair API ``datasets/dpe03existant`` (verified 2026-07-04; ~15.1 M rows,
-Licence Ouverte v2.0). Raw data is NEVER committed (CLAUDE.md rule 6): output
-goes to ``data/dpe_sample.jsonl`` which is gitignored.
+data-fair API ``datasets/dpe03existant`` (verified 2026-07-04, columns
+re-verified against the live schema on 2026-07-11; ~15.1 M rows, Licence
+Ouverte v2.0). Raw data is NEVER committed (CLAUDE.md rule 6): output goes to
+``data/*.jsonl`` which is gitignored.
 
 Sampling: stratified by construction period x climate zone x main heating
 energy, taking up to ``--per-stratum`` rows per stratum in dataset order.
 This is deterministic but not random within a stratum — acceptable for a
 validation of physical consistency, documented as a limitation in the report.
 
-Usage: python validation/download_dpe.py [--per-stratum 30] [--out data/dpe_sample.jsonl]
+Usage:
+    python validation/download_dpe.py [--per-stratum 30] [--out data/dpe_sample.jsonl]
+    python validation/download_dpe.py --building-type appartement --out data/dpe_apartments.jsonl
 """
 
 from __future__ import annotations
@@ -56,6 +59,34 @@ SELECT_COLUMNS = [
     "besoin_chauffage",
     "besoin_ecs",
     "ubat_w_par_m2_k",
+    # v2 columns (2026-07-11): building inertia (engine input since #10), the
+    # apartment position fields (#15) and the summer-comfort indicators (#16
+    # proposal — downloaded now so a future campaign needs no re-download).
+    "classe_inertie_batiment",
+    # Detailed loss breakdown (apartment calibration, campaign v3):
+    "deperditions_murs",
+    "deperditions_planchers_hauts",
+    "deperditions_planchers_bas",
+    "deperditions_baies_vitrees",
+    "deperditions_portes",
+    "deperditions_ponts_thermiques",
+    "deperditions_renouvellement_air",
+    "type_installation_chauffage",
+    "type_installation_ecs",
+    "type_emetteur_installation_chauffage_n1",
+    "position_logement_dans_immeuble",
+    "numero_etage_appartement",
+    "nombre_niveau_immeuble",
+    "nombre_appartement",
+    "surface_habitable_immeuble",
+    "logement_traversant",
+    "ventilation_posterieure_2012",
+    "indicateur_confort_ete",
+    "protection_solaire_exterieure",
+    "presence_brasseur_air",
+    "besoin_refroidissement",
+    "conso_refroidissement_ep",
+    "type_generateur_froid",
 ]
 
 PERIODS = [
@@ -80,10 +111,12 @@ ENERGIES = [
 ]
 
 
-def fetch_stratum(period: str, zone: str, energy: str, size: int) -> list[dict[str, object]]:
-    """Fetch up to ``size`` house rows for one stratum."""
+def fetch_stratum(
+    period: str, zone: str, energy: str, size: int, building_type: str = "maison"
+) -> list[dict[str, object]]:
+    """Fetch up to ``size`` rows of one building type for one stratum."""
     qs = (
-        f'type_batiment:maison AND periode_construction:"{period}" '
+        f'type_batiment:{building_type} AND periode_construction:"{period}" '
         f'AND zone_climatique:"{zone}" '
         f'AND type_energie_principale_chauffage:"{energy}"'
     )
@@ -102,6 +135,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--per-stratum", type=int, default=30)
     parser.add_argument("--out", type=Path, default=Path("data/dpe_sample.jsonl"))
+    parser.add_argument("--building-type", choices=["maison", "appartement"], default="maison")
     args = parser.parse_args()
 
     args.out.parent.mkdir(parents=True, exist_ok=True)
@@ -112,7 +146,9 @@ def main() -> None:
             for zone in ZONES:
                 for energy in ENERGIES:
                     try:
-                        rows = fetch_stratum(period, zone, energy, args.per_stratum)
+                        rows = fetch_stratum(
+                            period, zone, energy, args.per_stratum, args.building_type
+                        )
                     except Exception as exc:
                         print(f"WARN {period}/{zone}/{energy}: {exc}")
                         time.sleep(2)

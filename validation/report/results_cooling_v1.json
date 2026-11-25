@@ -1,0 +1,86 @@
+{
+ "scope": "rows with a declared cooling generator (type_generateur_froid)",
+ "skipped": 50,
+ "cooling_need_kwh": {
+  "n": 2383,
+  "bias_kwh": -229.1,
+  "mae_kwh": 604.6,
+  "mape_pct": 30.6,
+  "pred_mean_kwh": 1546.7,
+  "obs_mean_kwh": 1775.8
+ },
+ "cooling_need_by_zone": {
+  "H1a": {
+   "n": 141,
+   "bias_kwh": -171.1,
+   "mae_kwh": 212.2,
+   "mape_pct": 33.9,
+   "pred_mean_kwh": 332.9,
+   "obs_mean_kwh": 504.0
+  },
+  "H1b": {
+   "n": 197,
+   "bias_kwh": -318.9,
+   "mae_kwh": 391.3,
+   "mape_pct": 29.7,
+   "pred_mean_kwh": 633.4,
+   "obs_mean_kwh": 952.3
+  },
+  "H1c": {
+   "n": 246,
+   "bias_kwh": -353.1,
+   "mae_kwh": 487.8,
+   "mape_pct": 30.8,
+   "pred_mean_kwh": 779.5,
+   "obs_mean_kwh": 1132.6
+  },
+  "H2a": {
+   "n": 36,
+   "bias_kwh": -146.9,
+   "mae_kwh": 164.6,
+   "mape_pct": 26.7,
+   "pred_mean_kwh": 345.4,
+   "obs_mean_kwh": 492.2
+  },
+  "H2b": {
+   "n": 129,
+   "bias_kwh": -339.0,
+   "mae_kwh": 412.2,
+   "mape_pct": 25.1,
+   "pred_mean_kwh": 493.9,
+   "obs_mean_kwh": 832.9
+  },
+  "H2c": {
+   "n": 407,
+   "bias_kwh": -690.6,
+   "mae_kwh": 824.9,
+   "mape_pct": 28.1,
+   "pred_mean_kwh": 895.7,
+   "obs_mean_kwh": 1586.3
+  },
+  "H2d": {
+   "n": 477,
+   "bias_kwh": 14.9,
+   "mae_kwh": 634.7,
+   "mape_pct": 31.5,
+   "pred_mean_kwh": 2416.1,
+   "obs_mean_kwh": 2401.2
+  },
+  "H3": {
+   "n": 750,
+   "bias_kwh": -65.7,
+   "mae_kwh": 688.3,
+   "mape_pct": 31.9,
+   "pred_mean_kwh": 2305.5,
+   "obs_mean_kwh": 2371.2
+  }
+ },
+ "cooling_consumption_ep_kwh": {
+  "n": 2383,
+  "bias_kwh": 111.6,
+  "mae_kwh": 273.4,
+  "mape_pct": 153.8,
+  "pred_mean_kwh": 509.0,
+  "obs_mean_kwh": 397.4
+ }
+}

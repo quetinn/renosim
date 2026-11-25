@@ -57,6 +57,45 @@ def test_dpe_label_altitude_variant() -> None:
     assert dpe_label(380, 20, ClimateZone.H2A, AltitudeClass.HIGH) == "F"
 
 
+class TestSmallSurfaceThresholds:
+    """Surface-dependent thresholds for dwellings <= 40 m2 (arrêté 25/03/2024).
+
+    Bounds read from the official annexe 5 tables §1.2.2 (rendered image,
+    verbatim). All hand-computed from those tables.
+    """
+
+    def test_20m2_relaxes_the_class(self) -> None:
+        # 20 m2 standard-altitude bounds: CEP A88 B128 C230 D300 E385 F476;
+        # CO2 A8 B13 C34 D54 E74 F104. CEP=200 -> energy C (200<230); CO2=20 -> C.
+        assert dpe_label(200, 20, ClimateZone.H1A, AltitudeClass.LOW, living_area_m2=20) == "C"
+        # Same consumption evaluated as a large dwelling -> D (180<=200<250).
+        assert dpe_label(200, 20, ClimateZone.H1A, AltitudeClass.LOW, living_area_m2=100) == "D"
+
+    def test_below_8m2_clamps_to_the_first_row(self) -> None:
+        # <= 8 m2 row: CEP_a=146, CEP_b=186, CO2_a=11.
+        assert dpe_label(140, 5, ClimateZone.H1A, AltitudeClass.LOW, living_area_m2=6) == "A"
+        assert dpe_label(150, 5, ClimateZone.H1A, AltitudeClass.LOW, living_area_m2=6) == "B"
+
+    def test_exactly_40m2_uses_small_table_with_eges_d_55(self) -> None:
+        # At 40 m2 the <=40 table gives EGES_d=55 (not the 50 of the >40 table).
+        # CO2=52 -> climate D (52<55); CEP=60 low -> energy A/B; label D.
+        assert dpe_label(60, 52, ClimateZone.H1A, AltitudeClass.LOW, living_area_m2=40) == "D"
+        # Strictly above 40 m2 -> large table, EGES_d=50 -> 52>=50 -> climate E.
+        assert dpe_label(60, 52, ClimateZone.H1A, AltitudeClass.LOW, living_area_m2=41) == "E"
+
+    def test_linear_interpolation_between_rows(self) -> None:
+        # CEP_c: row22=221, row23=217 -> 22.5 m2 = 219. CEP=218<219 -> energy C.
+        assert dpe_label(218, 5, ClimateZone.H1A, AltitudeClass.LOW, living_area_m2=22.5) == "C"
+        # At 24 m2 CEP_c=214 -> 218>=214 -> energy D.
+        assert dpe_label(218, 5, ClimateZone.H1A, AltitudeClass.LOW, living_area_m2=24) == "D"
+
+    def test_high_altitude_small_surface_relaxes_e_and_f(self) -> None:
+        # 20 m2, H1c >800 m: CEP_e high-altitude bound = 445 (vs 385 standard).
+        # CEP=440 -> E in high-altitude cold zone, F otherwise.
+        assert dpe_label(440, 5, ClimateZone.H1C, AltitudeClass.HIGH, living_area_m2=20) == "E"
+        assert dpe_label(440, 5, ClimateZone.H1C, AltitudeClass.LOW, living_area_m2=20) == "F"
+
+
 def test_energy_cost_flat_and_brackets() -> None:
     # fuel oil flat rate: 10 000 kWh * 0.09142 = 914.2 EUR
     assert annual_energy_cost_eur({EnergyCarrier.FUEL_OIL: 10000.0}) == pytest.approx(914.2)

@@ -22,6 +22,7 @@ from renosim.models import (
     HeatingGeneratorType,
     HeatingSystem,
     OpaqueEnvelopeElement,
+    SolarProtectionLevel,
     VentilationSystem,
     VentilationType,
     Window,
@@ -58,6 +59,32 @@ class RenovationMeasure(Protocol):
     def apply(self, building: Building) -> Building:
         """Return a new Building with the measure applied."""
         ...
+
+
+def added_r_from_insulation(material: str, thickness_cm: float) -> float:
+    """Added thermal resistance of an insulation layer: R = thickness / lambda.
+
+    Parameters
+    ----------
+    material
+        Key into ``tables/insulation_materials.json`` (e.g. ``"glass_wool"``);
+        ``"unknown"`` applies the 3CL conventional lambda of 0.04 W/(m.K).
+    thickness_cm
+        Insulation thickness in centimetres (> 0).
+
+    Returns
+    -------
+    float
+        Added thermal resistance in m2.K/W.
+    """
+    materials = load_table("insulation_materials")["materials"]
+    if material not in materials:
+        known = ", ".join(sorted(materials))
+        raise ValueError(f"unknown insulation material {material!r} (expected one of: {known})")
+    if thickness_cm <= 0:
+        raise ValueError(f"thickness_cm must be positive, got {thickness_cm}")
+    lambda_w_per_mk = float(materials[material]["lambda_w_per_mk"])
+    return (thickness_cm / 100.0) / lambda_w_per_mk
 
 
 def _insulate(element: OpaqueEnvelopeElement, added_r: float) -> OpaqueEnvelopeElement:
@@ -100,7 +127,13 @@ class RoofInsulation:
     cost_key: str = "roof_insulation"
 
     def apply(self, building: Building) -> Building:
-        return replace(building, roof=_insulate(building.roof, self.added_r_m2k_per_w))
+        # An insulated roof also flips the summer-comfort roof criterion
+        # (annexe 9): dual winter/summer effect of the measure (#16).
+        return replace(
+            building,
+            roof=_insulate(building.roof, self.added_r_m2k_per_w),
+            roof_insulated=True,
+        )
 
 
 @dataclass(frozen=True, slots=True)
@@ -206,6 +239,22 @@ class HeatingReplacement:
 
 
 @dataclass(frozen=True, slots=True)
+class SolarProtectionInstallation:
+    """Install exterior solar protections (volets/BSO) on every bay (#16 brique 3).
+
+    A pure summer measure: it lifts the annexe 9 "insufficient" condition of
+    the passive summer-comfort indicator. No effect on V1 consumptions —
+    mobile protections are outside the 3CL cooling-need calculation (D-19).
+    """
+
+    order: int = 0
+    cost_key: str = "solar_protection_installation"
+
+    def apply(self, building: Building) -> Building:
+        return replace(building, exterior_solar_protections=SolarProtectionLevel.FULL)
+
+
+@dataclass(frozen=True, slots=True)
 class DHWUpgrade:
     """Switch DHW to a heat-pump water heater (chauffe-eau thermodynamique)."""
 
@@ -222,7 +271,8 @@ class DHWUpgrade:
         )
 
 
-#: Factories producing one default-parameter instance of each of the 6 measures,
+#: Factories producing one default-parameter instance of each measure (the six
+#: V1 energy measures plus the summer-only solar protections, #16 brique 3),
 #: used by invariant tests and by the app's measure cards.
 ALL_MEASURE_FACTORIES: tuple[Callable[[], RenovationMeasure], ...] = (
     WallInsulation,
@@ -231,6 +281,7 @@ ALL_MEASURE_FACTORIES: tuple[Callable[[], RenovationMeasure], ...] = (
     VentilationUpgrade,
     HeatingReplacement,
     DHWUpgrade,
+    SolarProtectionInstallation,
 )
 
 

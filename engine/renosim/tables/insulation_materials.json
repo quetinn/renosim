@@ -1,0 +1,51 @@
+{
+  "_meta": {
+    "description": "Design thermal conductivity (lambda, W/(m.K)) per insulation material, used to convert a user-entered insulation thickness into an added thermal resistance R = thickness_m / lambda. Single source of truth shared by the engine (bridge) and the app's material dropdown.",
+    "source": "Règles Th-Bât (bâtiments existants), fascicule 2 « Matériaux », valeurs par défaut §2.6 — https://rt-re-batiment.developpement-durable.gouv.fr/IMG/pdf/2-fascicule_materiaux.pdf ; convention 3CL-DPE 2021 pour isolant inconnu : U = 1/(1/U0 + e/0,04), soit lambda = 0,04 W/(m.K) (annexe 1 de l'arrêté du 31 mars 2021 modifié, §3.2.b).",
+    "date_accessed": "2026-07-06",
+    "notes": "Regulatory default values, deliberately conservative — ACERMI-certified products are often better (e.g. glass wool down to 0.032 W/(m.K)); users knowing the exact product R can derive the thickness accordingly. Bio-based materials (cellulose, wood fibre) are deferred by Th-Bât to annexe IX RT2012: the 3CL default 0.040 is retained for them, consistent with certified products (0.038-0.044). The retained bracket per material is documented in 'basis'.",
+    "units": { "lambda_w_per_mk": "W/(m.K)" }
+  },
+  "materials": {
+    "glass_wool": {
+      "label": "Laine de verre",
+      "lambda_w_per_mk": 0.040,
+      "basis": "Th-Bât §2.6.2.2 : 0,039-0,041 W/(m.K) pour 20-40 kg/m3 (rouleaux et panneaux courants)"
+    },
+    "rock_wool": {
+      "label": "Laine de roche",
+      "lambda_w_per_mk": 0.042,
+      "basis": "Th-Bât §2.6.2.1 : 0,042 W/(m.K) pour 40-100 kg/m3"
+    },
+    "cellulose": {
+      "label": "Ouate de cellulose",
+      "lambda_w_per_mk": 0.040,
+      "basis": "Th-Bât renvoie à l'annexe IX RT2012 ; défaut 3CL 0,04 retenu (cohérent avec les produits certifiés 0,038-0,044)"
+    },
+    "wood_fiber": {
+      "label": "Fibre de bois",
+      "lambda_w_per_mk": 0.040,
+      "basis": "Th-Bât renvoie à l'annexe IX RT2012 ; défaut 3CL 0,04 retenu"
+    },
+    "eps": {
+      "label": "Polystyrène expansé (PSE)",
+      "lambda_w_per_mk": 0.042,
+      "basis": "Th-Bât §2.6.4.1 : 0,042 W/(m.K) pour 19-24 kg/m3 (plaques moulées)"
+    },
+    "xps": {
+      "label": "Polystyrène extrudé (XPS)",
+      "lambda_w_per_mk": 0.041,
+      "basis": "Th-Bât §2.6.4.2.1 : plaques sans gaz occlus autres que l'air/CO2, épaisseur <= 60 mm"
+    },
+    "polyurethane": {
+      "label": "Polyuréthane (PUR/PIR)",
+      "lambda_w_per_mk": 0.030,
+      "basis": "Th-Bât §2.6.4.5.1 : plaques moulées en continu à parements étanches aux gaz"
+    },
+    "unknown": {
+      "label": "Isolant inconnu / autre",
+      "lambda_w_per_mk": 0.040,
+      "basis": "Convention 3CL-DPE 2021 : lambda = 0,04 W/(m.K) quand l'isolant n'est pas identifié"
+    }
+  }
+}

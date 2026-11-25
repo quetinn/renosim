@@ -28,6 +28,7 @@ from renosim.renovation import (
     HeatingReplacement,
     RenovationMeasure,
     RoofInsulation,
+    SolarProtectionInstallation,
     VentilationUpgrade,
     WallInsulation,
     WindowReplacement,
@@ -35,8 +36,13 @@ from renosim.renovation import (
     predefined_bundles,
 )
 from renosim.simulation import SimulationResult, simulate
+from renosim.summer_comfort import (
+    SummerComfortAssessment,
+    SummerComfortLevel,
+    assess_summer_comfort,
+)
 
-__version__ = "0.4.0"
+__version__ = "0.5.0"
 
 #: Version of the JSON input/output schema exchanged with the front end.
 #: Bumped on any breaking change to the interface (CLAUDE.md §3.2).
@@ -63,6 +69,9 @@ __all__ = [
     "RoofInsulation",
     "ScenarioAssessment",
     "SimulationResult",
+    "SolarProtectionInstallation",
+    "SummerComfortAssessment",
+    "SummerComfortLevel",
     "VentilationSystem",
     "VentilationType",
     "VentilationUpgrade",
@@ -72,6 +81,7 @@ __all__ = [
     "__version__",
     "apply_measures",
     "assess_scenario",
+    "assess_summer_comfort",
     "engine_info",
     "measure_cost_range",
     "predefined_bundles",

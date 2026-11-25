@@ -46,6 +46,13 @@
       "before_1948_windows_with_seals": 2.5
     }
   },
+  "q4pa_conv_apartment_by_period": {
+    "note": "Colonne « Appartement/Immeuble » du tableau Q4Paconv/m² §4 (p.39).",
+    "before_1948": 4.6,
+    "1948_1974": 2.0,
+    "1975_2012": 1.5,
+    "after_2012": 1.0
+  },
   "shelter_coefficients": {
     "several_exposed_facades": { "e": 0.07, "f": 15 },
     "single_exposed_facade": { "e": 0.02, "f": 20 }
@@ -55,5 +62,11 @@
     "exhaust_only_hygro": { "until_2012": 50, "after_2012": 15 },
     "balanced_heat_recovery": { "until_2012": 80, "after_2012": 35 },
     "formula": "Caux_vent [kWh/an] = 8760 * Pvent_moy / 1000"
+  },
+  "auxiliary_power_collective_w_per_m3h": {
+    "note": "Immeuble collectif §5 (p.41) : Pvent_moy = Pvent * Qvarep_conv * Sh ; simple flux auto et hygro partagent la même ligne.",
+    "exhaust_only": { "until_2012": 0.46, "after_2012": 0.25 },
+    "balanced_heat_recovery": { "until_2012": 1.1, "after_2012": 0.6 },
+    "formula": "Caux_vent [kWh/an] = 8760 * Pvent * Qvarep_conv * Sh / 1000"
   }
 }

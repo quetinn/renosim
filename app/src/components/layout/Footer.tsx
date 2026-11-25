@@ -4,7 +4,7 @@ const REPO_URL = "https://github.com/quetinn/renosim";
 
 export function Footer() {
   return (
-    <footer className="mt-auto border-t border-line bg-cream/60">
+    <footer className="mt-auto border-t border-line bg-cream/60 print:hidden">
       <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
         <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
           <div className="max-w-md space-y-2">

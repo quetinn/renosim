@@ -136,7 +136,7 @@ def house_gas_1990_h2() -> Building:
 
 
 def small_house_electric() -> Building:
-    """Edge case: 35 m2 house, electric heating (thresholds <40 m2 not modelled)."""
+    """Edge case: 35 m2 house, electric heating (surface-dependent DPE thresholds)."""
     u = default_u_values(
         ConstructionPeriod.Y1975_1977, ClimateZone.H1B, insulated=True, electric_joule=True
     )
@@ -189,12 +189,24 @@ def test_case_gas_1990_house_is_c_to_e() -> None:
     assert result.label in ("C", "D", "E"), (result.label, result.primary_energy_kwh_m2)
 
 
-def test_case_small_house_runs_and_uses_standard_thresholds() -> None:
-    # <40 m2 surface-dependent thresholds (arrêté 25/03/2024) are NOT modelled;
-    # documented deviation — the engine must still produce a coherent result.
+def test_case_small_house_uses_surface_dependent_thresholds() -> None:
+    # <=40 m2 surface-dependent thresholds (arrêté 25/03/2024) ARE applied.
+    # The 35 m2 house gets relaxed bounds vs. the same CEP/CO2 as a large home.
+    from renosim.outputs import dpe_label
+
     result = simulate(small_house_electric())
     assert result.label in ("A", "B", "C", "D", "E", "F", "G")
     assert result.final_energy_kwh_m2 > 0
+    # The engine's small-surface label must match the surface-aware threshold
+    # applied to its own CEP/CO2, and be no worse than the large-surface label.
+    large = dpe_label(
+        result.primary_energy_kwh_m2,
+        result.co2_kg_m2,
+        small_house_electric().climate_zone,
+        small_house_electric().altitude_class,
+        living_area_m2=100.0,
+    )
+    assert result.label <= large  # relaxed thresholds never worsen the class
 
 
 # ---------------------------------------------------------------------- invariants

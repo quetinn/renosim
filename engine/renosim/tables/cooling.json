@@ -1,0 +1,23 @@
+{
+  "_meta": {
+    "table": "cooling",
+    "description": "Conventional cooling (refroidissement) parameters of the 3CL-DPE 2021 method: cooling setpoint, seasonal efficiency (SEER/EER) of the cooling generator per climate-zone group and installation period, cooling intermittence coefficient, and the effective internal heat capacity Cin per inertia class used by the summer utilization factor.",
+    "source": "Annexe 1 (méthode de calcul 3CL-DPE 2021) de l'arrêté du 31 mars 2021 modifié, §10 'Calcul de la consommation de froid (Cfr)' (pages 67-70), version consolidée publiée sur rt-re-batiment.developpement-durable.gouv.fr (consolide_annexe_1_arrete_du_31_03_2021_relatif_aux_methodes_et_procedures_applicables.pdf), transcription verbatim.",
+    "date_accessed": "2026-07-11",
+    "notes": "Cfr = intermittence x Bfr / EER with EER = eer_from_seer_factor x SEER (§10.3). The 'before_2008' column is published as an EER directly (footnote '*EER'): eer_direct = true skips the 0.95 factor. Unknown installation period maps to 'from_2015' (documented app convention, deviation D-20: the French residential AC stock is overwhelmingly recent). V1 assumes the whole dwelling is cooled (official rule prorates Cfr by the cooled floor-area share when partial - D-20). Cin drives the cooling time constant t = Cin / (3600 x GV), a = 1 + t/15 (§10.2)."
+  },
+  "cooling_setpoint_conventional_c": 28.0,
+  "intermittence": 0.9,
+  "eer_from_seer_factor": 0.95,
+  "seer": {
+    "H1_H2": { "before_2008": 3.6, "2008_2014": 6.5, "from_2015": 6.7 },
+    "H3": { "before_2008": 3.25, "2008_2014": 5.7, "from_2015": 7.5 },
+    "eer_direct_periods": ["before_2008"]
+  },
+  "internal_heat_capacity_j_per_k_m2": {
+    "light": 110000,
+    "medium": 165000,
+    "heavy": 260000,
+    "quote": "Légère 110 000*Sh ; Moyenne 165 000*Sh ; Lourde ou très lourde 260 000*Sh (§10.2)"
+  }
+}

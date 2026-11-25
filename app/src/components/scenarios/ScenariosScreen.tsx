@@ -10,25 +10,31 @@ import {
   Blinds,
   Home,
   Info,
+  Leaf,
   Lightbulb,
   Loader2,
+  PiggyBank,
+  Sun,
 } from "lucide-react";
-import type { ReactNode } from "react";
+import { Suspense, lazy, type ReactNode } from "react";
+import { INSULATION_MATERIAL_ORDER, addedRPreview } from "../../data/insulationMaterials";
 import {
-  CartesianGrid,
-  Cell,
-  LabelList,
-  ResponsiveContainer,
-  Scatter,
-  ScatterChart,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
-import { BUNDLE_LABELS, GLAZING_LABELS, MEASURE_LABELS, VENTILATION_LABELS } from "../../i18n/fr";
+  BUNDLE_LABELS,
+  GLAZING_LABELS,
+  INSULATION_MATERIAL_LABELS,
+  MEASURE_LABELS,
+  SUMMER_COMFORT_LEVEL_LABELS,
+  VENTILATION_LABELS,
+} from "../../i18n/fr";
 import { useEngine } from "../../pyodide/PyodideContext";
 import { useAppState } from "../../state/AppState";
-import type { MeasureType, ScenarioOutput } from "../../types/schema";
+import type {
+  InsulationMaterial,
+  MeasurePreview,
+  MeasureType,
+  ScenarioOutput,
+  SummerComfortLevel,
+} from "../../types/schema";
 import {
   formatEuroRange,
   formatEuros,
@@ -38,7 +44,9 @@ import {
 } from "../../utils/format";
 import { Button } from "../ui/Button";
 import { InfoTip } from "../ui/InfoTip";
+import { PageActions } from "../ui/PageActions";
 import { DpeBadge } from "../results/DpeScale";
+import { LabelTargets } from "./LabelTargets";
 
 const MEASURE_ICONS: Record<MeasureType, ReactNode> = {
   roof_insulation: <Home size={20} aria-hidden />,
@@ -47,6 +55,7 @@ const MEASURE_ICONS: Record<MeasureType, ReactNode> = {
   heating_replacement: <Flame size={20} aria-hidden />,
   dhw_upgrade: <Droplets size={20} aria-hidden />,
   ventilation_upgrade: <Fan size={20} aria-hidden />,
+  solar_protection_installation: <Sun size={20} aria-hidden />,
 };
 
 const CARD_ORDER: MeasureType[] = [
@@ -56,6 +65,7 @@ const CARD_ORDER: MeasureType[] = [
   "heating_replacement",
   "dhw_upgrade",
   "ventilation_upgrade",
+  "solar_protection_installation",
 ];
 
 function scenarioTitle(id: string): string {
@@ -71,11 +81,46 @@ const SHORT_TITLES: Record<string, string> = {
   heating_replacement: "Chauffage",
   dhw_upgrade: "Eau chaude",
   ventilation_upgrade: "VMC",
+  solar_protection_installation: "Volets/BSO",
   bouquet: "Votre bouquet",
 };
 
+/** Ordre des niveaux de confort d'été pour comparer avant/après. */
+const SUMMER_LEVEL_ORDER: SummerComfortLevel[] = ["insufficient", "medium", "good"];
+
+const SUMMER_LEVEL_CLASS: Record<SummerComfortLevel, string> = {
+  insufficient: "text-clay",
+  medium: "text-amber-deep",
+  good: "text-pine",
+};
+
+/** Compact « Moyen → Bon » cell; a dash when the scenario changes nothing. */
+function SummerDelta({
+  before,
+  after,
+}: {
+  before: SummerComfortLevel;
+  after: SummerComfortLevel;
+}) {
+  if (before === after) {
+    return <span className="text-ink-faint">—</span>;
+  }
+  return (
+    <span className="inline-flex items-center gap-1 whitespace-nowrap">
+      <span className={SUMMER_LEVEL_CLASS[before]}>{SUMMER_COMFORT_LEVEL_LABELS[before]}</span>
+      <ArrowRight size={11} className="text-ink-faint" aria-hidden />
+      <span className={`font-semibold ${SUMMER_LEVEL_CLASS[after]}`}>
+        {SUMMER_COMFORT_LEVEL_LABELS[after]}
+      </span>
+    </span>
+  );
+}
+
 const selectClass =
   "mt-2 w-full cursor-pointer rounded-xl border border-line bg-surface px-3 py-2 text-xs font-medium text-ink outline-none focus:border-pine";
+
+// Recharts lives in its own lazy chunk: it is only fetched when a chart is shown.
+const CostGainChart = lazy(() => import("./CostGainChart"));
 
 export function ScenariosScreen() {
   const { status } = useEngine();
@@ -113,6 +158,14 @@ export function ScenariosScreen() {
     0,
   );
 
+  // "Par où commencer" — rank the single-measure previews (conventional):
+  // most profitable = lowest positive payback; biggest CO2 gain = highest ΔCO2.
+  const badges = pickMeasureBadges(output.measure_previews);
+  const summerBefore = output.summer_comfort.level;
+  const improvesSummer = (type: MeasureType) =>
+    SUMMER_LEVEL_ORDER.indexOf(output.measure_previews[type].summer_comfort_level_after) >
+    SUMMER_LEVEL_ORDER.indexOf(summerBefore);
+
   return (
     <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
       <motion.div
@@ -130,14 +183,21 @@ export function ScenariosScreen() {
               {formatInt(baseline.primary_energy_kwh_m2)} kWhep/m²·an.
             </p>
           </div>
-          <Button variant="ghost" onClick={() => setView("results")}>
-            <ArrowLeft size={16} aria-hidden />
-            Ma situation
-          </Button>
+          <div className="flex items-center gap-1 print:hidden">
+            <PageActions />
+            <Button variant="ghost" onClick={() => setView("results")}>
+              <ArrowLeft size={16} aria-hidden />
+              Ma situation
+            </Button>
+          </div>
         </div>
 
         {/* Predefined bundles */}
-        <div className="mt-7 flex flex-wrap gap-2.5" role="group" aria-label="Bouquets prédéfinis">
+        <div
+          className="mt-7 flex flex-wrap gap-2.5 print:hidden"
+          role="group"
+          aria-label="Bouquets prédéfinis"
+        >
           {Object.entries(output.bundles).map(([key, measures]) => {
             const label = BUNDLE_LABELS[key];
             if (!label) return null;
@@ -165,7 +225,7 @@ export function ScenariosScreen() {
         </div>
 
         {/* Measure cards */}
-        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 print:hidden">
           {CARD_ORDER.map((type, i) => {
             const active = activeMeasures.has(type);
             const cost = output.measure_costs[type];
@@ -190,7 +250,7 @@ export function ScenariosScreen() {
                 >
                   <span
                     className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl transition-colors ${
-                      active ? "bg-pine text-white" : "bg-pine-soft text-pine"
+                      active ? "bg-pine text-on-pine" : "bg-pine-soft text-pine"
                     }`}
                   >
                     {MEASURE_ICONS[type]}
@@ -201,7 +261,7 @@ export function ScenariosScreen() {
                       <span
                         aria-hidden
                         className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 transition-all ${
-                          active ? "border-pine bg-pine text-white" : "border-line-strong bg-surface"
+                          active ? "border-pine bg-pine text-on-pine" : "border-line-strong bg-surface"
                         }`}
                       >
                         {active && <Check size={13} />}
@@ -213,6 +273,30 @@ export function ScenariosScreen() {
                     <span className="mt-2 block text-xs font-semibold text-amber-deep tabular">
                       {formatEuroRange(cost.low_eur, cost.high_eur)}
                     </span>
+                    {(badges.mostProfitable === type ||
+                      badges.biggestCo2 === type ||
+                      improvesSummer(type)) && (
+                      <span className="mt-2 flex flex-wrap gap-1.5">
+                        {badges.mostProfitable === type && (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-pine-soft px-2 py-0.5 text-[11px] font-semibold text-pine-deep">
+                            <PiggyBank size={12} aria-hidden />
+                            Le plus rentable
+                          </span>
+                        )}
+                        {badges.biggestCo2 === type && (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-pine-soft px-2 py-0.5 text-[11px] font-semibold text-pine-deep">
+                            <Leaf size={12} aria-hidden />
+                            Plus gros gain CO₂
+                          </span>
+                        )}
+                        {improvesSummer(type) && (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-amber-soft px-2 py-0.5 text-[11px] font-semibold text-amber-deep">
+                            <Sun size={12} aria-hidden />
+                            Confort d'été
+                          </span>
+                        )}
+                      </span>
+                    )}
                   </span>
                 </button>
 
@@ -277,32 +361,28 @@ export function ScenariosScreen() {
                       </label>
                     )}
                     {(type === "roof_insulation" || type === "wall_insulation") && (
-                      <label className="block text-xs font-medium text-ink-soft">
-                        Résistance ajoutée (m²·K/W)
-                        <select
-                          className={selectClass}
-                          value={type === "roof_insulation" ? params.roofAddedR : params.wallAddedR}
-                          onChange={(e) =>
-                            updateParams(
-                              type === "roof_insulation"
-                                ? { roofAddedR: Number(e.target.value) }
-                                : { wallAddedR: Number(e.target.value) },
-                            )
-                          }
-                        >
-                          {(type === "roof_insulation" ? [6, 7, 8, 10] : [3, 3.7, 4.5, 6]).map(
-                            (r) => (
-                              <option key={r} value={r}>
-                                R = {r.toLocaleString("fr-FR")}
-                                {r ===
-                                (type === "roof_insulation" ? 7 : 3.7)
-                                  ? " (recommandé)"
-                                  : ""}
-                              </option>
-                            ),
-                          )}
-                        </select>
-                      </label>
+                      <InsulationParams
+                        material={
+                          type === "roof_insulation" ? params.roofMaterial : params.wallMaterial
+                        }
+                        thicknessCm={
+                          type === "roof_insulation"
+                            ? params.roofThicknessCm
+                            : params.wallThicknessCm
+                        }
+                        onMaterial={(m) =>
+                          updateParams(
+                            type === "roof_insulation" ? { roofMaterial: m } : { wallMaterial: m },
+                          )
+                        }
+                        onThickness={(t) =>
+                          updateParams(
+                            type === "roof_insulation"
+                              ? { roofThicknessCm: t }
+                              : { wallThicknessCm: t },
+                          )
+                        }
+                      />
                     )}
                     {type === "dhw_upgrade" && (
                       <p className="text-xs text-ink-faint">
@@ -316,8 +396,17 @@ export function ScenariosScreen() {
           })}
         </div>
 
+        {/* "Que faut-il pour atteindre C ?" — cheapest bundle per target class */}
+        {baseline.label && (
+          <LabelTargets
+            baselineLabel={baseline.label}
+            targets={output.label_targets}
+            onApply={applyBundle}
+          />
+        )}
+
         {scenarios.length === 0 ? (
-          <div className="mt-10 rounded-3xl border border-dashed border-line-strong bg-surface p-10 text-center">
+          <div className="mt-10 rounded-3xl border border-dashed border-line-strong bg-surface p-10 text-center print:hidden">
             <Lightbulb size={28} className="mx-auto text-amber" aria-hidden />
             <p className="mt-3 font-medium">Activez au moins un geste pour voir son impact.</p>
             <p className="mt-1 text-sm text-ink-soft">
@@ -364,6 +453,10 @@ export function ScenariosScreen() {
                         Retour
                         <span className="block font-normal">simple</span>
                       </th>
+                      <th scope="col" className="px-4 py-3.5 text-right font-semibold">
+                        Confort d'été
+                        <span className="block font-normal">passif</span>
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
@@ -381,7 +474,7 @@ export function ScenariosScreen() {
                           <th scope="row" className="px-5 py-3.5 text-left font-medium">
                             {scenarioTitle(s.id)}
                             {isBouquet && (
-                              <span className="ml-2 rounded-full bg-pine px-2 py-0.5 text-[10px] font-bold text-white uppercase">
+                              <span className="ml-2 rounded-full bg-pine px-2 py-0.5 text-[10px] font-bold text-on-pine uppercase">
                                 {s.measures.length} gestes
                               </span>
                             )}
@@ -414,6 +507,12 @@ export function ScenariosScreen() {
                               ? "> 30 ans"
                               : `${formatPayback(a.payback_years_low)} – ${formatPayback(a.payback_years_high)}`}
                           </td>
+                          <td className="px-4 py-3.5 text-right text-xs">
+                            <SummerDelta
+                              before={summerBefore}
+                              after={s.summer_comfort_after.level}
+                            />
+                          </td>
                         </tr>
                       );
                     })}
@@ -445,69 +544,26 @@ export function ScenariosScreen() {
                 <h2 className="font-display text-xl font-semibold">Coût vs gain</h2>
                 <InfoTip text="Chaque point est un scénario : plus il est haut à gauche, plus il rapporte par euro investi (investissement = milieu de la fourchette)." />
               </div>
-              <ResponsiveContainer width="100%" height={320}>
-                <ScatterChart margin={{ top: 28, right: 36, bottom: 12, left: 8 }}>
-                  <CartesianGrid stroke="var(--color-line)" strokeDasharray="4 6" />
-                  <XAxis
-                    type="number"
-                    dataKey="investment"
-                    name="Investissement"
-                    tickFormatter={(v) => `${formatInt((v as number) / 1000)} k€`}
-                    label={{
-                      value: "Investissement (milieu de fourchette)",
-                      position: "insideBottom",
-                      offset: -6,
-                      style: { fill: "var(--color-ink-faint)", fontSize: 12 },
-                    }}
-                  />
-                  <YAxis
-                    type="number"
-                    dataKey="savings"
-                    name="Économies"
-                    tickFormatter={(v) => `${formatInt(v as number)} €`}
-                    label={{
-                      value: "Économies (€/an)",
-                      angle: -90,
-                      position: "insideLeft",
-                      style: { fill: "var(--color-ink-faint)", fontSize: 12 },
-                    }}
-                  />
-                  <Tooltip
-                    cursor={{ strokeDasharray: "4 4" }}
-                    formatter={(value, name) => [
-                      name === "Investissement"
-                        ? formatEuros(value as number)
-                        : `${formatEuros(value as number)}/an`,
-                      name,
-                    ]}
-                  />
-                  <Scatter
-                    data={[...singles, ...(bouquet ? [bouquet] : [])].map((s) => {
-                      const a = assessment(s, isPerso);
-                      return {
-                        name: SHORT_TITLES[s.id] ?? scenarioTitle(s.id),
-                        investment: (a.investment_low_eur + a.investment_high_eur) / 2,
-                        savings: a.annual_savings_eur,
-                        bouquet: s.id === "bouquet",
-                      };
-                    })}
-                    isAnimationActive={false}
-                  >
-                    {[...singles, ...(bouquet ? [bouquet] : [])].map((s) => (
-                      <Cell
-                        key={s.id}
-                        fill={s.id === "bouquet" ? "var(--color-amber)" : "var(--color-pine)"}
-                        r={s.id === "bouquet" ? 10 : 7}
-                      />
-                    ))}
-                    <LabelList
-                      dataKey="name"
-                      position="top"
-                      style={{ fill: "var(--color-ink-soft)", fontSize: 11, fontWeight: 600 }}
-                    />
-                  </Scatter>
-                </ScatterChart>
-              </ResponsiveContainer>
+              <Suspense
+                fallback={
+                  <div className="flex h-80 items-center justify-center text-sm text-ink-faint">
+                    Chargement du graphique…
+                  </div>
+                }
+              >
+                <CostGainChart
+                  points={[...singles, ...(bouquet ? [bouquet] : [])].map((s) => {
+                    const a = assessment(s, isPerso);
+                    return {
+                      id: s.id,
+                      name: SHORT_TITLES[s.id] ?? scenarioTitle(s.id),
+                      investment: (a.investment_low_eur + a.investment_high_eur) / 2,
+                      savings: a.annual_savings_eur,
+                      bouquet: s.id === "bouquet",
+                    };
+                  })}
+                />
+              </Suspense>
             </section>
           </>
         )}
@@ -530,6 +586,88 @@ export function ScenariosScreen() {
   );
 }
 
+/** Insulation card parameters: material dropdown + thickness, with a live R preview. */
+function InsulationParams({
+  material,
+  thicknessCm,
+  onMaterial,
+  onThickness,
+}: {
+  material: InsulationMaterial;
+  thicknessCm: number;
+  onMaterial: (material: InsulationMaterial) => void;
+  onThickness: (thicknessCm: number) => void;
+}) {
+  return (
+    <div className="space-y-2">
+      <label className="block text-xs font-medium text-ink-soft">
+        Isolant
+        <select
+          className={selectClass}
+          value={material}
+          onChange={(e) => onMaterial(e.target.value as InsulationMaterial)}
+        >
+          {INSULATION_MATERIAL_ORDER.map((m) => (
+            <option key={m} value={m}>
+              {INSULATION_MATERIAL_LABELS[m]}
+            </option>
+          ))}
+        </select>
+      </label>
+      <label className="block text-xs font-medium text-ink-soft">
+        Épaisseur (cm)
+        <input
+          type="number"
+          inputMode="decimal"
+          min={1}
+          max={60}
+          step={1}
+          value={thicknessCm}
+          onChange={(e) => {
+            const v = Number(e.target.value);
+            if (!Number.isNaN(v)) onThickness(Math.min(60, Math.max(1, v)));
+          }}
+          className="mt-2 w-full rounded-xl border border-line bg-surface px-3 py-2 text-xs font-medium text-ink outline-none tabular focus:border-pine"
+        />
+      </label>
+      <p className="text-xs text-ink-faint tabular">
+        soit R ≈{" "}
+        {addedRPreview(material, thicknessCm).toLocaleString("fr-FR", {
+          maximumFractionDigits: 1,
+        })}{" "}
+        m²·K/W
+      </p>
+    </div>
+  );
+}
+
 function assessment(scenario: ScenarioOutput, isPerso: boolean) {
   return isPerso && scenario.personalized ? scenario.personalized : scenario.conventional;
+}
+
+/**
+ * "Par où commencer" badges from the conventional single-measure previews:
+ * the most profitable gesture (lowest positive simple payback) and the one
+ * with the biggest annual CO₂ saving. Ties and non-positive savings excluded.
+ */
+function pickMeasureBadges(previews: Record<MeasureType, MeasurePreview>): {
+  mostProfitable: MeasureType | null;
+  biggestCo2: MeasureType | null;
+} {
+  const entries = Object.entries(previews) as [MeasureType, MeasurePreview][];
+  let mostProfitable: MeasureType | null = null;
+  let bestPayback = Infinity;
+  let biggestCo2: MeasureType | null = null;
+  let bestCo2 = 0;
+  for (const [type, p] of entries) {
+    if (p.payback_years_low != null && p.annual_savings_eur > 0 && p.payback_years_low < bestPayback) {
+      bestPayback = p.payback_years_low;
+      mostProfitable = type;
+    }
+    if (p.annual_co2_savings_kg > bestCo2) {
+      bestCo2 = p.annual_co2_savings_kg;
+      biggestCo2 = type;
+    }
+  }
+  return { mostProfitable, biggestCo2 };
 }

@@ -8,7 +8,7 @@ from renosim.models import AltitudeClass, ClimateZone, EnergyCarrier
 from renosim.tables_io import load_table
 
 RegulationVintage = Literal["dpe_2021", "dpe_2026"]
-EnergyUse = Literal["heating", "dhw", "lighting", "auxiliaries"]
+EnergyUse = Literal["heating", "dhw", "cooling", "lighting", "auxiliaries"]
 
 _CARRIER_KEY = {
     EnergyCarrier.ELECTRICITY: "electricity",
@@ -54,12 +54,65 @@ def co2_emissions_kg(final_energy_kwh: float, carrier: EnergyCarrier, use: Energ
     return final_energy_kwh * float(entry)
 
 
-def _thresholds(zone: ClimateZone, altitude: AltitudeClass) -> dict[str, dict[str, float]]:
+def _is_high_altitude_cold_zone(
+    zone: ClimateZone, altitude: AltitudeClass, variant: dict[str, object]
+) -> bool:
+    zones = variant["applies_to_zones"]
+    assert isinstance(zones, list)
+    return altitude is AltitudeClass.HIGH and zone.value in zones
+
+
+def _interp_small_surface(values: list[float], surfaces: list[float], surface_m2: float) -> float:
+    """Threshold bound at ``surface_m2``, linearly interpolated between rows.
+
+    ``values`` and ``surfaces`` are parallel (surfaces ascending, index 0 =
+    the '<= 8 m2' row). A surface below the first row clamps to it; the table
+    stops at 40 m2 (callers only use it for surfaces <= 40).
+    """
+    if surface_m2 <= surfaces[0]:
+        return values[0]
+    for i in range(len(surfaces) - 1):
+        lo, hi = surfaces[i], surfaces[i + 1]
+        if lo <= surface_m2 <= hi:
+            frac = (surface_m2 - lo) / (hi - lo)
+            return values[i] + (values[i + 1] - values[i]) * frac
+    return values[-1]
+
+
+def _thresholds(
+    zone: ClimateZone, altitude: AltitudeClass, surface_m2: float | None
+) -> dict[str, dict[str, float]]:
+    """Resolve the label bounds for a dwelling, surface-dependent when <= 40 m2.
+
+    ``surface_m2`` None (or > 40) uses the large-surface tables; <= 40 m2 uses
+    the surface-interpolated small-surface tables (arrêté 25/03/2024). In high
+    altitude cold zones only the E and F bounds are relaxed.
+    """
     table = load_table("dpe_thresholds")
-    variant = table["high_altitude_cold_zones"]
-    if altitude is AltitudeClass.HIGH and zone.value in variant["applies_to_zones"]:
+    high_alt = _is_high_altitude_cold_zone(zone, altitude, table["high_altitude_cold_zones"])
+
+    if surface_m2 is None or surface_m2 > 40.0:
+        variant = table["high_altitude_cold_zones"] if high_alt else table["standard"]
         return variant  # type: ignore[no-any-return]
-    return table["standard"]  # type: ignore[no-any-return]
+
+    small = table["small_surface_le_40m2"]
+    surfaces = small["surfaces_m2"]
+
+    def resolve(axis: str) -> dict[str, float]:
+        std = small["standard"][axis]
+        bounds = {
+            label: _interp_small_surface(std[label], surfaces, surface_m2) for label in _LABELS
+        }
+        if high_alt:
+            ha = small["high_altitude_cold_zones"][axis]
+            for label in ("E", "F"):
+                bounds[label] = _interp_small_surface(ha[label], surfaces, surface_m2)
+        return bounds
+
+    return {
+        "primary_energy_upper_kwhep_m2y": resolve("primary_energy_upper_kwhep_m2y"),
+        "co2_upper_kgco2_m2y": resolve("co2_upper_kgco2_m2y"),
+    }
 
 
 def dpe_label(
@@ -67,13 +120,21 @@ def dpe_label(
     eges_kgco2_m2y: float,
     zone: ClimateZone,
     altitude: AltitudeClass,
+    living_area_m2: float | None = None,
 ) -> str:
     """DPE label (A-G): worst of the energy and climate classifications.
 
     Values are compared after rounding down to the integer, per annexe 5
     ('valeurs arrondies à l'entier inférieur'); upper bounds are exclusive.
+
+    Parameters
+    ----------
+    living_area_m2
+        Reference surface in m2. When <= 40 m2 the surface-dependent thresholds
+        of the arrêté du 25 mars 2024 apply; ``None`` (default) or > 40 m2 uses
+        the standard large-surface tables.
     """
-    thresholds = _thresholds(zone, altitude)
+    thresholds = _thresholds(zone, altitude, living_area_m2)
     cep = float(int(cep_kwhep_m2y))
     eges = float(int(eges_kgco2_m2y))
 

@@ -6,7 +6,7 @@ import { HelpCircle } from "lucide-react";
  */
 export function InfoTip({ text }: { text: string }) {
   return (
-    <details className="group relative inline-block align-middle">
+    <details className="group relative inline-block align-middle print:hidden">
       <summary
         className="inline-flex min-h-6 min-w-6 cursor-pointer list-none items-center justify-center rounded-full text-ink-faint transition-colors hover:text-pine [&::-webkit-details-marker]:hidden"
         aria-label="Aide"

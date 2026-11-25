@@ -6,4 +6,7 @@ import { defineConfig } from "vite";
 export default defineConfig({
   base: process.env.VITE_BASE ?? "/",
   plugins: [react(), tailwindcss()],
+  // The app imports the engine's insulation-materials table (repo root is one
+  // level up); allow the dev server to serve files from there.
+  server: { fs: { allow: [".."] } },
 });

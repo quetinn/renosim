@@ -1,5 +1,79 @@
 # Journal de bord
 
+## 2026-07-07 — Quatre améliorations du backlog (#3, #7, #8, #10)
+
+**Fait :** implémentation de quatre pistes du backlog (`docs/improvements_backlog.md`), toutes
+calibration-neutres par défaut ; les items ⚠️ (#5 auxiliaires, #9 intermittence) sont laissés
+pour l'itération de calibration couplée à la re-validation #14.
+
+1. **#10 Inertie paramétrée** — enum `InertiaClass` (`models.py`), exposant du facteur
+   d'utilisation par classe (§6.1 : légère 2,5 / moyenne 2,9 / lourde 3,6, valeurs déjà
+   tabulées dans `occupancy_conventional.json`), champ additif `inertia` du schéma 0.1,
+   question « Type de construction (inertie) » à l'étape Enveloppe. « Je ne sais pas »
+   (défaut) = moyenne, identique au comportement calibré Phase 3. D-14 marqué partiellement
+   levé. Vérifié : lourde < moyenne < légère sur les besoins, unknown ≡ medium.
+2. **#8 Objectif d'étiquette** — entrée optionnelle `label_targets` du schéma : le bridge
+   évalue les 63 combinaisons des six gestes (paramètres des cartes inclus) et renvoie, par
+   classe meilleure que l'étiquette actuelle, la combinaison la moins chère qui l'atteint
+   (départage à l'investissement médian). Section « Viser une étiquette »
+   (`LabelTargets.tsx`) : puces de classes (désactivées si hors de portée), bouquet gagnant,
+   bouton « Activer ce bouquet ». Demandé seulement sur l'écran Scénarios (l'écran Situation
+   reste instantané). Vérifié navigateur : maison F → cibles E/D/C/B accessibles, A grisée ;
+   « atteindre C » = combles + PAC, 10 700–27 300 €, 1 681 €/an, cohérent avec le tableau.
+3. **#7 Partage par URL** — bouton « Partager » (copie presse-papier) encodant l'instantané
+   en base64 URL-safe dans `#s=…` ; import prioritaire sur localStorage à l'ouverture,
+   arrivée directe sur Situation, hash nettoyé. Vérifié : aller-retour complet (session
+   vierge → restauration postal/inertie/gestes).
+4. **#3 Rapport imprimable** — `print:hidden` sur tout le chrome interactif, bloc
+   `@media print` (couleurs DPE préservées via `print-color-adjust: exact`, fond blanc,
+   `break-inside: avoid`), ligne print-only date/mode/avertissement, bouton « Imprimer »
+   (`PageActions.tsx`) sur Situation et Scénarios.
+
+**État des tests :** moteur 133/133 verts (couverture ~94 %), ruff + format + mypy strict OK,
+`npm run build` OK, wheel régénéré (`renosim-0.4.0`). Vérification navigateur de bout en
+bout : parcours, résultats (F, 414 kWhep/m²), scénarios, objectif d'étiquette, partage.
+
+**Prochaines étapes :** Phase 5 (README, note finale, billet de blog, tag v1.0) ; puis #14
+(re-validation ADEME v2) en y intégrant #5 et #9 ; côté design : #6 mode sombre, #11 export
+PDF (s'appuie sur #3).
+
+## 2026-07-07 — Trois premières améliorations du backlog (#1, #2, #4)
+
+**Fait :** implémentation des trois pistes recommandées avant Phase 5, dans l'ordre
+faisabilité croissante.
+
+- **#2 Seuils DPE petites surfaces (≤ 40 m²) — écart D-12 LEVÉ.** Les tableaux officiels de
+  l'arrêté du 25 mars 2024 (annexe 5 §1.2.2.1 standard et §1.2.2.2 zones froides d'altitude,
+  E/F relâchés) sont en images dans le PDF : rendus en PNG via PyMuPDF puis **lus
+  visuellement** cellule par cellule (une transcription automatisée avait lissé à tort la
+  colonne EGES_d, non monotone : 51→52→53→54→55 en fin de tableau). Encodés verbatim dans
+  `dpe_thresholds.json` (33 lignes × 12 bornes + variante altitude). `outputs.py` interpole
+  linéairement en surface (≤ 8 m² → ligne « ≤ 8 » ; > 40 m² → tables standards inchangées) ;
+  `simulate()` passe la surface. 6 tests calculés à la main (dont la discontinuité officielle
+  à 40 m² : EGES_d = 55 côté ≤ 40 vs 50 au-delà). D-12 marqué RÉSOLU dans `deviations.md`.
+- **#1 Alerte passoire thermique.** Composant `PassoireAlert` (écran Situation) : encart sourcé
+  loi Climat & Résilience quand l'étiquette conventionnelle est E/F/G — message différencié
+  (passoire F/G vs. E « bientôt concerné »), dates d'interdiction de location (G 2025, F 2028,
+  E 2034), précision « location, pas propriétaire occupant », lien France Rénov'. UI seule,
+  aucun calcul d'aides (hors périmètre).
+- **#4 Badges « par où commencer ».** Le bridge renvoie `measure_previews` : évaluation
+  conventionnelle autonome des 6 gestes sur le logement courant (économies €, retour, ΔCO₂,
+  étiquette après), réutilisant `assess_scenario`. Le front (`pickMeasureBadges`) badge la carte
+  la plus rentable (retour simple mini positif) et le plus gros gain CO₂, **avant** activation.
+  Ajout additif au schéma 0.1 (rétro-compatible). 2 tests bridge.
+
+**État des tests :** moteur 123/123 verts (couverture 94,3 %), ruff + format + mypy strict OK,
+`npm run build` OK (bundle initial 427 kB, recharts en chunk séparé), wheel régénéré et vérifié
+(table petites surfaces présente, 33 lignes). Vérification navigateur : maison 1948-74 fioul
+69003 → étiquette F, alerte « interdiction location 2028 » affichée ; écran scénarios → badge
+« Le plus rentable » sur Combles, « Plus gros gain CO₂ » sur Chauffage ; aucune erreur
+console/réseau. NB : rendu d'animation gelé dans l'environnement de preview (artefact connu,
+non reproductible en usage réel) — vérifications faites via DOM/accessibilité.
+
+**Prochaines étapes :** reste du backlog (`docs/improvements_backlog.md`) ; #14 (re-validation
+ADEME v2) reste le plus valorisant pour la note, #8 (objectif d'étiquette) la prochaine grosse
+fonctionnalité conseil.
+
 ## 2026-07-04 (soir) — Phase 3 : validation contre la base DPE ADEME
 
 **Fait :** `download_dpe.py` (API data-fair `dpe03existant` vérifiée en ligne, échantillon
@@ -186,3 +260,244 @@ d'économies, non-additivité visible vs 4 281 €/an en sommant les gestes) ; m
 2. Mise en forme finale de la note de validation, billet de blog (al-folio).
 3. Envisager le code-splitting du bundle (795 kB minifié) : import dynamique de Recharts.
 4. Tag `v1.0` après revue complète.
+
+## 2026-07-06 — Saisie de l'isolation par matériau + épaisseur (pré-Phase 5)
+
+**Fait :** remplacement de la saisie « résistance R » (que personne ne connaît) par une liste
+déroulante d'isolants + champ épaisseur, aux deux endroits concernés : option « Je connais
+l'isolant posé » du formulaire (étape Enveloppe) et cartes de gestes isolation combles/murs
+(écran scénarios), avec aperçu en direct du R calculé.
+
+- Nouvelle table `tables/insulation_materials.json` : λ utile par famille d'isolant, sourcée
+  sur les **règles Th-Bât fascicule « Matériaux »** (valeurs par défaut §2.6, site
+  rt-re-batiment) ; biosourcés (ouate, fibre de bois) et « isolant inconnu » sur la
+  **convention 3CL λ = 0,04** (annexe 1 arrêté 31/03/2021 : U = 1/(1/U0 + e/0,04)).
+- Moteur : `added_r_from_insulation(material, thickness_cm)` dans `renovation.py`
+  (R = e/λ) ; le bridge accepte `material` + `thickness_cm` en plus de
+  `r_value_m2k_per_w` / `added_r_m2k_per_w` (rétro-compatible, schéma 0.1 inchangé —
+  ajouts optionnels uniquement).
+- Front : la table du moteur est importée telle quelle par Vite (une seule source de vérité
+  pour les λ) ; l'aperçu « soit R ≈ x » est purement affichage, le moteur recalcule.
+  `MeasureParams` porte désormais matériau+épaisseur (défauts : laine de verre 28 cm combles
+  ≈ R 7, 15 cm murs ≈ R 3,75, cohérents avec les défauts moteur).
+
+**État des tests :** moteur 100/100 verts (couverture 93,9 %), ruff + mypy strict OK,
+`npm run build` OK, wheel régénéré. Vérification navigateur : carte combles → passage
+laine de verre → polyuréthane (28 cm) : R affiché 7 → 9,3 m²·K/W, conso après 272 → 270
+kWhep/m²·an, économies 933 → 947 €/an (recalcul Pyodide OK). NB : la fenêtre de preview
+sans rAF gèle les transitions AnimatePresence du Wizard (artefact d'environnement de test,
+non reproductible en usage réel).
+
+**Prochaines étapes :** Phase 5 (README, note finale, billet de blog, tag v1.0) ; voir la
+liste d'améliorations proposées en discussion (orientation des vitrages, type de plancher
+bas, saisie détaillée des métrés, Web Worker Pyodide, persistance locale).
+
+## 2026-07-06 (soir) — Cinq améliorations pré-Phase 5
+
+**Fait :** implémentation des cinq améliorations proposées, toutes calibration-neutres par
+défaut (les défauts « je ne sais pas » reproduisent exactement le comportement validé en
+Phase 3).
+
+1. **Orientation des vitrages + masques** — nouveaux champs Enveloppe (orientation dominante,
+   environnement dégagé/masqué). Moteur : `solar_orientation_modifier` (ratios des C1
+   verticaux moyens oct→avr, table `solar_orientation.json` calculée depuis §18.5 de
+   l'annexe 1) et `solar_shading_factor` (Fe2 §6.2.2.2.1 : 0,8 / 0,4). D-06 mis à jour.
+   Vérifié : maison de référence 415 → 404 kWhep/m² en « plutôt sud ».
+2. **Type de plancher bas** — terre-plein (tables Ue p.19 avant/après 2001), vide sanitaire /
+   sous-sol (table p.18, inchangée = défaut M-7), garage/local non chauffé (b = 0,95, table b
+   §3.1). Vérifié : 415 → 422 kWhep (F → G) en terre-plein pour la maison de référence.
+3. **Saisie détaillée des métrés** — bloc optionnel `geometry` dans le schéma (murs, baies,
+   toiture, plancher, hauteur sous plafond) remplaçant la reconstruction M-1 champ à champ ;
+   panneau repliable « Je connais mes surfaces » à l'étape Général. D-17 mis à jour.
+4. **Pyodide en Web Worker + code-splitting** — le runtime et chaque simulation tournent hors
+   du thread UI (`engine.worker.ts`, protocole de messages typé, réponses obsolètes ignorées) ;
+   Recharts lazy-loadé (`LossesChart`, `CostGainChart`). Bundle initial : 798 → 425 kB
+   (chunk recharts 335 kB à la demande), plus d'avertissement de taille au build.
+5. **Persistance locale** — form/occupancy/params/gestes/vintage dans `localStorage`
+   (clé `renosim:v1`, fusion tolérante avec les défauts, best-effort en navigation privée),
+   bouton « Effacer mes réponses et repartir de zéro » dans le parcours.
+
+**État des tests :** moteur 116/116 verts (couverture 94,2 %), ruff + format + mypy strict OK,
+`npm run build` OK, wheel régénéré. Vérification navigateur : moteur prêt via worker, baseline
+identique (415 kWhep/m², F), effets orientation/plancher/géométrie confirmés ci-dessus,
+restauration du formulaire après rechargement OK, aucune erreur console/réseau.
+
+**Prochaines étapes :** Phase 5 — README exemplaire, note de validation finale, billet de
+blog, tag v1.0. Penser à mentionner dans la note que les nouveaux champs (orientation,
+plancher, métrés) sont neutres par défaut vis-à-vis de la calibration.
+
+## 2026-07-10 — Passage en revue du backlog d'améliorations (13 items traités)
+
+**Fait (calibration-neutres, front + schéma 0.1 additif) :**
+
+1. **#10 Inertie paramétrée** — enum `InertiaClass`, exposants officiels §6.1 branchés dans
+   `needs.py`, champ `inertia` du schéma, question « Type de construction (inertie) » à
+   l'étape Enveloppe (défaut « je ne sais pas » = moyenne = comportement calibré). D-14 màj.
+2. **#8 Objectif d'étiquette** — entrée optionnelle `label_targets` : le bridge évalue les
+   63 combinaisons des 6 gestes (paramètres des cartes) et renvoie la moins chère par classe
+   cible ; section « Viser une étiquette » (`LabelTargets.tsx`) avec activation en un clic.
+   Demandé uniquement sur l'écran Scénarios (l'écran Situation reste instantané).
+3. **#7 Partage par URL** — instantané complet en base64 URL-safe dans le fragment `#s=…`
+   (rien ne quitte le navigateur), import prioritaire au chargement, arrivée directe sur les
+   résultats, hash nettoyé. Bouton « Partager » (copie presse-papier).
+4. **#3/#11 Rapport imprimable / export PDF** — `print:hidden` sur tout le chrome, bloc
+   `@media print` (couleurs DPE forcées, fond blanc), en-tête print-only (date/mode/
+   avertissement), bloc « Hypothèses de la simulation » (`PrintHypotheses.tsx`), bouton
+   « Imprimer / PDF » (impression pilotée, option retenue du backlog).
+5. **#6 Mode sombre** — palette re-déclarée sous `prefers-color-scheme: dark` (screen
+   uniquement, l'impression reste claire), tokens `--color-on-pine`/`--color-on-amber`
+   (pine/amber clairs + encre foncée dessus), gamme DPE et panneau `pine-ink` inchangés,
+   graphiques sur variables, `theme-color` double.
+6. **#12 Multi-projets** — magasin `renosim:projects:v1`, panneau « Mes logements »
+   (enregistrer/charger/supprimer, tableau comparatif avec résumés conventionnels figés).
+7. **#13 Maison interactive** — `HouseLossMap.tsx` : coupe SVG colorée vert→rouge selon la
+   part de chaque zone dans GV, zones cliquables (accessibles clavier) qui activent le geste
+   correspondant, à côté du graphique en barres.
+
+**Fait (⚠️ moteur, itération de calibration documentée) :**
+
+8. **#5 Auxiliaires §15** — annexe 1 consolidée re-téléchargée (rt-re-batiment, 10/07/2026),
+   §15/§18.1 extraits : `Paux_g = G + H·Pn`, circulateur complet (Pcirc, Lem, Tbase),
+   table `auxiliaries` sourcée, `heating_auxiliary_kwh`/`dhw_auxiliary_kwh`, 5 tests à la
+   main. **Re-validation immédiate** (échantillon local, 11 624 maisons) :
+   ±1 classe 90,8 % → 90,5 %, exact 50,5 % → 50,2 %, biais +7,8 → +10,8 kWhep/m² —
+   dégradation marginale, auxiliaires conservés. D-11 RÉSOLU, `results_v2_aux.json`.
+9. **#9 Intermittence** — item périmé : INT était déjà implémenté (calibré Phase 3).
+   Complément : la classe d'inertie sélectionne désormais la colonne I0 « lourde » de la
+   table §8 (les deux effets officiels opposés de l'inertie sont modélisés).
+
+**Constat #14 :** l'échantillon local ne porte pas les colonnes plancher bas / orientation
+des baies → le volet « nouveaux champs » exige un re-téléchargement ADEME (backlog màj).
+**#15 appartements** : non traité (V2 après v1.0, brief §2.2).
+
+**État des tests :** moteur 139/139 verts (couverture 94,6 %), ruff + format + mypy strict
+OK, `npm run build` OK, wheel régénéré. Vérification navigateur : inertie visible à l'étape
+Enveloppe, objectif d'étiquette E→B atteignables / A désactivée sur la maison de référence
+(bouquet C = combles + PAC, 10 700-27 300 €, 1 681 €/an, retour 6-16 ans), activation en un
+clic reflétée dans le tableau, partage par URL rebouclé (session vierge → résultats
+restaurés), règles print présentes, mode sombre appliqué (fond #101612, contrastes on-pine).
+
+**Prochaines étapes :** Phase 5 (README, note de validation finale — y intégrer l'itération
+v2 auxiliaires —, billet de blog, tag v1.0) ; volet restant de #14 (échantillon ADEME enrichi
+plancher/orientation).
+
+## 2026-07-11 — #14 (v2), #15 appartements, proposition confort d'été
+
+**#14 — échantillon enrichi + re-validation.** Vérification du schéma live de l'API ADEME
+(230 champs) : ni type de plancher bas ni orientation des baies n'y sont exposés (ils vivent
+dans le XML DPE, pas dans `dpe03existant`) — l'hypothèse du backlog était fausse. Champs
+réellement exploitables : `classe_inertie_batiment` (→ notre nouvelle entrée inertie, choix
+M-8), position/traversant des appartements, et tout le bloc confort d'été (téléchargé
+d'avance). Échantillon maisons v2 re-téléchargé (11 708 lignes), campagne v3 : ±1 classe
+90,3 %, biais +12,1 — l'inertie mappée est quasi neutre (les deux effets officiels
+opposés se compensent). `results_v3_inertia.json`.
+
+**#15 — appartements (sortie assumée du périmètre V1 §2.2, demande explicite).** Moteur :
+`DwellingType` + variantes officielles (Nadeq collectif §11.1, Q4Pa appartement §4 p.39,
+Pvent collectif §5 p.41, I0 immeuble/chauffage individuel §8 p.56, e/f façade unique,
+b = 0,35 mur sur circulation §3.1). Bridge + formulaire : type de logement, position
+(RDC/intermédiaire/dernier étage/je ne sais pas), traversant/mono-orienté ; niveaux et
+mitoyenneté masqués pour les appartements. **Campagne dédiée** (11 057 lignes téléchargées,
+8 895 « dpe appartement individuel » mappés) : première passe catastrophique (GV
+prédit/observé 0,60, ±1 classe 76,2 %) → diagnostic poste à poste avec les colonnes
+`deperditions_*` (position manquante à 99 %, murs ×0,54, ponts ×0,22) → conventions de
+reconstruction calibrées (`apartment_reconstruction` : murs ×1,85, b espérés plafond
+0,45/plancher 0,10 si position inconnue, ponts 25 %) → **GV 0,99, biais −0,2 kWhep/m²,
+±1 classe 87,9 %, exact 45,0 %**. Écart D-18 complet (méthode, calibration, limites :
+installations collectives traitées comme individuelles, bouclage ECS non modélisé).
+
+**Confort d'été — proposition (idée de Noé).** Document `docs/proposal_confort_ete.md` :
+3 briques — (1) indicateur officiel de confort d'été passif de l'annexe 4 (inertie,
+protections solaires ext., traversant, toiture, brasseurs ; ~1 j, validable immédiatement
+contre `indicateur_confort_ete`), (2) besoin/conso de refroidissement §10 (⚠️ lève D-02,
+tables été à extraire, ~3-5 j), (3) gestes « été » (volets/BSO en 7ᵉ geste). Backlog #16.
+
+**État des tests :** moteur 148/148 verts (couverture 94,7 %), ruff + format + mypy strict
+OK, `npm run build` OK, wheel régénéré. Vérification navigateur : appartement 60 m² dernier
+étage mono-orienté H1c → « Appartement de 60 m² », classe F (398 kWhep/m²), toiture 44 % des
+déperditions sur la maison interactive, auxiliaires collectifs comptés. NB : l'artefact
+rAF/AnimatePresence de l'environnement de preview gèle l'affichage du Wizard (l'état avance,
+la section affichée non) — navigation testée via l'import d'URL de partage ; non
+reproductible en usage réel (déjà noté le 06/07).
+
+**Prochaines étapes :** décision sur la proposition #16 (brique 1 recommandée en premier) ;
+Phase 5 (README, note de validation — y intégrer les chapitres v2 auxiliaires, v3 inertie et
+appartements —, billet de blog, tag v1.0).
+
+## 2026-07-11 (suite) — #16 Confort d'été : les 3 briques + correctif C1 hiver
+
+**#16 brique 1 — indicateur de confort d'été passif** (annexe 9 du document consolidé des
+annexes DPE habitation — la proposition disait « annexe 4 » ; grille extraite verbatim,
+pages 22-26). `summer_comfort.json` + module pur `summer_comfort.py` (insuffisant si baies
+S/E/O/toiture sans protection extérieure ou toiture non isolée sous plafond déperditif ;
+bon si ≥ 2 de {inertie lourde, traversant, brasseurs fixes} ; défaut officiel toiture
+inconnue pré/post-1975). Nouveaux champs moteur (protections, brasseurs, clim,
+roof_insulated, through_dwelling) + 3 questions au formulaire + carte « Confort d'été
+(sans climatisation) » sur l'écran Situation (pastille officielle 3 niveaux, leviers
+passifs, avertissement « l'étiquette DPE mesure l'hiver »). Le geste toiture bascule le
+critère été. Simplifications D-19 (déclaratif global, maisons supposées traversantes).
+**Campagne dédiée** (`run_summer_comfort.py`, M-10) : la base mélange les millésimes de la
+grille officielle (DPE 2021 : 16 % d'accord — ancienne grille) ; sur les DPE ≥ 2025 :
+maisons **95,5 %** exact / 98,6 % ±1 (n = 7 943), appartements **91,0 %** / 98,3 %
+(n = 4 284). Choix M-10 clé : « qualité insuffisante » ≠ « non isolée » (+5,5 pts).
+
+**#16 brique 2 — besoin/conso de refroidissement §10 (⚠️ lève D-02, écart D-20).**
+Tables été extraites de l'annexe 1 (§18.2 : DH28/Nref28/E_fr28 par zone × altitude × mois —
+piège de parsing : les valeurs 100-199 ressemblaient aux numéros de page ; §18.5 : C1 été
+verticaux juin→sept ; §10.3 : SEER par zone × période, avant-2008 = EER direct) +
+`cooling.json`. Bfr mensuel verbatim §10.2 (Rbth, fut avec Cin par inertie, DH28 ≡
+(Textmoy_clim−28)·Nref28 aux arrondis près — évite la coquille H2d/mai de la table
+publiée) ; Sse été = 0,5 calibré rebasé par C1_été/moyenne_C1_hiver_verticale. Cfr =
+0,9·Bfr/EER seulement si clim déclarée (question période au formulaire) ; Bfr affiché pour
+tous (« ce que coûterait votre été »). Ordres de grandeur : maison non isolée 4 kWh/m²
+(H1a) → 28 kWh/m² (H3) ; est/ouest > sud > nord. **Validation** (M-11, 2 383 maisons
+climatisées) : besoin −13 % (H2d +15 kWh/2 401, H3 −66/2 371), conso EP +28 % (surface
+refroidie 100 % = majorant, D-20). **Campagne v4** : ±1 classe 90,2 %, biais +12,9
+(`results_v4_cooling.json`) — quasi neutre, D-02 RÉSOLU.
+
+**#16 brique 3 — 7ᵉ geste « volets/BSO extérieurs »** (gain été pur, 200-750 €/m² de baie
+sourcé guides pro, exclu de la recherche d'étiquette cible), colonne « Confort d'été
+passif » avant → après dans le tableau des scénarios + badge sur les cartes. Vérifié
+navigateur : maison H3 volets absents + toiture nue → ni geste seul ne suffit, le bouquet
+combles+volets passe Insuffisant → Moyen ; clim avant 2008 = 684 kWh (0,9·2468/3,25 ✓).
+
+**Correctif C1 hiver (demande explicite, D-06).** `c1_heating_season_vertical` encodait la
+colonne inclinée 25-75° du §18.5 au lieu de la verticale ≥ 75° (sud H1a 1,857 au lieu de
+1,00). Corrigé (modificateurs sud 1,52 → 1,67, nord 0,61 → 0,58) ; **neutre pour la
+calibration** : l'échantillon ADEME n'a pas d'orientation des baies, campagne v4
+re-exécutée bit-identique. NB : une session parallèle (worktree) a été lancée sur le même
+sujet — sa correction sera redondante avec celle-ci.
+
+**État :** moteur 188/188 verts (couverture 95,0 %), ruff + format + mypy strict OK,
+wheel 0.5.0 régénéré, `npm run build` OK. Vérification navigateur des 3 écrans (import
+par URL de partage — artefact Wizard/preview connu). Schéma 0.1 additif (blocs `summer`,
+`needs.cooling_kwh`, `summer_comfort`, `summer_comfort_after`, 7ᵉ geste).
+
+**Prochaines étapes :** Phase 5 (README, note de validation — chapitres confort d'été /
+refroidissement / v4 —, billet de blog, tag v1.0) ; réconcilier la session parallèle C1 ;
+option V2 : question « surface refroidie » pour lever le majorant D-20.
+
+## 2026-11-25 — Audit complet (moteur, validation, app) vs RT2012 / RE2020
+
+Audit sans modification de code, rapport dans **`docs/audit_2026-11-25.md`**. Dossier
+`Annexes` (raccourci vers RT2012 complète + RE2020 complète, décrets 2026 inclus) extrait ;
+NB : les fascicules Th-U/Th-I/Th-S/Th-L sont des scans sans couche texte (OCR nécessaire).
+
+**Vérifié conforme :** zonage département → zone (96/96 identique à l'annexe I de l'arrêté RT2012
+du 26/10/2010) ; facteurs CO₂ identiques à l'art. 10 de l'arrêté RE2020 du 04/08/2021.
+
+**Constats P0 :** 79 fichiers non commités depuis le 05/07 ; défaut app `dpe_2021` alors que
+1,9 est en vigueur depuis le 01/01/2026 ; prix énergie 2021 (TODO bloquant non levé) ;
+calibration et métriques sur le même échantillon (pas de hold-out), note de validation
+restée en v1 (biais +7,8 → +12,9, ±1 classe 90,2 %).
+
+**Bugs moteur démontrés :** ECS couplée qui suit un poêle à granulés (2 450 kWh d'ECS « au
+poêle ») ; chaudière bois = rendement poêle avec circulateur mais Rd = 1 ; PAC sur passoire
+non dimensionnée (≈ 18 kW requis, coût forfaitaire). Autres : HSP saisie ignorée pour
+infiltration/intermittence, tranches d'âge ancrées implicitement sur 2026, constantes métier
+en dur, écart fenêtres non documenté.
+
+**État des tests :** 188/188 verts, couverture 95,0 %, ruff/format/mypy OK, `npm run build` OK.
+
+**Prochaines étapes :** décider de la feuille de route §9 du rapport (Sprint 0 sécurisation →
+prix/validation → Phase 5/v1.0 → v1.1 « conformité »).

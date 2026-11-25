@@ -2,20 +2,31 @@ import { AnimatePresence, motion } from "motion/react";
 import { ArrowLeft, ArrowRight, Check, MapPin, Sparkles } from "lucide-react";
 import { useState } from "react";
 import { climateZoneFromPostalCode } from "../../data/climateZones";
+import { INSULATION_MATERIAL_ORDER, addedRPreview } from "../../data/insulationMaterials";
 import {
   ADJACENCY_LABELS,
   ALTITUDE_LABELS,
+  APARTMENT_POSITION_LABELS,
+  COOLING_PERIOD_LABELS,
   DHW_LABELS,
+  DWELLING_LABELS,
+  FLOOR_TYPE_LABELS,
   GLAZING_LABELS,
+  GLAZING_ORIENTATION_LABELS,
   HEATING_AGE_LABELS,
   HEATING_LABELS,
   HELP_TEXTS,
+  INERTIA_LABELS,
+  INSULATION_MATERIAL_LABELS,
   INSULATION_STATE_LABELS,
   PERIOD_LABELS,
+  SOLAR_PROTECTION_LABELS,
+  SOLAR_SHADING_LABELS,
   VENTILATION_LABELS,
 } from "../../i18n/fr";
 import { useAppState } from "../../state/AppState";
-import type { InsulationChoice } from "../../state/model";
+import type { GeometryState, InsulationChoice } from "../../state/model";
+import type { InsulationMaterial } from "../../types/schema";
 import { Button } from "../ui/Button";
 import { Field, NumberInput, RadioCards, Segmented, type Option } from "../form/fields";
 
@@ -23,6 +34,104 @@ const STEPS = ["Localisation", "Général", "Enveloppe", "Systèmes"] as const;
 
 function typedOptions<T extends string>(labels: Record<T, string>): Option<T>[] {
   return (Object.entries(labels) as [T, string][]).map(([value, label]) => ({ value, label }));
+}
+
+/** Number input accepting an empty value (null = "let the engine estimate"). */
+function OptionalNumberInput({
+  label,
+  suffix,
+  placeholder,
+  value,
+  onChange,
+}: {
+  label: string;
+  suffix: string;
+  placeholder: string;
+  value: number | null;
+  onChange: (value: number | null) => void;
+}) {
+  return (
+    <label className="block text-xs font-medium text-ink-soft">
+      {label}
+      <span className="mt-1.5 flex items-center gap-2 rounded-2xl border border-line bg-surface px-3 py-2 focus-within:border-pine">
+        <input
+          type="number"
+          inputMode="decimal"
+          min={0}
+          value={value ?? ""}
+          placeholder={placeholder}
+          aria-label={label}
+          onChange={(e) => {
+            const raw = e.target.value;
+            if (raw === "") {
+              onChange(null);
+              return;
+            }
+            const v = Number(raw);
+            if (!Number.isNaN(v)) onChange(v);
+          }}
+          className="w-full border-none bg-transparent text-sm font-semibold text-ink outline-none tabular"
+        />
+        <span className="shrink-0 text-xs text-ink-faint">{suffix}</span>
+      </span>
+    </label>
+  );
+}
+
+/** Collapsible "I know my surface areas" panel (optional M-1 overrides). */
+function GeometryPanel({
+  geometry,
+  onChange,
+}: {
+  geometry: GeometryState;
+  onChange: (geometry: GeometryState) => void;
+}) {
+  const patch = (p: Partial<GeometryState>) => onChange({ ...geometry, ...p });
+  return (
+    <details className="rounded-2xl border border-line bg-surface px-4 py-3">
+      <summary className="cursor-pointer text-sm font-semibold text-ink">
+        Je connais mes surfaces (optionnel)
+      </summary>
+      <p className="mt-2 text-xs leading-relaxed text-ink-soft">{HELP_TEXTS.geometry}</p>
+      <div className="mt-3 grid gap-3 sm:grid-cols-2">
+        <OptionalNumberInput
+          label="Hauteur sous plafond"
+          suffix="m"
+          placeholder="2,5"
+          value={geometry.ceilingHeight}
+          onChange={(ceilingHeight) => patch({ ceilingHeight })}
+        />
+        <OptionalNumberInput
+          label="Murs extérieurs (hors fenêtres)"
+          suffix="m²"
+          placeholder="auto"
+          value={geometry.wallArea}
+          onChange={(wallArea) => patch({ wallArea })}
+        />
+        <OptionalNumberInput
+          label="Fenêtres et portes-fenêtres"
+          suffix="m²"
+          placeholder="auto"
+          value={geometry.windowArea}
+          onChange={(windowArea) => patch({ windowArea })}
+        />
+        <OptionalNumberInput
+          label="Toiture / plafond"
+          suffix="m²"
+          placeholder="auto"
+          value={geometry.roofArea}
+          onChange={(roofArea) => patch({ roofArea })}
+        />
+        <OptionalNumberInput
+          label="Plancher bas"
+          suffix="m²"
+          placeholder="auto"
+          value={geometry.floorArea}
+          onChange={(floorArea) => patch({ floorArea })}
+        />
+      </div>
+    </details>
+  );
 }
 
 function InsulationField({
@@ -42,21 +151,47 @@ function InsulationField({
         options={typedOptions(INSULATION_STATE_LABELS)}
         value={choice.state}
         onChange={(state) =>
-          onChange(state === "known_r" ? { state, rValue: 3.7 } : { state })
+          onChange(
+            state === "known_r"
+              ? { state, material: "glass_wool", thicknessCm: 20 }
+              : { state },
+          )
         }
       />
       {choice.state === "known_r" && (
-        <div className="flex items-center gap-3 pt-1">
+        <div className="flex flex-wrap items-center gap-3 pt-1">
+          <select
+            value={choice.material}
+            onChange={(e) =>
+              onChange({ ...choice, material: e.target.value as InsulationMaterial })
+            }
+            aria-label={`Isolant ${label}`}
+            className="min-h-11 cursor-pointer rounded-2xl border border-line bg-surface px-4 py-2 text-sm font-medium text-ink outline-none focus:border-pine"
+          >
+            {INSULATION_MATERIAL_ORDER.map((m) => (
+              <option key={m} value={m}>
+                {INSULATION_MATERIAL_LABELS[m]}
+              </option>
+            ))}
+          </select>
           <NumberInput
-            value={choice.rValue}
-            onChange={(rValue) => onChange({ state: "known_r", rValue: Math.max(0.1, rValue) })}
-            min={0.1}
-            max={20}
-            step={0.1}
-            suffix="m²·K/W"
-            ariaLabel={`Résistance thermique ${label}`}
+            value={choice.thicknessCm}
+            onChange={(thicknessCm) =>
+              onChange({ ...choice, thicknessCm: Math.min(60, Math.max(1, thicknessCm)) })
+            }
+            min={1}
+            max={60}
+            step={1}
+            suffix="cm"
+            ariaLabel={`Épaisseur d'isolant ${label}`}
           />
-          <span className="text-xs text-ink-faint">R ajouté par l'isolant</span>
+          <span className="text-xs text-ink-faint tabular">
+            soit R ≈{" "}
+            {addedRPreview(choice.material, choice.thicknessCm).toLocaleString("fr-FR", {
+              maximumFractionDigits: 1,
+            })}{" "}
+            m²·K/W
+          </span>
         </div>
       )}
     </Field>
@@ -64,7 +199,7 @@ function InsulationField({
 }
 
 export function Wizard() {
-  const { form, updateForm, setPeriod, setView } = useAppState();
+  const { form, updateForm, setPeriod, setView, resetAll } = useAppState();
   const [step, setStep] = useState(0);
   const [direction, setDirection] = useState(1);
   const [touchedPostal, setTouchedPostal] = useState(false);
@@ -98,7 +233,7 @@ export function Wizard() {
                 aria-current={current ? "step" : undefined}
                 className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold transition-colors ${
                   done
-                    ? "bg-pine text-white"
+                    ? "bg-pine text-on-pine"
                     : current
                       ? "border-2 border-pine bg-pine-soft text-pine-deep"
                       : "border border-line bg-surface text-ink-faint"
@@ -193,9 +328,41 @@ export function Wizard() {
             {step === 1 && (
               <div className="space-y-7">
                 <StepTitle
-                  title="Parlez-nous de la maison"
+                  title="Parlez-nous du logement"
                   subtitle="L'année de construction pré-remplit l'isolation et les équipements typiques de l'époque — ajustables à l'étape suivante."
                 />
+                <Field label="Type de logement" help={HELP_TEXTS.dwellingType}>
+                  <Segmented
+                    name="Type de logement"
+                    options={typedOptions(DWELLING_LABELS)}
+                    value={form.dwellingType}
+                    onChange={(dwellingType) => updateForm({ dwellingType })}
+                  />
+                </Field>
+                {form.dwellingType === "apartment" && (
+                  <>
+                    <Field label="Position dans l'immeuble" help={HELP_TEXTS.apartmentPosition}>
+                      <RadioCards
+                        name="Position dans l'immeuble"
+                        columns={2}
+                        options={typedOptions(APARTMENT_POSITION_LABELS)}
+                        value={form.apartmentPosition}
+                        onChange={(apartmentPosition) => updateForm({ apartmentPosition })}
+                      />
+                    </Field>
+                    <Field label="Logement traversant" help={HELP_TEXTS.apartmentTraversant}>
+                      <Segmented
+                        name="Logement traversant"
+                        options={[
+                          { value: "yes", label: "Traversant (2 façades)" },
+                          { value: "no", label: "Mono-orienté (1 façade)" },
+                        ]}
+                        value={form.apartmentTraversant ? "yes" : "no"}
+                        onChange={(v) => updateForm({ apartmentTraversant: v === "yes" })}
+                      />
+                    </Field>
+                  </>
+                )}
                 <Field label="Surface habitable" help={HELP_TEXTS.livingArea}>
                   <NumberInput
                     value={form.livingArea}
@@ -215,28 +382,34 @@ export function Wizard() {
                     onChange={setPeriod}
                   />
                 </Field>
-                <div className="grid gap-7 sm:grid-cols-2">
-                  <Field label="Niveaux chauffés" help={HELP_TEXTS.levels}>
-                    <Segmented
-                      name="Niveaux chauffés"
-                      options={[
-                        { value: "1", label: "1" },
-                        { value: "2", label: "2" },
-                        { value: "3", label: "3" },
-                      ]}
-                      value={String(form.levels) as "1" | "2" | "3"}
-                      onChange={(v) => updateForm({ levels: Number(v) })}
-                    />
-                  </Field>
-                  <Field label="Mitoyenneté" help={HELP_TEXTS.adjacency}>
-                    <Segmented
-                      name="Mitoyenneté"
-                      options={typedOptions(ADJACENCY_LABELS)}
-                      value={form.adjacency}
-                      onChange={(adjacency) => updateForm({ adjacency })}
-                    />
-                  </Field>
-                </div>
+                {form.dwellingType === "house" && (
+                  <div className="grid gap-7 sm:grid-cols-2">
+                    <Field label="Niveaux chauffés" help={HELP_TEXTS.levels}>
+                      <Segmented
+                        name="Niveaux chauffés"
+                        options={[
+                          { value: "1", label: "1" },
+                          { value: "2", label: "2" },
+                          { value: "3", label: "3" },
+                        ]}
+                        value={String(form.levels) as "1" | "2" | "3"}
+                        onChange={(v) => updateForm({ levels: Number(v) })}
+                      />
+                    </Field>
+                    <Field label="Mitoyenneté" help={HELP_TEXTS.adjacency}>
+                      <Segmented
+                        name="Mitoyenneté"
+                        options={typedOptions(ADJACENCY_LABELS)}
+                        value={form.adjacency}
+                        onChange={(adjacency) => updateForm({ adjacency })}
+                      />
+                    </Field>
+                  </div>
+                )}
+                <GeometryPanel
+                  geometry={form.geometry}
+                  onChange={(geometry) => updateForm({ geometry })}
+                />
               </div>
             )}
 
@@ -261,6 +434,24 @@ export function Wizard() {
                   choice={form.floorInsulation}
                   onChange={(floorInsulation) => updateForm({ floorInsulation })}
                 />
+                <Field label="Sous le plancher bas" help={HELP_TEXTS.floorType}>
+                  <RadioCards
+                    name="Sous le plancher bas"
+                    columns={2}
+                    options={typedOptions(FLOOR_TYPE_LABELS)}
+                    value={form.floorType}
+                    onChange={(floorType) => updateForm({ floorType })}
+                  />
+                </Field>
+                <Field label="Type de construction (inertie)" help={HELP_TEXTS.inertia}>
+                  <RadioCards
+                    name="Type de construction (inertie)"
+                    columns={2}
+                    options={typedOptions(INERTIA_LABELS)}
+                    value={form.inertia}
+                    onChange={(inertia) => updateForm({ inertia })}
+                  />
+                </Field>
                 <Field label="Vitrage" help={HELP_TEXTS.glazing}>
                   <RadioCards
                     name="Vitrage"
@@ -268,6 +459,37 @@ export function Wizard() {
                     options={typedOptions(GLAZING_LABELS)}
                     value={form.glazing}
                     onChange={(glazing) => updateForm({ glazing })}
+                  />
+                </Field>
+                <Field
+                  label="Orientation principale des fenêtres"
+                  help={HELP_TEXTS.glazingOrientation}
+                >
+                  <RadioCards
+                    name="Orientation principale des fenêtres"
+                    columns={2}
+                    options={typedOptions(GLAZING_ORIENTATION_LABELS)}
+                    value={form.glazingOrientation}
+                    onChange={(glazingOrientation) => updateForm({ glazingOrientation })}
+                  />
+                </Field>
+                <Field label="Environnement autour de la maison" help={HELP_TEXTS.solarShading}>
+                  <Segmented
+                    name="Environnement autour de la maison"
+                    options={typedOptions(SOLAR_SHADING_LABELS)}
+                    value={form.solarShading}
+                    onChange={(solarShading) => updateForm({ solarShading })}
+                  />
+                </Field>
+                <Field
+                  label="Volets ou brise-soleil extérieurs"
+                  help={HELP_TEXTS.solarProtections}
+                >
+                  <Segmented
+                    name="Volets ou brise-soleil extérieurs"
+                    options={typedOptions(SOLAR_PROTECTION_LABELS)}
+                    value={form.solarProtections}
+                    onChange={(solarProtections) => updateForm({ solarProtections })}
                   />
                 </Field>
               </div>
@@ -314,6 +536,49 @@ export function Wizard() {
                     onChange={(ventilation) => updateForm({ ventilation })}
                   />
                 </Field>
+                <div className="grid gap-7 sm:grid-cols-2">
+                  <Field label="Brasseurs d'air fixes" help={HELP_TEXTS.fixedAirCirculators}>
+                    <Segmented
+                      name="Brasseurs d'air fixes"
+                      options={[
+                        { value: "no", label: "Non" },
+                        { value: "yes", label: "Oui" },
+                      ]}
+                      value={form.fixedAirCirculators ? "yes" : "no"}
+                      onChange={(v) => updateForm({ fixedAirCirculators: v === "yes" })}
+                    />
+                  </Field>
+                  <Field label="Climatisation" help={HELP_TEXTS.airConditioning}>
+                    <Segmented
+                      name="Climatisation"
+                      options={[
+                        { value: "no", label: "Non" },
+                        { value: "yes", label: "Oui" },
+                      ]}
+                      value={form.airConditioning ? "yes" : "no"}
+                      onChange={(v) => updateForm({ airConditioning: v === "yes" })}
+                    />
+                  </Field>
+                </div>
+                {form.airConditioning && (
+                  <Field
+                    label="Installation de la climatisation"
+                    help={HELP_TEXTS.airConditioningPeriod}
+                  >
+                    <Segmented
+                      name="Installation de la climatisation"
+                      options={typedOptions(COOLING_PERIOD_LABELS)}
+                      value={
+                        form.airConditioningPeriod === "unknown"
+                          ? "from_2015"
+                          : form.airConditioningPeriod
+                      }
+                      onChange={(airConditioningPeriod) =>
+                        updateForm({ airConditioningPeriod })
+                      }
+                    />
+                  </Field>
+                )}
               </div>
             )}
           </motion.section>
@@ -345,6 +610,18 @@ export function Wizard() {
           Saisissez un code postal métropolitain valide pour continuer.
         </p>
       )}
+      <p className="mt-6 text-center">
+        <button
+          type="button"
+          onClick={() => {
+            resetAll();
+            setStep(0);
+          }}
+          className="cursor-pointer text-xs text-ink-faint underline-offset-2 transition-colors hover:text-clay hover:underline"
+        >
+          Effacer mes réponses et repartir de zéro
+        </button>
+      </p>
     </div>
   );
 }

@@ -5,7 +5,7 @@ import { Button } from "../ui/Button";
 export function Header({ onOpenMethod }: { onOpenMethod: () => void }) {
   const { view, setView } = useAppState();
   return (
-    <header className="sticky top-0 z-40 border-b border-line/70 bg-paper/85 backdrop-blur-md">
+    <header className="sticky top-0 z-40 border-b border-line/70 bg-paper/85 backdrop-blur-md print:hidden">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-3 px-4 sm:px-6">
         <button
           type="button"
@@ -13,7 +13,7 @@ export function Header({ onOpenMethod }: { onOpenMethod: () => void }) {
           className="flex cursor-pointer items-center gap-2.5"
           aria-label="RénoSim — retour à l'accueil"
         >
-          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-pine text-white">
+          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-pine text-on-pine">
             <Leaf size={18} aria-hidden />
           </span>
           <span className="font-display text-xl font-semibold tracking-tight">RénoSim</span>

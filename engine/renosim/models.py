@@ -89,6 +89,90 @@ class VentilationType(StrEnum):
     BALANCED_HEAT_RECOVERY = "balanced_heat_recovery"  # VMC double flux
 
 
+class GlazingOrientation(StrEnum):
+    """Dominant orientation of the glazed areas (simplified journey input).
+
+    Modulates the solar gains with the 3CL C1 orientation ratios (§18.5);
+    ``UNKNOWN`` means balanced/unknown glazing and applies no modifier, which
+    reproduces the calibrated deviation D-06 behaviour.
+    """
+
+    SOUTH = "south"
+    EAST_WEST = "east_west"
+    NORTH = "north"
+    UNKNOWN = "unknown"
+
+
+class SolarShading(StrEnum):
+    """Simplified distant-mask level, mapped onto the 3CL Fe2 factors (§6.2.2.2.1).
+
+    ``CLEAR_OR_UNKNOWN`` applies no reduction (the calibrated solar coefficient
+    already embeds an average masking level); ``PARTIAL`` matches obstacles of
+    15-30°, ``HEAVY`` obstacles of 30-60°.
+    """
+
+    CLEAR_OR_UNKNOWN = "clear_or_unknown"
+    PARTIAL = "partial"
+    HEAVY = "heavy"
+
+
+class SolarProtectionLevel(StrEnum):
+    """Exterior solar protections of the bays facing South, East, West or roof.
+
+    Annexe 9 of the DPE arrêté (passive summer-comfort indicator): the level
+    is "insufficient" as soon as one such bay lacks an exterior protection
+    (shutters, external blinds, BSO...). The guided form asks the user
+    directly instead of collecting per-bay data (deviation D-19);
+    ``UNKNOWN`` is treated as ``FULL`` (protections are directly observable,
+    the default only serves the pressed user).
+    """
+
+    FULL = "full"
+    PARTIAL = "partial"
+    NONE = "none"
+    UNKNOWN = "unknown"
+
+
+class CoolingPeriod(StrEnum):
+    """Installation period of the cooling generator, selecting the SEER bracket.
+
+    3CL §10.3 SEER table; ``UNKNOWN`` maps to the most recent bracket
+    (documented convention D-20 — the French residential AC stock is
+    overwhelmingly recent).
+    """
+
+    BEFORE_2008 = "before_2008"
+    Y2008_2014 = "2008_2014"
+    FROM_2015 = "from_2015"
+    UNKNOWN = "unknown"
+
+
+class DwellingType(StrEnum):
+    """Dwelling type: single-family house (V1) or apartment (V1.1, #15).
+
+    Selects the collective variants of the conventional tables: Nadeq
+    (3CL §11.1), Q4Pa-conv airtightness (§4), ventilation auxiliaries (§5)
+    and the intermittence I0 table (§8).
+    """
+
+    HOUSE = "house"
+    APARTMENT = "apartment"
+
+
+class InertiaClass(StrEnum):
+    """Thermal inertia class selecting the 3CL utilization-factor exponent (§6.1).
+
+    The official method derives the class from the wall/floor composition; the
+    simplified journey asks a single question instead. ``UNKNOWN`` keeps the
+    Phase 3 calibrated behaviour (medium inertia, deviation D-14).
+    """
+
+    LIGHT = "light"
+    MEDIUM = "medium"
+    HEAVY = "heavy"
+    UNKNOWN = "unknown"
+
+
 @dataclass(frozen=True, slots=True)
 class OpaqueEnvelopeElement:
     """A single opaque envelope surface (wall, floor, roof) contributing to GV.
@@ -248,6 +332,43 @@ class Building:
     number_of_occupants
         Household size, used for DHW needs in personalized mode (§4.2). Ignored in
         conventional mode, where DHW needs derive from ``living_area_m2``.
+    glazing_orientation
+        Dominant orientation of the glazed areas; ``UNKNOWN`` (default) applies no
+        solar-orientation modifier.
+    solar_shading
+        Simplified distant-mask level; ``CLEAR_OR_UNKNOWN`` (default) applies no
+        reduction.
+    inertia
+        Thermal inertia class for the utilization-factor exponent; ``UNKNOWN``
+        (default) behaves as medium inertia (deviation D-14).
+    dwelling_type
+        House (default) or apartment; apartments use the collective variants
+        of the conventional tables (D-18).
+    single_exposed_facade
+        True for a non-through apartment (one facade to the outside): the
+        infiltration shelter coefficients e/f switch to the "une seule facade
+        exposee" column (3CL §4).
+    exterior_solar_protections
+        Exterior solar protections of the S/E/W/roof bays, for the passive
+        summer-comfort indicator (annexe 9, #16 brique 1).
+    has_fixed_air_circulators
+        True when the dwelling has FIXED ceiling/wall fans (brasseurs d'air
+        fixes; mobile fans do not count, annexe 9 §1.2).
+    has_air_conditioning
+        True when the dwelling has an active cooling system: its conventional
+        consumption Cfr (3CL §10) is then part of the assessed uses (D-02
+        lifted, #16 brique 2). The cooling NEED Bfr is computed either way.
+    air_conditioning_period
+        Installation period of the cooling generator (SEER bracket, §10.3).
+        Ignored when ``has_air_conditioning`` is False.
+    roof_insulated
+        Declared insulation state of the roof/cover for the summer-comfort
+        indicator; ``None`` (unknown) applies the official annexe 9 default
+        (considered insulated from 1975 onwards).
+    through_dwelling
+        Whether the dwelling is through-oriented (openings on opposite
+        facades); ``None`` derives it: houses are assumed through, apartments
+        use ``single_exposed_facade`` (deviation D-19).
     """
 
     living_area_m2: float
@@ -262,6 +383,17 @@ class Building:
     dhw_system: DHWSystem
     ventilation_system: VentilationSystem
     number_of_occupants: int | None = None
+    glazing_orientation: GlazingOrientation = GlazingOrientation.UNKNOWN
+    solar_shading: SolarShading = SolarShading.CLEAR_OR_UNKNOWN
+    inertia: InertiaClass = InertiaClass.UNKNOWN
+    dwelling_type: DwellingType = DwellingType.HOUSE
+    single_exposed_facade: bool = False
+    exterior_solar_protections: SolarProtectionLevel = SolarProtectionLevel.UNKNOWN
+    has_fixed_air_circulators: bool = False
+    has_air_conditioning: bool = False
+    air_conditioning_period: CoolingPeriod = CoolingPeriod.UNKNOWN
+    roof_insulated: bool | None = None
+    through_dwelling: bool | None = None
 
     def __post_init__(self) -> None:
         if self.living_area_m2 <= 0:
