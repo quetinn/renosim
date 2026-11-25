@@ -239,6 +239,7 @@ class TestHeatingReplacementDHW:
     def test_explicit_dhw_upgrade_wins_whatever_the_order(self) -> None:
         base = house_1970_oil_uninsulated()
         stove = HeatingReplacement(HeatingGeneratorType.WOOD_PELLET_STOVE)
-        for bundle in ([stove, DHWUpgrade()], [DHWUpgrade(), stove]):
+        bundles: list[list[RenovationMeasure]] = [[stove, DHWUpgrade()], [DHWUpgrade(), stove]]
+        for bundle in bundles:
             after = apply_measures(base, bundle)
             assert after.dhw_system.generator_type is DHWGeneratorType.HEAT_PUMP_WATER_HEATER
