@@ -134,7 +134,7 @@ export function Landing({ onOpenMethod }: { onOpenMethod: () => void }) {
           </Reveal>
           <Reveal delay={0.1} className="text-center sm:text-left">
             <p className="font-display text-4xl font-semibold text-pine">
-              <CountUp value={86.7} format={(v) => `${v.toFixed(1).replace(".", ",")} %`} />
+              <CountUp value={87.0} format={(v) => `${v.toFixed(1).replace(".", ",")} %`} />
             </p>
             <p className="mt-1 text-sm text-ink-soft">
               d'étiquettes prédites à ±1 classe du diagnostic officiel (plus fiable pour le gaz,

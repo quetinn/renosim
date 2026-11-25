@@ -114,12 +114,19 @@ Format : un écart = une entrée. Statut : `décidé` (au niveau du brief, pas e
 - **Impact :** faible pour les cas types ; les valeurs Re/Rd/Rr elles-mêmes sont les valeurs
   officielles (§12.1-12.3).
 
-## D-10 — Éclairage : heures moyennes nationales
+## D-10 — Éclairage : heures de fonctionnement — RÉSOLU (25/11/2026)
 
-- **Statut :** codé (`systems.py`, `lighting_kwh`)
-- **3CL officielle :** Nh mensuel par zone climatique (croisement lever/coucher du soleil).
-- **RénoSim :** forfait annuel Nh = 2123 h (moyenne nationale citée §6.1 de l'annexe).
-- **Impact :** négligeable (l'éclairage pèse ~2-3 kWhep/m²/an).
+- **Statut :** RÉSOLU — conforme (`systems.py`, `lighting_kwh` ; table `lighting` de
+  `system_efficiencies.json`).
+- **3CL officielle :** §16.1 de l'annexe 1 (p.102-103) : `Cecl = Σj C·Pecl·Nhj/1000` avec C = 0,9,
+  Pecl = 1,4 W/m² et Nhj tabulé par zone climatique et par mois (1 445 à 1 566 h/an).
+- **Historique :** jusqu'au 25/11/2026, le moteur utilisait une durée unique de 2 123 h
+  présentée comme une « moyenne nationale », soit +41 % par rapport aux DPE publiés.
+  L'analyse par usage (note de validation v2.1, §5.4) l'a révélé.
+- **RénoSim :** table mensuelle encodée telle que publiée ; seule la somme annuelle sert, car
+  l'éclairage n'interagit avec aucun autre poste dans le moteur.
+- **Impact mesuré (campagne v6) :** éclairage moteur/DPE 1,41 → 1,00 ; biais Cep test
+  +35,0 → +33,3 kWhep/m², ±1 classe 86,7 → 87,0 %.
 
 ## D-11 — Auxiliaires de chauffage et d'ECS — RÉSOLU (10/07/2026, simplifications documentées)
 
@@ -244,8 +251,8 @@ Format : un écart = une entrée. Statut : `décidé` (au niveau du brief, pas e
   transmet pas la hauteur ADEME au facteur d'intermittence.
 - **Justification :** mêmes hypothèses que la campagne de validation — les métriques publiées
   restent donc représentatives de ce que produit l'app avec les défauts (note v2 du
-  25/11/2026 : 86,7 % à ±1 classe sur l'échantillon test indépendant, 90,2 % sur la
-  calibration).
+  25/11/2026, campagne v6 : 87,0 % à ±1 classe sur l'échantillon test indépendant, 90,3 %
+  sur la calibration).
 - **Impact :** incertitude géométrique de l'ordre de ±10-15 % sur les surfaces déperditives pour
   les maisons de forme atypique quand les métrés ne sont pas saisis.
 

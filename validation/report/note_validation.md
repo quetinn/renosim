@@ -1,6 +1,7 @@
 # Note technique de validation — moteur RénoSim vs base DPE ADEME (v2)
 
-**Date :** 25 novembre 2026 (v2.1 : analyse par version de méthode, §5.4) · **Moteur :** `renosim` 0.5.0 (méthode 3CL-DPE 2021 simplifiée) ·
+**Date :** 25 novembre 2026 (v2.1 : analyse par version de méthode, §5.4 ; v2.2 : éclairage
+officiel, campagne v6) · **Moteur :** `renosim` 0.5.0 (méthode 3CL-DPE 2021 simplifiée) ·
 **Auteur :** Noé Quetin · **Version précédente :** v1 du 4 juillet 2026 (§9)
 
 > La v2 ajoute ce qui manquait à la v1 : un **échantillon de test indépendant** (jamais vu
@@ -10,15 +11,20 @@
 
 ## 0. Résumé
 
+Campagne **v6** (moteur actuel, éclairage officiel §16.1) :
+
 | | Calibration (n = 11 625) | **Test indépendant (n = 11 496)** |
 |---|---:|---:|
-| Biais Cep (kWhep/m²/an) | +12,9 [11,7 ; 14,1] | **+35,0** [33,6 ; 36,4] |
-| MAE (kWhep/m²/an) | 45,9 | 57,0 |
-| Accord exact d'étiquette | 49,8 % [48,9 ; 50,7] | **44,4 %** [43,6 ; 45,3] |
-| Accord à ±1 classe | 90,2 % [89,6 ; 90,7] | **86,7 %** [86,1 ; 87,4] |
-| ±1 classe, repondéré selon le parc | 81,3 % [79,4 ; 82,9] | **71,4 %** [69,3 ; 73,3] |
+| Biais Cep (kWhep/m²/an) | +11,3 [10,1 ; 12,5] | **+33,3** [31,9 ; 34,7] |
+| MAE (kWhep/m²/an) | 45,7 | 56,3 |
+| Accord exact d'étiquette | 50,0 % [49,0 ; 50,9] | **44,9 %** [44,0 ; 45,8] |
+| Accord à ±1 classe | 90,3 % [89,8 ; 90,9] | **87,0 %** [86,4 ; 87,6] |
+| ±1 classe, repondéré selon le parc | 81,4 % [79,6 ; 83,1] | **71,7 %** [69,6 ; 73,6] |
 
-*Crochets : intervalle de confiance à 95 % (bootstrap percentile, 1 000 tirages, graine 2026).*
+*Crochets : intervalle de confiance à 95 % (bootstrap percentile, 1 000 tirages, graine 2026).
+Campagne v5 (avant la correction de l'éclairage), test : biais +35,0, exact 44,4 %, ±1 classe
+86,7 %, repondéré 71,4 %. Les analyses détaillées des §5.1 à §5.4 portent sur la v5 ; la
+correction de l'éclairage ne change pas leurs conclusions.*
 
 1. **Le critère ±1 classe ≥ 90 % (CLAUDE.md §7.2) n'est pas atteint sur données
    indépendantes.** Le chiffre publié en v1 (90,8 %), puis en v4 (90,2 %), était mesuré sur
@@ -30,8 +36,8 @@
    versions 2.1 à 2.5 (2022-2025), le moteur surestime d'environ **+40 kWhep/m²** dans **les
    deux** échantillons (§5.2, §5.4).
    **Sur les DPE en version actuelle (2.6) du test indépendant, le critère est atteint :**
-   ±1 classe **93,6 %** [92,5 ; 94,7], exact 55,1 %, biais +3,7 (n = 1 885). Repondéré selon le
-   parc : 86,3 % [81,9 ; 90,2].
+   ±1 classe **93,6 %** [92,4 ; 94,7], exact 55,2 %, biais +2,3 (n = 1 885, v6). Repondéré selon
+   le parc : 86,3 % [81,9 ; 90,2].
 3. Repondérés selon la répartition réelle des maisons diagnostiquées (58 % construites avant
    1975, 46 % chauffées à l'électricité), les résultats sont nettement moins bons, car ces
    segments sont justement les plus faibles du moteur.
@@ -110,6 +116,7 @@ Toutes les itérations jusqu'à v4 ont été mesurées sur l'échantillon de cal
 | v3 | Inertie ADEME (M-8), échantillon v2 | +12,1 | 45,7 | 50,1 % | 90,3 % |
 | v4 | Refroidissement §10 (D-20) | +12,9 | 45,9 | 49,8 % | 90,2 % |
 | **v5** | **Aucun changement de moteur : évaluation sur l'échantillon test** | **+35,0** | **57,0** | **44,4 %** | **86,7 %** |
+| **v6** | **Éclairage : heures Nh officielles par zone et par mois (§16.1), test** | **+33,3** | **56,3** | **44,9 %** | **87,0 %** |
 
 Les itérations v2 à v4 ajoutent des éléments officiels de la méthode. Chacune dégrade légèrement
 les métriques de calibration, et elles ont été conservées par fidélité méthodologique. La v5
@@ -225,11 +232,13 @@ pour l'ECS (1,47 contre 1,52). Ce n'est donc pas un coefficient global : il faut
 **type de générateur** (champ `type_generateur_chauffage_principal`) et à la composition des
 sous-populations (part des PAC dans « électricité », notamment).
 
-**4. Un écart indépendant de la version : l'éclairage.** Le moteur compte 2,7 kWh_ef/m² contre
-1,9 publié, dans toutes les versions et pour toutes les énergies (+41 %). L'enjeu absolu est
-faible (≈ 1,9 kWhep/m² à 2,3), mais la constance du rapport désigne un paramètre mal encodé dans
-le forfait d'éclairage (D-10 : heures de fonctionnement, puissance ou coefficient de commande).
-C'est à vérifier contre le §16 de l'annexe 1.
+**4. Un écart indépendant de la version : l'éclairage — corrigé en v6.** Le moteur comptait
+2,7 kWh_ef/m² contre 1,9 publié, dans toutes les versions et pour toutes les énergies (+41 %).
+Cause : une durée « moyenne nationale » de 2 123 h, alors que le §16.1 de l'annexe 1 (p.102-103)
+tabule les heures de fonctionnement par zone et par mois, de 1 445 à 1 566 h/an. Avec la table
+officielle, 0,9 × 1,4 × 1 500 / 1 000 = 1,89 kWh/m² en H1a, et le rapport moteur/DPE tombe à
+**1,000-1,007** sur les deux échantillons (`bias_analysis_v6.json`). Effet sur les métriques :
+voir la v6 du §0 (environ −1,7 kWhep/m²).
 
 **Lecture.** Le moteur a été calé, sans que ce soit voulu, sur des DPE de la version de méthode
 2.6 (2026), qui est la version en vigueur et donc **celle que l'outil doit reproduire**. Sur ces
@@ -265,18 +274,17 @@ l'étiquette selon la réglementation du jour. Les versions antérieures sont ra
 d'information. Ce choix devra être annoncé dans la note avant la prochaine calibration, et pas
 choisi après coup selon les résultats.
 
-**Suites, par ordre de priorité :**
-1. **Éclairage** : vérifier le forfait §16 de l'annexe 1 (+41 % constant, §5.4-4).
-2. **Tirer un nouvel échantillon de calibration aléatoire, limité à la version en vigueur**
+**Suites, par ordre de priorité** (l'éclairage, ex-priorité 1, est corrigé en v6) :
+1. **Tirer un nouvel échantillon de calibration aléatoire, limité à la version en vigueur**
    (`--random`, disjoint du test). Calibrer uniquement dessus, puis mesurer une seule fois sur le
    sous-ensemble v2.6 du test v1 (et sur un test v2 tiré de la même façon).
-3. **Électricité et bâti d'avant 1975** : analyse par type de générateur (part des PAC, joule,
+2. **Électricité et bâti d'avant 1975** : analyse par type de générateur (part des PAC, joule,
    ECS électrique) et leviers v1.1 de l'audit (matériau des murs, ponts thermiques linéiques,
    inertie Th-I).
-4. **Versions antérieures** : comprendre ce qui change dans la chaîne de génération entre les
+3. **Versions antérieures** : comprendre ce qui change dans la chaîne de génération entre les
    versions 2.5 et 2.6 (notes de version des logiciels, contrôles de cohérence ADEME), pour
    documenter l'écart plutôt que le corriger.
-5. **Publier les chiffres complets** (calibration, test, version en vigueur, brut et repondéré)
+4. **Publier les chiffres complets** (calibration, test, version en vigueur, brut et repondéré)
    dans le README et l'app.
 
 **Critère exact (60 %).** Il reste hors d'atteinte (44 % au test). La v1 l'attribuait à un manque
@@ -315,3 +323,5 @@ exactement les mêmes lignes ; les fichiers de résultats committés font foi po
 - **v2.1 (25/11/2026)** : analyse par version de méthode et par usage ; pas de recalcul
   rétroactif ; critère atteint sur les DPE en version actuelle (93,6 %, brut) mais pas une fois
   repondéré (86,3 %) ; écart d'éclairage constant de +41 % identifié.
+- **v2.2 (25/11/2026)** : éclairage corrigé (heures officielles du §16.1) ; campagne v6 : test
+  ±1 classe 87,0 %, biais +33,3 ; DPE v2.6 du test 93,6 %, biais +2,3.

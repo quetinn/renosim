@@ -58,8 +58,8 @@ npm run dev
 - [x] **Phase 2** — Gestes de rénovation & économie
 - [x] **Phase 3** — Validation contre la base DPE ADEME + note technique
       — note v2 du 25/11/2026 ([note](validation/report/note_validation.md)) : sur un échantillon
-      **test indépendant** de 11 496 maisons, 86,7 % d'accord à ±1 classe (critère de 90 % non
-      atteint ; 90,2 % sur l'échantillon de calibration), biais +35 kWhep/m²/an ; 93,6 % sur les
+      **test indépendant** de 11 496 maisons, 87,0 % d'accord à ±1 classe (critère de 90 % non
+      atteint ; 90,3 % sur l'échantillon de calibration), biais +33 kWhep/m²/an ; 93,6 % sur les
       DPE de la version de méthode actuelle (2.6), 86,3 % une fois repondéré selon le parc ;
       points faibles identifiés : électricité, bâti d'avant 1975, DPE des versions 2.1 à 2.5
 - [x] **Phase 4** — App React + Pyodide : landing, parcours guidé (4 étapes), situation

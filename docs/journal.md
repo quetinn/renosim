@@ -583,3 +583,15 @@ tirer un nouvel échantillon de calibration aléatoire ; ne jamais régler sur l
 **Prochaines étapes :** forfait d'éclairage ; annoncer la référence « version de méthode en
 vigueur » puis tirer un échantillon de calibration aléatoire limité à la v2.6 ; analyse par
 type de générateur (électricité, PAC, bois) ; leviers v1.1 sur le bâti ancien.
+
+## 2026-11-25 (suite 4) — Correction de l'éclairage (D-10 résolu)
+
+- Lecture du §16.1 de l'annexe 1 3CL consolidée (p.102-103, dans le navigateur, le site refusant
+  les accès automatisés) : Nh est tabulé par zone et par mois (1 445 à 1 566 h/an). Le moteur
+  utilisait 2 123 h, d'où +41 %.
+- Table mensuelle encodée telle que publiée (les totaux annuels sont vérifiés par un test),
+  `lighting_kwh` corrigé, 3 tests calculés à la main (H1a 100 m² = 189,0 kWh ; H2c = 197,3 kWh).
+- Campagne v6 : éclairage moteur/DPE 1,000-1,007 ; test : biais +35,0 → +33,3, ±1 classe
+  86,7 → 87,0 %, exact 44,4 → 44,9 % ; DPE v2.6 du test : 93,6 %, biais +2,3. Note de validation
+  v2.2, D-10, app et README mis à jour.
+- État : 205/205 tests, ruff/format/mypy OK.
