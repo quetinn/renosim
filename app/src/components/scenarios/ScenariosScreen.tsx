@@ -133,6 +133,7 @@ export function ScenariosScreen() {
     params,
     updateParams,
     occupancy,
+    form,
     setView,
     simulationError,
   } = useAppState();
@@ -337,6 +338,14 @@ export function ScenariosScreen() {
                           <option value="condensing_boiler">Chaudière gaz à condensation</option>
                           <option value="wood_pellet_stove">Poêle à granulés</option>
                         </select>
+                        {params.heatingTarget === "wood_pellet_stove" &&
+                          form.dhw === "coupled_to_heating_system" && (
+                            <span className="mt-1.5 block font-normal text-ink-faint">
+                              Un poêle ne produit pas d'eau chaude : elle passe sur un ballon
+                              électrique, sauf si vous activez aussi le chauffe-eau
+                              thermodynamique.
+                            </span>
+                          )}
                       </label>
                     )}
                     {type === "ventilation_upgrade" && (

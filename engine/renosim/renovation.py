@@ -27,6 +27,7 @@ from renosim.models import (
     VentilationType,
     Window,
 )
+from renosim.systems import HYDRAULIC_GENERATORS
 from renosim.tables_io import load_table
 
 #: Default added thermal resistances (m2.K/W), usual "performant" levels
@@ -226,16 +227,24 @@ class HeatingReplacement:
             generator_age_years=0.0,
         )
         new_building = replace(building, heating_system=new_system)
-        # DHW coupled to the heating system follows the new generator's carrier.
-        if building.dhw_system.generator_type is DHWGeneratorType.COUPLED_TO_HEATING_SYSTEM:
-            new_building = replace(
-                new_building,
-                dhw_system=DHWSystem(
-                    generator_type=DHWGeneratorType.COUPLED_TO_HEATING_SYSTEM,
-                    energy_carrier=carrier,
-                ),
+        if building.dhw_system.generator_type is not DHWGeneratorType.COUPLED_TO_HEATING_SYSTEM:
+            return new_building
+        if self.new_generator in HYDRAULIC_GENERATORS:
+            # DHW coupled to the heating system follows the new generator's carrier.
+            new_dhw = DHWSystem(
+                generator_type=DHWGeneratorType.COUPLED_TO_HEATING_SYSTEM,
+                energy_carrier=carrier,
             )
-        return new_building
+        else:
+            # A generator without hydraulic network (pellet stove) cannot produce
+            # DHW: the coupled production moves to an electric storage water
+            # heater (audit 2026-11-25, §4.1). An explicit DHWUpgrade in the same
+            # bundle still overrides it, whatever the order.
+            new_dhw = DHWSystem(
+                generator_type=DHWGeneratorType.ELECTRIC_STORAGE,
+                energy_carrier=EnergyCarrier.ELECTRICITY,
+            )
+        return replace(new_building, dhw_system=new_dhw)
 
 
 @dataclass(frozen=True, slots=True)

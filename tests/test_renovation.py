@@ -210,3 +210,34 @@ class TestSolarProtectionInstallation:
         before = house_1970_oil_uninsulated()
         after = SolarProtectionInstallation().apply(before)
         assert simulate(after).primary_energy_kwh_m2 == simulate(before).primary_energy_kwh_m2
+
+
+class TestHeatingReplacementDHW:
+    """A boiler-coupled DHW follows the new generator only if it can serve it."""
+
+    def test_coupled_dhw_follows_a_hydraulic_generator(self) -> None:
+        base = house_1970_oil_uninsulated()
+        assert base.dhw_system.generator_type is DHWGeneratorType.COUPLED_TO_HEATING_SYSTEM
+        after = HeatingReplacement(HeatingGeneratorType.CONDENSING_BOILER).apply(base)
+        assert after.dhw_system.generator_type is DHWGeneratorType.COUPLED_TO_HEATING_SYSTEM
+        assert after.dhw_system.energy_carrier is EnergyCarrier.NATURAL_GAS
+
+    def test_pellet_stove_cannot_produce_dhw(self) -> None:
+        # A stove has no hydraulic network: the coupled DHW must move to an
+        # electric storage water heater instead of being "produced by the stove"
+        # (audit 2026-11-25, §4.1).
+        base = house_1970_oil_uninsulated()
+        after = HeatingReplacement(HeatingGeneratorType.WOOD_PELLET_STOVE).apply(base)
+        assert after.dhw_system.generator_type is DHWGeneratorType.ELECTRIC_STORAGE
+        assert after.dhw_system.energy_carrier is EnergyCarrier.ELECTRICITY
+        result = simulate(after)
+        assert result.final_energy_kwh_by_carrier.get(EnergyCarrier.ELECTRICITY, 0.0) > (
+            result.final_energy_kwh_by_use["dhw"]
+        )
+
+    def test_explicit_dhw_upgrade_wins_whatever_the_order(self) -> None:
+        base = house_1970_oil_uninsulated()
+        stove = HeatingReplacement(HeatingGeneratorType.WOOD_PELLET_STOVE)
+        for bundle in ([stove, DHWUpgrade()], [DHWUpgrade(), stove]):
+            after = apply_measures(base, bundle)
+            assert after.dhw_system.generator_type is DHWGeneratorType.HEAT_PUMP_WATER_HEATER

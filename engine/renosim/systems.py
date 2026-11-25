@@ -327,7 +327,8 @@ def ventilation_auxiliary_kwh(building: Building) -> float:
 
 
 #: Generators with a central hydraulic network -> heating circulator (§15.2).
-_HYDRAULIC_GENERATORS = frozenset(
+#: Only these can also produce a boiler-coupled DHW (renovation.py).
+HYDRAULIC_GENERATORS = frozenset(
     {
         HeatingGeneratorType.STANDARD_BOILER,
         HeatingGeneratorType.LOW_TEMPERATURE_BOILER,
@@ -392,7 +393,7 @@ def heating_auxiliary_kwh(
     """
     total = _generation_aux_kwh(building, heating_needs_kwh)
 
-    if building.heating_system.generator_type in _HYDRAULIC_GENERATORS:
+    if building.heating_system.generator_type in HYDRAULIC_GENERATORS:
         aux = load_table("system_efficiencies")["auxiliaries"]
         circ = aux["circulator"]
         sh = building.living_area_m2
