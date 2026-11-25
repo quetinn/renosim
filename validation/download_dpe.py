@@ -7,13 +7,18 @@ Ouverte v2.0). Raw data is NEVER committed (CLAUDE.md rule 6): output goes to
 ``data/*.jsonl`` which is gitignored.
 
 Sampling: stratified by construction period x climate zone x main heating
-energy, taking up to ``--per-stratum`` rows per stratum in dataset order.
-This is deterministic but not random within a stratum — acceptable for a
-validation of physical consistency, documented as a limitation in the report.
+energy, taking up to ``--per-stratum`` rows per stratum. By default rows come
+in dataset order (deterministic, not random — the calibration samples
+dpe_sample*.jsonl were drawn this way). ``--random`` uses the API's
+reproducible pseudo-random order (``sort=_rand``) and ``--exclude`` drops every
+``numero_dpe`` already present in the given files: this is how the independent
+TEST sample is drawn (audit 2026-11-25 §3.4).
 
 Usage:
     python validation/download_dpe.py [--per-stratum 30] [--out data/dpe_sample.jsonl]
     python validation/download_dpe.py --building-type appartement --out data/dpe_apartments.jsonl
+    python validation/download_dpe.py --random --out data/dpe_test_v1.jsonl
+        --exclude data/dpe_sample.jsonl data/dpe_sample_v2.jsonl
 """
 
 from __future__ import annotations
@@ -112,7 +117,12 @@ ENERGIES = [
 
 
 def fetch_stratum(
-    period: str, zone: str, energy: str, size: int, building_type: str = "maison"
+    period: str,
+    zone: str,
+    energy: str,
+    size: int,
+    building_type: str = "maison",
+    sort: str | None = None,
 ) -> list[dict[str, object]]:
     """Fetch up to ``size`` rows of one building type for one stratum."""
     qs = (
@@ -120,11 +130,12 @@ def fetch_stratum(
         f'AND zone_climatique:"{zone}" '
         f'AND type_energie_principale_chauffage:"{energy}"'
     )
-    params = urllib.parse.urlencode(
-        {"size": str(size), "qs": qs, "select": ",".join(SELECT_COLUMNS)}
-    )
+    query = {"size": str(size), "qs": qs, "select": ",".join(SELECT_COLUMNS)}
+    if sort is not None:
+        query["sort"] = sort
+    params = urllib.parse.urlencode(query)
     url = f"{API_BASE}?{params}"
-    request = urllib.request.Request(url, headers={"User-Agent": "renosim-validation/0.3"})
+    request = urllib.request.Request(url, headers={"User-Agent": "renosim-validation/0.4"})
     with urllib.request.urlopen(request, timeout=60) as response:
         payload = json.loads(response.read().decode("utf-8"))
     results: list[dict[str, object]] = payload.get("results", [])
@@ -136,18 +147,33 @@ def main() -> None:
     parser.add_argument("--per-stratum", type=int, default=30)
     parser.add_argument("--out", type=Path, default=Path("data/dpe_sample.jsonl"))
     parser.add_argument("--building-type", choices=["maison", "appartement"], default="maison")
+    parser.add_argument(
+        "--random", action="store_true", help="reproducible pseudo-random order (sort=_rand)"
+    )
+    parser.add_argument(
+        "--exclude", type=Path, nargs="*", default=[], help="JSONL files whose DPE to skip"
+    )
     args = parser.parse_args()
+
+    excluded: set[str] = set()
+    for path in args.exclude:
+        with path.open(encoding="utf-8") as f:
+            excluded.update(str(json.loads(line).get("numero_dpe")) for line in f if line.strip())
+    print(f"excluded DPE ids: {len(excluded)}")
+    sort = "_rand" if args.random else None
+    # Over-fetch when excluding so each stratum can still be filled.
+    fetch_size = args.per_stratum * 2 if excluded else args.per_stratum
 
     args.out.parent.mkdir(parents=True, exist_ok=True)
     total = 0
-    seen: set[str] = set()
+    seen: set[str] = set(excluded)
     with args.out.open("w", encoding="utf-8") as out:
         for period in PERIODS:
             for zone in ZONES:
                 for energy in ENERGIES:
                     try:
                         rows = fetch_stratum(
-                            period, zone, energy, args.per_stratum, args.building_type
+                            period, zone, energy, fetch_size, args.building_type, sort
                         )
                     except Exception as exc:
                         print(f"WARN {period}/{zone}/{energy}: {exc}")
@@ -155,6 +181,8 @@ def main() -> None:
                         continue
                     kept = 0
                     for row in rows:
+                        if kept >= args.per_stratum:
+                            break
                         key = str(row.get("numero_dpe") or id(row))
                         if key in seen:
                             continue
