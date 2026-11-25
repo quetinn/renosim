@@ -17,13 +17,14 @@ import json
 import sys
 from collections import defaultdict
 from pathlib import Path
+from typing import cast
 
 sys.path.insert(0, str(Path(__file__).parent))
 
 from mapping import map_row
 from renosim import CONVENTIONAL, EnergyCarrier
 from renosim.needs import annual_needs
-from renosim.outputs import primary_energy_kwh
+from renosim.outputs import RegulationVintage, primary_energy_kwh
 from renosim.systems import cooling_consumption
 
 
@@ -77,7 +78,7 @@ def main() -> None:
             observed_cep = row.get("conso_refroidissement_ep")
             if observed_cep is not None:
                 cfr_ef = cooling_consumption(building, bfr).final_energy_kwh
-                vintage = "dpe_2026" if result.regulation_vintage == "dpe_2026" else "dpe_2021"
+                vintage = cast(RegulationVintage, result.regulation_vintage)
                 cfr_ep = primary_energy_kwh(cfr_ef, EnergyCarrier.ELECTRICITY, vintage)
                 cep_pairs.append((cfr_ep, float(observed_cep)))
 

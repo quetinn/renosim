@@ -12,8 +12,8 @@ import type {
   DpeClass,
   MeasureInput,
   MeasureType,
-  RegulationVintage,
   SimulationOutput,
+  VintageChoice,
 } from "../types/schema";
 import {
   DEFAULT_MEASURE_PARAMS,
@@ -38,7 +38,7 @@ interface PersistedState {
   occupancy: OccupancyState;
   params: MeasureParams;
   activeMeasures: MeasureType[];
-  vintage: RegulationVintage;
+  vintage: VintageChoice;
 }
 
 /** Fill defaults on a raw snapshot (localStorage or shared URL); null if unusable. */
@@ -53,7 +53,10 @@ function sanitizePersisted(data: Partial<PersistedState> | null): PersistedState
     occupancy: { ...INITIAL_OCCUPANCY, ...(data.occupancy ?? {}) },
     params: { ...DEFAULT_MEASURE_PARAMS, ...(data.params ?? {}) },
     activeMeasures: Array.isArray(data.activeMeasures) ? data.activeMeasures : [],
-    vintage: data.vintage === "dpe_2021" ? "dpe_2021" : "dpe_2026",
+    vintage:
+      data.vintage === "dpe_2021" || data.vintage === "dpe_2026" || data.vintage === "dpe_2027"
+        ? data.vintage
+        : "current",
   };
 }
 
@@ -168,8 +171,8 @@ interface AppStateValue {
   params: MeasureParams;
   updateParams: (patch: Partial<MeasureParams>) => void;
 
-  vintage: RegulationVintage;
-  setVintage: (vintage: RegulationVintage) => void;
+  vintage: VintageChoice;
+  setVintage: (vintage: VintageChoice) => void;
 
   /** Shareable link embedding the current description in the URL fragment. */
   shareUrl: () => string;
@@ -201,7 +204,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     new Set(PERSISTED?.activeMeasures ?? []),
   );
   const [params, setParams] = useState<MeasureParams>(PERSISTED?.params ?? DEFAULT_MEASURE_PARAMS);
-  const [vintage, setVintage] = useState<RegulationVintage>(PERSISTED?.vintage ?? "dpe_2026");
+  const [vintage, setVintage] = useState<VintageChoice>(PERSISTED?.vintage ?? "current");
   const [output, setOutput] = useState<SimulationOutput | null>(null);
   const [simulationError, setSimulationError] = useState<string | null>(null);
 
@@ -233,7 +236,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     setOccupancy(INITIAL_OCCUPANCY);
     setActiveMeasures(new Set());
     setParams(DEFAULT_MEASURE_PARAMS);
-    setVintage("dpe_2026");
+    setVintage("current");
     setOutput(null);
     setSimulationError(null);
   }, []);

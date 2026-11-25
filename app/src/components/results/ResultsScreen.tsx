@@ -17,8 +17,8 @@ import { DWELLING_LABELS, HELP_TEXTS, USE_LABELS } from "../../i18n/fr";
 import { useEngine } from "../../pyodide/PyodideContext";
 import { useAppState } from "../../state/AppState";
 import { HEATING_SYSTEMS } from "../../state/model";
-import type { SimulationResult } from "../../types/schema";
-import { formatInt } from "../../utils/format";
+import type { RegulationVintage, SimulationResult } from "../../types/schema";
+import { formatInt, formatOneDecimal } from "../../utils/format";
 import { Button } from "../ui/Button";
 import { InfoTip } from "../ui/InfoTip";
 import { PageActions } from "../ui/PageActions";
@@ -28,6 +28,12 @@ import { HouseLossMap } from "./HouseLossMap";
 import { PrintHypotheses } from "./PrintHypotheses";
 import { ProjectsPanel } from "./ProjectsPanel";
 import { SummerComfortCard } from "./SummerComfortCard";
+
+const VINTAGE_LABELS: Record<RegulationVintage, string> = {
+  dpe_2021: "DPE 2021-2025",
+  dpe_2026: "DPE 2026",
+  dpe_2027: "DPE 2027",
+};
 
 // Recharts lives in its own lazy chunk: it is only fetched when a chart is shown.
 const LossesChart = lazy(() => import("./LossesChart"));
@@ -144,7 +150,8 @@ export function ResultsScreen() {
         <p className="mt-2 hidden text-xs leading-relaxed text-ink-soft print:block">
           Simulation RénoSim du {new Date().toLocaleDateString("fr-FR")} — mode{" "}
           {isPerso ? "personnalisé (l'étiquette reste conventionnelle)" : "conventionnel (DPE)"},
-          convention {vintage === "dpe_2026" ? "DPE en vigueur (2026)" : "DPE 2021-2025"}. Outil pédagogique — ne
+          convention {VINTAGE_LABELS[output.conventions.regulation_vintage]} (électricité ×
+          {formatOneDecimal(output.conventions.electricity_primary_energy_factor)}). Outil pédagogique — ne
           remplace ni un DPE officiel ni un audit énergétique.
         </p>
 
@@ -174,13 +181,17 @@ export function ResultsScreen() {
               <Segmented
                 name="Convention DPE"
                 options={[
-                  { value: "dpe_2026", label: "En vigueur (2026)" },
+                  { value: "current", label: "En vigueur" },
+                  { value: "dpe_2026", label: "DPE 2026" },
                   { value: "dpe_2021", label: "DPE 2021-2025" },
                 ]}
                 value={vintage}
                 onChange={setVintage}
               />
-              <InfoTip text="Depuis le 1er janvier 2026, le coefficient d'énergie primaire de l'électricité passe de 2,3 à 1,9 (arrêté du 13 août 2025). C'est la convention appliquée par défaut. « DPE 2021-2025 » permet de comparer avec un diagnostic émis avant 2026." />
+              <InfoTip text="Coefficient d'énergie primaire de l'électricité : 2,3 pour les DPE établis jusqu'au 31/12/2025, 1,9 en 2026 (arrêté du 13 août 2025), 1,7 à partir du 1er janvier 2027 (arrêté publié le 31 août 2026). « En vigueur » applique celui du jour ; les autres permettent de comparer avec un diagnostic plus ancien." />
+              <span className="tabular-nums">
+                (électricité × {formatOneDecimal(output.conventions.electricity_primary_energy_factor)})
+              </span>
             </div>
           </div>
 
@@ -323,6 +334,11 @@ export function ResultsScreen() {
                 unit="kgCO₂/an"
               />
             </div>
+            <p className="-mt-2 text-xs text-ink-faint">
+              Facture calculée avec les {output.conventions.energy_prices.label.charAt(0).toLowerCase()}
+              {output.conventions.energy_prices.label.slice(1)}
+              {isPerso ? ", sauf les prix que vous avez saisis" : ""}.
+            </p>
             <div className="rounded-2xl border border-line bg-surface p-5 shadow-card">
               <h3 className="text-sm font-semibold">Répartition par usage</h3>
               <ul className="mt-3 space-y-2.5">

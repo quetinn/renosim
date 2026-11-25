@@ -4,6 +4,8 @@ Label thresholds (annexe 5, arrêté 31/03/2021): A <70/6, B <110/11, C <180/30,
 D <250/50, E <330/70, F <420/100, G above. Final label = worst of the two.
 """
 
+from datetime import date
+
 import pytest
 
 from renosim.models import AltitudeClass, ClimateZone, EnergyCarrier
@@ -13,6 +15,7 @@ from renosim.outputs import (
     co2_emissions_kg,
     dpe_label,
     primary_energy_kwh,
+    regulation_vintage_in_force,
 )
 
 
@@ -23,10 +26,24 @@ def test_primary_energy_electricity_dpe_2021() -> None:
     assert primary_energy_kwh(1000.0, EnergyCarrier.NATURAL_GAS, "dpe_2021") == 1000.0
 
 
-def test_default_vintage_is_regulation_in_force() -> None:
-    # Since 2026-01-01 the DPE uses 1.9 for electricity (arrêté 13/08/2025):
-    # callers that do not choose a convention get the current one (D-13).
-    assert DEFAULT_REGULATION_VINTAGE == "dpe_2026"
+def test_vintage_in_force_follows_the_regulatory_calendar() -> None:
+    # 2.3 until 2025-12-31 (arrêtés du 31/03/2021), 1.9 in 2026 (arrêté du
+    # 13/08/2025), 1.7 from 2027-01-01 (arrêté published 31/08/2026, ministry
+    # press release) — D-13.
+    assert regulation_vintage_in_force(date(2025, 12, 31)) == "dpe_2021"
+    assert regulation_vintage_in_force(date(2026, 1, 1)) == "dpe_2026"
+    assert regulation_vintage_in_force(date(2026, 12, 31)) == "dpe_2026"
+    assert regulation_vintage_in_force(date(2027, 1, 1)) == "dpe_2027"
+    assert regulation_vintage_in_force(date(2020, 1, 1)) == "dpe_2021"  # before the first entry
+
+
+def test_default_vintage_is_the_one_in_force_today() -> None:
+    assert regulation_vintage_in_force(date.today()) == DEFAULT_REGULATION_VINTAGE
+
+
+def test_primary_energy_electricity_dpe_2027() -> None:
+    assert primary_energy_kwh(1000.0, EnergyCarrier.ELECTRICITY, "dpe_2027") == 1700.0
+    assert primary_energy_kwh(1000.0, EnergyCarrier.FUEL_OIL, "dpe_2027") == 1000.0
 
 
 def test_co2_emissions_per_use() -> None:
@@ -104,9 +121,14 @@ class TestSmallSurfaceThresholds:
 
 
 def test_energy_cost_flat_and_brackets() -> None:
-    # fuel oil flat rate: 10 000 kWh * 0.09142 = 914.2 EUR
-    assert annual_energy_cost_eur({EnergyCarrier.FUEL_OIL: 10000.0}) == pytest.approx(914.2)
-    # electricity 10 000 kWh -> bracket 5000-15000: 94 + 0.15735*10000 = 1667.5
-    assert annual_energy_cost_eur({EnergyCarrier.ELECTRICITY: 10000.0}) == pytest.approx(1667.5)
-    # natural gas 20 000 kWh -> bracket 2: 230 + 0.06533*20000 = 1536.6
-    assert annual_energy_cost_eur({EnergyCarrier.NATURAL_GAS: 20000.0}) == pytest.approx(1536.6)
+    # Tariffs of the arrêté du 25 mars 2024 (annexe 7, in force 2024-07-01).
+    # fuel oil flat rate: 10 000 kWh * 0.14821 = 1482.1 EUR
+    assert annual_energy_cost_eur({EnergyCarrier.FUEL_OIL: 10000.0}) == pytest.approx(1482.1)
+    # wood pellets flat rate: 10 000 kWh * 0.09897 = 989.7 EUR
+    assert annual_energy_cost_eur({EnergyCarrier.WOOD_PELLETS: 10000.0}) == pytest.approx(989.7)
+    # electricity 10 000 kWh -> bracket 5000-15000: 119 + 0.19726*10000 = 2091.6
+    assert annual_energy_cost_eur({EnergyCarrier.ELECTRICITY: 10000.0}) == pytest.approx(2091.6)
+    # electricity 20 000 kWh -> bracket >= 15000: 78 + 0.20001*20000 = 4078.2
+    assert annual_energy_cost_eur({EnergyCarrier.ELECTRICITY: 20000.0}) == pytest.approx(4078.2)
+    # natural gas 20 000 kWh -> bracket 5000-50000: 182 + 0.09488*20000 = 2079.6
+    assert annual_energy_cost_eur({EnergyCarrier.NATURAL_GAS: 20000.0}) == pytest.approx(2079.6)

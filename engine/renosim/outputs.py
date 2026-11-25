@@ -2,18 +2,34 @@
 
 from __future__ import annotations
 
+from datetime import date
 from typing import Literal, cast
 
 from renosim.models import AltitudeClass, ClimateZone, EnergyCarrier
 from renosim.tables_io import load_table
 
-RegulationVintage = Literal["dpe_2021", "dpe_2026"]
+RegulationVintage = Literal["dpe_2021", "dpe_2026", "dpe_2027"]
+REGULATION_VINTAGES: tuple[RegulationVintage, ...] = ("dpe_2021", "dpe_2026", "dpe_2027")
 
-#: Convention used when the caller does not pick one: the regulation in force
-#: (tables/emission_factors.json, ``default_regulation_vintage``; D-13).
-DEFAULT_REGULATION_VINTAGE: RegulationVintage = cast(
-    RegulationVintage, load_table("emission_factors")["default_regulation_vintage"]["value"]
-)
+
+def regulation_vintage_in_force(on: date) -> RegulationVintage:
+    """DPE primary-energy convention in force on a given date (D-13).
+
+    Reads ``regulation_vintage_schedule`` of tables/emission_factors.json: the
+    latest entry whose ``from`` date is not after ``on``; dates before the
+    first entry get the first convention.
+    """
+    entries = load_table("emission_factors")["regulation_vintage_schedule"]["entries"]
+    chosen = str(entries[0]["vintage"])
+    for entry in entries:
+        if date.fromisoformat(str(entry["from"])) <= on:
+            chosen = str(entry["vintage"])
+    return cast(RegulationVintage, chosen)
+
+
+#: Convention used when the caller does not pick one: the one in force on the
+#: day the engine is loaded (in the app: the day the page is opened).
+DEFAULT_REGULATION_VINTAGE: RegulationVintage = regulation_vintage_in_force(date.today())
 EnergyUse = Literal["heating", "dhw", "cooling", "lighting", "auxiliaries"]
 
 _CARRIER_KEY = {
@@ -40,8 +56,8 @@ def primary_energy_kwh(
     carrier
         Energy carrier.
     vintage
-        ``"dpe_2021"`` (electricity factor 2.3, DPEs issued 2021-2025) or
-        ``"dpe_2026"`` (1.9, in force since 2026-01-01).
+        ``"dpe_2021"`` (electricity factor 2.3, DPEs issued 2021-2025),
+        ``"dpe_2026"`` (1.9, 2026) or ``"dpe_2027"`` (1.7, from 2027-01-01).
     """
     factors = load_table("emission_factors")["primary_energy_factor"][vintage]
     if carrier is EnergyCarrier.ELECTRICITY:

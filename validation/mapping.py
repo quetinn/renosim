@@ -70,6 +70,7 @@ from __future__ import annotations
 import math
 import re
 from dataclasses import dataclass
+from datetime import date
 
 from renosim.models import (
     AltitudeClass,
@@ -90,6 +91,7 @@ from renosim.models import (
     VentilationType,
     Window,
 )
+from renosim.outputs import regulation_vintage_in_force
 from renosim.tables_io import load_table
 
 REFERENCE_YEAR = 2023
@@ -528,7 +530,9 @@ def map_row(row: dict[str, object]) -> MappingResult:
     )
     ges = row.get("emission_ges_5_usages_par_m2")
     dpe_date = str(row.get("date_etablissement_dpe") or "")
-    vintage = "dpe_2026" if dpe_date >= "2026-01-01" else "dpe_2021"
+    vintage = (
+        regulation_vintage_in_force(date.fromisoformat(dpe_date[:10])) if dpe_date else "dpe_2021"
+    )
     return MappingResult(
         building=building,
         reason=None,

@@ -21,11 +21,13 @@ import json
 import sys
 from collections import Counter, defaultdict
 from pathlib import Path
+from typing import cast
 
 sys.path.insert(0, str(Path(__file__).parent))
 
 from mapping import MappingResult, map_row
 from renosim import simulate
+from renosim.outputs import RegulationVintage
 
 LABELS = ["A", "B", "C", "D", "E", "F", "G"]
 
@@ -59,7 +61,7 @@ def main() -> None:
     errors: Counter[str] = Counter()
     for m in mapped:
         assert m.building is not None
-        vintage = "dpe_2026" if m.regulation_vintage == "dpe_2026" else "dpe_2021"
+        vintage = cast(RegulationVintage, m.regulation_vintage)
         try:
             sim = simulate(m.building, regulation_vintage=vintage)  # conventional
         except Exception as exc:

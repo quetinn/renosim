@@ -27,7 +27,7 @@ import {
   type MeasureInput,
   type MeasureType,
   type OccupancyInput,
-  type RegulationVintage,
+  type VintageChoice,
   type ScenarioInput,
   type SimulationPayload,
   type SolarProtectionLevel,
@@ -367,12 +367,13 @@ export function simulationPayload(
   occupancy: OccupancyState,
   active: ReadonlySet<MeasureType>,
   params: MeasureParams,
-  vintage: RegulationVintage,
+  vintage: VintageChoice,
   includeLabelTargets = false,
 ): SimulationPayload {
   return {
     schema_version: SCHEMA_VERSION,
-    regulation_vintage: vintage,
+    // "current": omitted, the engine applies the convention in force today.
+    ...(vintage === "current" ? {} : { regulation_vintage: vintage }),
     building: buildingInput(form),
     occupancy: occupancyInput(occupancy, form),
     scenarios: scenariosInput(active, params),
