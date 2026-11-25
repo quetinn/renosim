@@ -56,7 +56,7 @@ export function Landing({ onOpenMethod }: { onOpenMethod: () => void }) {
             >
               <span className="inline-flex items-center gap-2 rounded-full border border-line bg-surface px-4 py-1.5 text-xs font-semibold tracking-wide text-pine uppercase">
                 <Sparkles size={14} aria-hidden />
-                Simulateur ouvert & validé sur données ADEME
+                Simulateur ouvert & confronté aux données ADEME
               </span>
               <h1 className="font-display text-4xl leading-[1.08] font-semibold tracking-tight sm:text-5xl lg:text-6xl">
                 Votre maison peut faire{" "}
@@ -125,18 +125,20 @@ export function Landing({ onOpenMethod }: { onOpenMethod: () => void }) {
         <div className="mx-auto grid max-w-6xl gap-8 px-4 py-12 sm:grid-cols-3 sm:px-6">
           <Reveal className="text-center sm:text-left">
             <p className="font-display text-4xl font-semibold text-pine">
-              <CountUp value={11624} />
+              <CountUp value={11496} />
             </p>
             <p className="mt-1 text-sm text-ink-soft">
-              DPE officiels de la base ADEME comparés aux prédictions du moteur
+              DPE officiels tirés au hasard dans la base ADEME, jamais utilisés pour régler le
+              moteur
             </p>
           </Reveal>
           <Reveal delay={0.1} className="text-center sm:text-left">
             <p className="font-display text-4xl font-semibold text-pine">
-              <CountUp value={90.8} format={(v) => `${v.toFixed(1).replace(".", ",")} %`} />
+              <CountUp value={86.7} format={(v) => `${v.toFixed(1).replace(".", ",")} %`} />
             </p>
             <p className="mt-1 text-sm text-ink-soft">
-              d'étiquettes prédites à ±1 classe du diagnostic officiel
+              d'étiquettes prédites à ±1 classe du diagnostic officiel (plus fiable pour le gaz,
+              le fioul et les maisons de 1975 à 2012)
             </p>
           </Reveal>
           <Reveal delay={0.2} className="text-center sm:text-left">

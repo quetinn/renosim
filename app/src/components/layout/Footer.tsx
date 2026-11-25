@@ -40,7 +40,7 @@ export function Footer() {
           </nav>
         </div>
         <p className="mt-8 text-xs text-ink-faint">
-          Moteur inspiré de la méthode 3CL-DPE 2021 (simplifiée, écarts documentés) — validé sur
+          Moteur inspiré de la méthode 3CL-DPE 2021 (simplifiée, écarts documentés) — confronté à
           la base des DPE de l'ADEME. Licence MIT.
         </p>
       </div>

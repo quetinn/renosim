@@ -107,6 +107,7 @@ def main() -> None:
     parser.add_argument(
         "--weights", type=Path, default=None, help="stratum population counts (JSON)"
     )
+    parser.add_argument("--by-year", action="store_true", help="add a breakdown by DPE issue year")
     args = parser.parse_args()
 
     rejections: Counter[str] = Counter()
@@ -137,6 +138,7 @@ def main() -> None:
                 "pred_label": sim.label,
                 "obs_label": m.observed_label,
                 "stratum": m.stratum,
+                "year": m.dpe_year,
             }
         )
 
@@ -209,6 +211,27 @@ def main() -> None:
             "within1_met": within1 >= 0.90,
         },
     }
+
+    if args.by_year:
+        years: dict[str, list[dict[str, object]]] = defaultdict(list)
+        for p in predictions:
+            years[str(p["year"])].append(p)
+        report["by_dpe_year"] = {
+            year: {
+                "n": len(group),
+                "cep_bias_kwhep_m2": round(
+                    sum(float(p["pred_cep"]) - float(p["obs_cep"]) for p in group) / len(group),  # type: ignore[arg-type]
+                    1,
+                ),
+                "exact": round(
+                    _agreement([(str(p["pred_label"]), str(p["obs_label"])) for p in group])[0], 3
+                ),
+                "within1": round(
+                    _agreement([(str(p["pred_label"]), str(p["obs_label"])) for p in group])[1], 3
+                ),
+            }
+            for year, group in sorted(years.items())
+        }
 
     rows = [
         (float(p["pred_cep"]), float(p["obs_cep"]), str(p["pred_label"]), str(p["obs_label"]))  # type: ignore[arg-type]

@@ -243,7 +243,9 @@ Format : un écart = une entrée. Statut : `décidé` (au niveau du brief, pas e
   (`tables/conventions.json`) s'applique, comme dans la campagne de validation, qui ne
   transmet pas la hauteur ADEME au facteur d'intermittence.
 - **Justification :** mêmes hypothèses que la campagne de validation — les métriques publiées
-  (90,8 % à ±1 classe) restent donc représentatives de ce que produit l'app avec les défauts.
+  restent donc représentatives de ce que produit l'app avec les défauts (note v2 du
+  25/11/2026 : 86,7 % à ±1 classe sur l'échantillon test indépendant, 90,2 % sur la
+  calibration).
 - **Impact :** incertitude géométrique de l'ordre de ±10-15 % sur les surfaces déperditives pour
   les maisons de forme atypique quand les métrés ne sont pas saisis.
 

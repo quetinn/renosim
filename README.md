@@ -57,7 +57,10 @@ npm run dev
 - [x] **Phase 1** — Moteur cœur : enveloppe, besoins, systèmes, étiquettes, 2 modes
 - [x] **Phase 2** — Gestes de rénovation & économie
 - [x] **Phase 3** — Validation contre la base DPE ADEME + note technique
-      (11 624 maisons : biais +7,8 kWhep/m²/an, 90,8 % d'accord à ±1 classe — [note](validation/report/note_validation.md))
+      — note v2 du 25/11/2026 ([note](validation/report/note_validation.md)) : sur un échantillon
+      **test indépendant** de 11 496 maisons, 86,7 % d'accord à ±1 classe (critère de 90 % non
+      atteint ; 90,2 % sur l'échantillon de calibration), biais +35 kWhep/m²/an ; points faibles
+      identifiés : électricité, bâti d'avant 1975, DPE 2021-2025
 - [x] **Phase 4** — App React + Pyodide : landing, parcours guidé (4 étapes), situation
       (étiquette animée, déperditions, mode conventionnel/personnalisé), scénarios (6 gestes,
       3 bouquets, comparateur coût/gain), panneau « Comment est-ce calculé ? »
