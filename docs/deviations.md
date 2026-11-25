@@ -147,15 +147,20 @@ Format : un écart = une entrée. Statut : `décidé` (au niveau du brief, pas e
 
 ## D-13 — Coefficient d'énergie primaire électricité : choix du millésime
 
-- **Statut :** codé (`outputs.py`, paramètre `regulation_vintage`)
+- **Statut :** codé (`outputs.py`, paramètre `regulation_vintage`) — défaut 2026 depuis le 25/11/2026
 - **Contexte :** l'arrêté du 13 août 2025 (JORFTEXT000052134589) abaisse le coefficient de
   conversion EP de l'électricité de 2,3 à **1,9 au 1er janvier 2026**. Le brief (rédigé avant)
   mentionnait 2,3.
-- **RénoSim :** les deux conventions sont encodées ; **défaut V1 = 2,3 (`dpe_2021`)** pour rester
-  cohérent avec la base ADEME de validation (DPE émis 2021-2025). Le mode `dpe_2026` (1,9) est
-  disponible et sera exposé dans l'UI en Phase 4.
+- **RénoSim :** les deux conventions sont encodées. **Défaut = 1,9 (`dpe_2026`) depuis le
+  25/11/2026** (clé `default_regulation_vintage` de `emission_factors.json`, lue par
+  `simulate`, `assess_scenario`, le bridge et l'app) : l'étiquette affichée est celle de la
+  réglementation en vigueur. Jusque-là le défaut était 2,3 (`dpe_2021`), choix hérité de la
+  Phase 1. La convention `dpe_2021` reste sélectionnable dans l'app (« DPE 2021-2025 », pour
+  comparer avec un diagnostic émis avant 2026). La campagne de validation n'utilise pas le
+  défaut : elle passe le millésime correspondant à la date de chaque DPE (itération 5,
+  `validation/mapping.py`), donc les métriques publiées sont inchangées.
 - **Impact :** un logement tout-électrique gagne ~17 % de Cep en convention 2026 (souvent une
-  classe). Ce choix devra être affiché clairement dans l'app.
+  classe) ; le sélecteur de convention est visible sur l'écran Situation.
 
 ## D-14 — Tables U par groupe de zone et inertie fixe — PARTIELLEMENT LEVÉ (07/07/2026)
 

@@ -16,6 +16,7 @@ from renosim.models import Building, EnergyCarrier
 from renosim.needs import AnnualNeeds, annual_heating_hours, annual_needs
 from renosim.occupancy import CONVENTIONAL, OccupancyScenario
 from renosim.outputs import (
+    DEFAULT_REGULATION_VINTAGE,
     RegulationVintage,
     annual_energy_cost_eur,
     co2_emissions_kg,
@@ -58,7 +59,7 @@ class SimulationResult:
 def simulate(
     building: Building,
     scenario: OccupancyScenario = CONVENTIONAL,
-    regulation_vintage: RegulationVintage = "dpe_2021",
+    regulation_vintage: RegulationVintage = DEFAULT_REGULATION_VINTAGE,
 ) -> SimulationResult:
     """Run the full calculation chain for a building.
 
@@ -69,9 +70,9 @@ def simulate(
     scenario
         Occupancy scenario; defaults to the conventional DPE scenario.
     regulation_vintage
-        DPE primary-energy convention: ``"dpe_2021"`` (electricity 2.3, matches
-        the 2021-2025 ADEME validation dataset — V1 default) or ``"dpe_2026"``
-        (1.9, in force since 2026-01-01).
+        DPE primary-energy convention: ``"dpe_2026"`` (electricity 1.9, in
+        force since 2026-01-01 — default) or ``"dpe_2021"`` (2.3, DPEs issued
+        2021-2025, used by the validation for those DPEs).
 
     Returns
     -------

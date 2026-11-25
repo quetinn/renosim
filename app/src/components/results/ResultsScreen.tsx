@@ -144,7 +144,7 @@ export function ResultsScreen() {
         <p className="mt-2 hidden text-xs leading-relaxed text-ink-soft print:block">
           Simulation RénoSim du {new Date().toLocaleDateString("fr-FR")} — mode{" "}
           {isPerso ? "personnalisé (l'étiquette reste conventionnelle)" : "conventionnel (DPE)"},
-          convention {vintage === "dpe_2026" ? "DPE 2026" : "DPE 2021"}. Outil pédagogique — ne
+          convention {vintage === "dpe_2026" ? "DPE en vigueur (2026)" : "DPE 2021-2025"}. Outil pédagogique — ne
           remplace ni un DPE officiel ni un audit énergétique.
         </p>
 
@@ -174,13 +174,13 @@ export function ResultsScreen() {
               <Segmented
                 name="Convention DPE"
                 options={[
-                  { value: "dpe_2021", label: "DPE 2021" },
-                  { value: "dpe_2026", label: "DPE 2026" },
+                  { value: "dpe_2026", label: "En vigueur (2026)" },
+                  { value: "dpe_2021", label: "DPE 2021-2025" },
                 ]}
                 value={vintage}
                 onChange={setVintage}
               />
-              <InfoTip text="Depuis le 1er janvier 2026, le coefficient d'énergie primaire de l'électricité passe de 2,3 à 1,9 (arrêté du 13 août 2025). « DPE 2021 » correspond aux diagnostics émis entre 2021 et 2025." />
+              <InfoTip text="Depuis le 1er janvier 2026, le coefficient d'énergie primaire de l'électricité passe de 2,3 à 1,9 (arrêté du 13 août 2025). C'est la convention appliquée par défaut. « DPE 2021-2025 » permet de comparer avec un diagnostic émis avant 2026." />
             </div>
           </div>
 

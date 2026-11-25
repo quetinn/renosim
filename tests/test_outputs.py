@@ -8,6 +8,7 @@ import pytest
 
 from renosim.models import AltitudeClass, ClimateZone, EnergyCarrier
 from renosim.outputs import (
+    DEFAULT_REGULATION_VINTAGE,
     annual_energy_cost_eur,
     co2_emissions_kg,
     dpe_label,
@@ -20,6 +21,12 @@ def test_primary_energy_electricity_dpe_2021() -> None:
     assert primary_energy_kwh(1000.0, EnergyCarrier.ELECTRICITY, "dpe_2021") == 2300.0
     assert primary_energy_kwh(1000.0, EnergyCarrier.ELECTRICITY, "dpe_2026") == 1900.0
     assert primary_energy_kwh(1000.0, EnergyCarrier.NATURAL_GAS, "dpe_2021") == 1000.0
+
+
+def test_default_vintage_is_regulation_in_force() -> None:
+    # Since 2026-01-01 the DPE uses 1.9 for electricity (arrêté 13/08/2025):
+    # callers that do not choose a convention get the current one (D-13).
+    assert DEFAULT_REGULATION_VINTAGE == "dpe_2026"
 
 
 def test_co2_emissions_per_use() -> None:

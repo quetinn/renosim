@@ -11,7 +11,7 @@ Input schema (``schema_version`` = :data:`renosim.SCHEMA_VERSION`)::
 
     {
       "schema_version": "0.1",
-      "regulation_vintage": "dpe_2021" | "dpe_2026",        # optional
+      "regulation_vintage": "dpe_2026" | "dpe_2021",        # optional (2026)
       "building": {
         "living_area_m2": 100.0,
         "levels": 1,                                         # optional
@@ -101,7 +101,11 @@ from renosim.models import (
     Window,
 )
 from renosim.occupancy import CONVENTIONAL, OccupancyScenario
-from renosim.outputs import RegulationVintage, annual_energy_cost_eur
+from renosim.outputs import (
+    DEFAULT_REGULATION_VINTAGE,
+    RegulationVintage,
+    annual_energy_cost_eur,
+)
 from renosim.renovation import (
     DEFAULT_ROOF_ADDED_R,
     DEFAULT_WALL_ADDED_R,
@@ -769,7 +773,7 @@ def run_simulation(payload_json: str) -> str:
         raise ValueError(
             f"unsupported schema_version {version!r}; this engine speaks {SCHEMA_VERSION!r}"
         )
-    vintage_raw = str(payload.get("regulation_vintage", "dpe_2021"))
+    vintage_raw = str(payload.get("regulation_vintage", DEFAULT_REGULATION_VINTAGE))
     if vintage_raw not in ("dpe_2021", "dpe_2026"):
         raise ValueError(f"unknown regulation_vintage {vintage_raw!r}")
     vintage = cast(RegulationVintage, vintage_raw)

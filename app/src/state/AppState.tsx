@@ -53,7 +53,7 @@ function sanitizePersisted(data: Partial<PersistedState> | null): PersistedState
     occupancy: { ...INITIAL_OCCUPANCY, ...(data.occupancy ?? {}) },
     params: { ...DEFAULT_MEASURE_PARAMS, ...(data.params ?? {}) },
     activeMeasures: Array.isArray(data.activeMeasures) ? data.activeMeasures : [],
-    vintage: data.vintage === "dpe_2026" ? "dpe_2026" : "dpe_2021",
+    vintage: data.vintage === "dpe_2021" ? "dpe_2021" : "dpe_2026",
   };
 }
 
@@ -201,7 +201,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     new Set(PERSISTED?.activeMeasures ?? []),
   );
   const [params, setParams] = useState<MeasureParams>(PERSISTED?.params ?? DEFAULT_MEASURE_PARAMS);
-  const [vintage, setVintage] = useState<RegulationVintage>(PERSISTED?.vintage ?? "dpe_2021");
+  const [vintage, setVintage] = useState<RegulationVintage>(PERSISTED?.vintage ?? "dpe_2026");
   const [output, setOutput] = useState<SimulationOutput | null>(null);
   const [simulationError, setSimulationError] = useState<string | null>(null);
 
@@ -233,7 +233,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     setOccupancy(INITIAL_OCCUPANCY);
     setActiveMeasures(new Set());
     setParams(DEFAULT_MEASURE_PARAMS);
-    setVintage("dpe_2021");
+    setVintage("dpe_2026");
     setOutput(null);
     setSimulationError(null);
   }, []);

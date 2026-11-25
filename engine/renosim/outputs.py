@@ -2,12 +2,18 @@
 
 from __future__ import annotations
 
-from typing import Literal
+from typing import Literal, cast
 
 from renosim.models import AltitudeClass, ClimateZone, EnergyCarrier
 from renosim.tables_io import load_table
 
 RegulationVintage = Literal["dpe_2021", "dpe_2026"]
+
+#: Convention used when the caller does not pick one: the regulation in force
+#: (tables/emission_factors.json, ``default_regulation_vintage``; D-13).
+DEFAULT_REGULATION_VINTAGE: RegulationVintage = cast(
+    RegulationVintage, load_table("emission_factors")["default_regulation_vintage"]["value"]
+)
 EnergyUse = Literal["heating", "dhw", "cooling", "lighting", "auxiliaries"]
 
 _CARRIER_KEY = {

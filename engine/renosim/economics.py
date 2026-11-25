@@ -13,7 +13,7 @@ from dataclasses import dataclass
 
 from renosim.models import Building
 from renosim.occupancy import CONVENTIONAL, OccupancyScenario
-from renosim.outputs import RegulationVintage
+from renosim.outputs import DEFAULT_REGULATION_VINTAGE, RegulationVintage
 from renosim.renovation import RenovationMeasure, apply_measures
 from renosim.simulation import SimulationResult, simulate
 from renosim.tables_io import load_table
@@ -66,7 +66,7 @@ def assess_scenario(
     building: Building,
     measures: Sequence[RenovationMeasure],
     scenario: OccupancyScenario = CONVENTIONAL,
-    regulation_vintage: RegulationVintage = "dpe_2021",
+    regulation_vintage: RegulationVintage = DEFAULT_REGULATION_VINTAGE,
 ) -> ScenarioAssessment:
     """Simulate a renovation scenario and derive its economics.
 
