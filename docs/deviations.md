@@ -10,12 +10,16 @@ Format : un écart = une entrée. Statut : `décidé` (au niveau du brief, pas e
 
 ---
 
-## D-01 — Périmètre : maisons individuelles uniquement
+## D-01 — Périmètre : maisons individuelles et appartements, pas d'immeuble entier
 
-- **Statut :** décidé (brief §2.1)
-- **3CL officielle :** couvre maisons, appartements et immeubles collectifs.
-- **RénoSim :** maisons individuelles uniquement en V1.
-- **Justification :** périmètre V1 ; l'échantillon de validation ADEME est filtré en conséquence.
+- **Statut :** codé — mis à jour le 25/11/2026 (le texte initial « maisons uniquement » était
+  devenu faux depuis D-18).
+- **3CL officielle :** couvre maisons, appartements et immeubles collectifs (DPE à l'immeuble).
+- **RénoSim :** maisons individuelles (périmètre initial du brief §2.1) et, depuis le
+  11/07/2026, appartements traités logement par logement (D-18, sur demande explicite).
+  Les DPE « à l'immeuble » et les installations collectives restent hors périmètre.
+- **Justification :** l'échantillon de validation maisons est filtré sur les maisons ;
+  les appartements ont leur propre campagne (D-18).
 
 ## D-02 — Confort d'été non traité — RÉSOLU (11/07/2026, #16)
 
@@ -28,12 +32,15 @@ Format : un écart = une entrée. Statut : `décidé` (au niveau du brief, pas e
 
 ## D-03 — Ponts thermiques forfaitaires
 
-- **Statut :** codé (`envelope.py`, `THERMAL_BRIDGE_SURCHARGE`)
+- **Statut :** calibré (`envelope.py`, valeur dans `tables/conventions.json` depuis le
+  25/11/2026)
 - **3CL officielle :** calcul des ponts thermiques par métrés de linéaires × ψ tabulés.
 - **RénoSim :** majoration forfaitaire de **8 %** des déperditions surfaciques, faute de métrés
-  dans un parcours utilisateur simplifié.
-- **Impact :** à quantifier lors de la validation ; le forfait est un candidat de calibration
-  prioritaire (Phase 3).
+  dans un parcours utilisateur simplifié ; conservée par la calibration Phase 3.
+- **Impact :** le forfait réagit peu à une isolation par l'intérieur, alors que c'est le cas où
+  les ponts thermiques pèsent le plus. Piste v1.1 (audit 2026-11-25 §4.5) : linéaires estimés
+  depuis la géométrie reconstruite × ψ tabulés (3CL §3.4, règles Th-U fascicule 5), ce qui
+  permettrait aussi de lever D-04.
 
 ## D-04 — ITE/ITI non distingués
 
@@ -44,11 +51,17 @@ Format : un écart = une entrée. Statut : `décidé` (au niveau du brief, pas e
 
 ## D-05 — Besoins de chauffage par degrés-heures mensuels
 
-- **Statut :** décidé (brief §4.1) — à préciser lors du codage (Phase 1)
-- **3CL officielle :** calcul mensuel détaillé avec données climatiques départementales corrigées.
-- **RénoSim :** degrés-heures mensuels par zone climatique (H1a…H3) et 3 classes d'altitude,
-  facteur d'utilisation des apports type ISO 13790.
-- **Impact :** lissage des variations locales de climat ; à quantifier lors de la validation.
+- **Statut :** codé (`needs.py`, `tables/climate_zones.json`) — texte mis à jour le
+  25/11/2026 (il datait d'avant le codage).
+- **3CL officielle :** besoins mensuels à partir des données conventionnelles par zone
+  climatique × classe d'altitude (annexe 1 §18 : DH, Nref, ensoleillement, eau froide) et du
+  facteur d'utilisation des apports du §6.1.
+- **RénoSim :** mêmes séries mensuelles, encodées depuis le §18, et même forme du facteur
+  d'utilisation. Écart restant, limité au mode personnalisé : une consigne autre que 19 °C est
+  obtenue par interpolation (ou extrapolation) linéaire entre les tables DH19 et DH21
+  (`occupancy.degree_hours_factor`). L'étiquette, calculée en mode conventionnel, n'est pas
+  concernée.
+- **Impact :** nul en mode conventionnel ; approximation linéaire en mode personnalisé.
 
 ## D-06 — Apports solaires : coefficient d'orientation/masques forfaitaire, modulé
 
@@ -220,6 +233,12 @@ Format : un écart = une entrée. Statut : `décidé` (au niveau du brief, pas e
   non isolées — configuration conventionnelle, pas de saisie Aiu/Aue). « Je ne sais pas »
   conserve la table p.18 (choix M-7), qui est l'hypothèse de la calibration Phase 3. Toutes les
   variantes Ue restent sur la ligne 2S/P = 5 (convention M-7).
+- **Hauteur sous plafond (25/11/2026) :** une hauteur saisie par l'utilisateur
+  (`geometry.ceiling_height_m`) sert à la reconstruction des murs et, désormais, au facteur
+  d'intermittence (G = GV/(Hsp·Sh), §8). Elle n'a pas d'effet sur l'infiltration : Hsp se
+  simplifie dans la formule du §4. Sans saisie, la valeur conventionnelle de 2,5 m
+  (`tables/conventions.json`) s'applique, comme dans la campagne de validation, qui ne
+  transmet pas la hauteur ADEME au facteur d'intermittence.
 - **Justification :** mêmes hypothèses que la campagne de validation — les métriques publiées
   (90,8 % à ±1 classe) restent donc représentatives de ce que produit l'app avec les défauts.
 - **Impact :** incertitude géométrique de l'ordre de ±10-15 % sur les surfaces déperditives pour
@@ -320,6 +339,39 @@ Format : un écart = une entrée. Statut : `décidé` (au niveau du brief, pas e
   global, apples-to-apples pour les logements climatisés.
 - **Impact :** conso, EP, CO₂ et étiquette des logements déclarant une clim ; ~+5 kWhep/m²
   pour une clim récente en zone chaude, ~+12 pour une clim d'avant 2008.
+
+---
+
+## D-21 — Fenêtres : Uw représentatif par type de vitrage, sans volets en hiver
+
+- **Statut :** codé (`tables/u_values_default.json`, `window_defaults`) — écart présent depuis
+  la Phase 1 mais documenté seulement le 25/11/2026 (audit §4.8).
+- **3CL officielle :** Uw lu selon le vitrage (Ug), le type et le matériau de menuiserie
+  (§3.3.2), puis Ujn (U jour-nuit) quand la baie a des fermetures (volets), à partir de leur
+  résistance additionnelle ; facteur solaire Sw selon le vitrage et la menuiserie (§6.2.1).
+- **RénoSim :** un Uw et un Sw médians par type de vitrage, toutes menuiseries confondues
+  (simple 4,8 ; double ancien 3,1 ; double récent 1,8 ; double faiblement émissif 1,4 ;
+  triple 1,0). Les volets, déjà demandés pour le confort d'été (D-19), n'interviennent pas en
+  hiver : Ujn n'est pas calculé.
+- **Impact :** déperditions des baies légèrement surestimées pour les logements équipés de
+  volets ; dispersion selon la menuiserie (bois/PVC vs alu sans rupteur) non représentée.
+  Piste v1.1 : brancher la résistance additionnelle des volets (règles Th-U fascicule 3) sur
+  la réponse existante, avec une itération de calibration.
+
+## D-22 — Chaudière bois évaluée comme un poêle à granulés
+
+- **Statut :** codé (`systems.py`, `heating_system_efficiency`) — écart déjà décrit par le
+  choix de mapping M-5 (`validation/mapping.py`), formalisé ici le 25/11/2026 (audit §4.3).
+- **3CL officielle :** rendements de génération propres aux chaudières bois (bûches,
+  granulés, plaquettes) selon leur classe et leur ancienneté (§13), avec distribution
+  hydraulique (Rd), régulation des radiateurs (Rr) et auxiliaires.
+- **RénoSim :** `WOOD_BOILER` reprend les rendements des poêles à granulés, avec Rd = 1 et
+  Rr « poêle/insert », alors qu'un circulateur de chauffage lui est compté (§15.2, D-11) :
+  la chaîne est incohérente (auxiliaires hydrauliques sans pertes de distribution).
+- **Impact :** les ~2 400 maisons au bois bûche de l'échantillon de validation passent par ce
+  chemin (accord exact 43,2 %, le plus faible avec l'électricité). La correction change donc
+  les métriques publiées : elle est reportée à la v1.1, avec les rendements officiels du §13
+  (annexe 1 consolidée à récupérer) et une itération de calibration documentée.
 
 ---
 
