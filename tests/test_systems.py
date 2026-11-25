@@ -236,3 +236,15 @@ class TestInertiaIntermittence:
         heavy = _house(inertia=InertiaClass.HEAVY)
         assert heating_system_efficiency(light).intermittence_i0 == pytest.approx(0.87)
         assert heating_system_efficiency(heavy).intermittence_i0 == pytest.approx(0.89)
+
+
+def test_intermittence_uses_declared_ceiling_height() -> None:
+    # Bare house GV = 994.83 W/K (test_envelope). G = GV/(Hsp*Sh):
+    #   Hsp 2.5 -> G = 3.9793 -> INT = I0/(1 + 0.1*2.9793) = I0/1.29793
+    #   Hsp 3.0 -> G = 3.3161 -> INT = I0/(1 + 0.1*2.3161) = I0/1.23161
+    # Ratio INT(3.0)/INT(2.5) = 1.29793/1.23161 = 1.05385
+    from renosim.systems import intermittence_factor
+
+    low = intermittence_factor(_house(), 1.0)
+    high = intermittence_factor(_house(ceiling_height_m=3.0), 1.0)
+    assert high / low == pytest.approx(1.05385, rel=1e-4)

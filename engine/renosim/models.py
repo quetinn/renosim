@@ -369,6 +369,10 @@ class Building:
         Whether the dwelling is through-oriented (openings on opposite
         facades); ``None`` derives it: houses are assumed through, apartments
         use ``single_exposed_facade`` (deviation D-19).
+    ceiling_height_m
+        Average ceiling height Hsp in metres, used by the intermittence factor
+        (3CL §8, G = GV/(Hsp*Sh)); it cancels out of the §4 infiltration
+        formula. ``None`` (default) applies the conventional height.
     """
 
     living_area_m2: float
@@ -394,6 +398,7 @@ class Building:
     air_conditioning_period: CoolingPeriod = CoolingPeriod.UNKNOWN
     roof_insulated: bool | None = None
     through_dwelling: bool | None = None
+    ceiling_height_m: float | None = None
 
     def __post_init__(self) -> None:
         if self.living_area_m2 <= 0:
@@ -402,6 +407,8 @@ class Building:
             raise ValueError("a Building must have at least one wall element")
         if not self.windows:
             raise ValueError("a Building must have at least one window element")
+        if self.ceiling_height_m is not None and self.ceiling_height_m <= 0:
+            raise ValueError(f"ceiling_height_m must be positive, got {self.ceiling_height_m}")
         if self.number_of_occupants is not None and self.number_of_occupants <= 0:
             raise ValueError(
                 f"number_of_occupants must be positive, got {self.number_of_occupants}"

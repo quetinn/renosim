@@ -231,8 +231,9 @@ class TestHeatingReplacementDHW:
         assert after.dhw_system.generator_type is DHWGeneratorType.ELECTRIC_STORAGE
         assert after.dhw_system.energy_carrier is EnergyCarrier.ELECTRICITY
         result = simulate(after)
-        assert result.final_energy_kwh_by_carrier.get(EnergyCarrier.ELECTRICITY, 0.0) > (
-            result.final_energy_kwh_by_use["dhw"]
+        assert (
+            result.final_energy_kwh_by_carrier.get(EnergyCarrier.ELECTRICITY, 0.0)
+            > (result.final_energy_kwh_by_use["dhw"])
         )
 
     def test_explicit_dhw_upgrade_wins_whatever_the_order(self) -> None:

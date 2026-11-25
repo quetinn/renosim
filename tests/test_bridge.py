@@ -665,3 +665,12 @@ class TestCooling:
         b = building_from_json(data)
         assert b.has_air_conditioning is True
         assert b.air_conditioning_period.value == "before_2008"
+
+
+def test_declared_ceiling_height_reaches_the_building() -> None:
+    # Audit 2026-11-25 §4.10: the geometry override is no longer limited to
+    # the surface reconstruction; unset keeps the conventional height.
+    data = base_building_json()
+    assert building_from_json(data).ceiling_height_m is None
+    data["geometry"] = {"ceiling_height_m": 3.0}
+    assert building_from_json(data).ceiling_height_m == 3.0

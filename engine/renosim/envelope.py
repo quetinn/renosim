@@ -25,8 +25,15 @@ from renosim.tables_io import load_table
 #: Candidate for calibration against the ADEME dataset in Phase 3.
 THERMAL_BRIDGE_SURCHARGE = 0.08
 
-#: Default average ceiling height (m), used for infiltration and intermittence.
+#: Conventional average ceiling height (m) when none is declared.
 DEFAULT_CEILING_HEIGHT_M = 2.5
+
+
+def ceiling_height_m(building: Building) -> float:
+    """Average ceiling height Hsp (m): declared value or the convention."""
+    if building.ceiling_height_m is not None:
+        return building.ceiling_height_m
+    return DEFAULT_CEILING_HEIGHT_M
 
 
 @dataclass(frozen=True, slots=True)
@@ -299,7 +306,7 @@ def envelope_heat_loss(building: Building) -> EnvelopeLosses:
     )
     shelter = load_table("ventilation")["shelter_coefficients"][shelter_key]
     e_coef, f_coef = float(shelter["e"]), float(shelter["f"])
-    hsp = DEFAULT_CEILING_HEIGHT_M
+    hsp = ceiling_height_m(building)
     # Sdep = deperditive areas excluding the ground floor (§4); elements fully
     # adjacent to heated spaces (b = 0, apartment party walls/ceilings) are not
     # deperditive and do not leak.

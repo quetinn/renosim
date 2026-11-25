@@ -12,7 +12,7 @@ from __future__ import annotations
 import math
 from dataclasses import dataclass
 
-from renosim.envelope import DEFAULT_CEILING_HEIGHT_M, conventional_airflows, envelope_heat_loss
+from renosim.envelope import ceiling_height_m, conventional_airflows, envelope_heat_loss
 from renosim.models import (
     Building,
     ClimateZone,
@@ -226,7 +226,7 @@ def heating_system_efficiency(building: Building) -> HeatingEfficiency:
 def intermittence_factor(building: Building, i0: float) -> float:
     """Intermittence factor INT = I0 / (1 + 0.1*(G-1)), G = GV/(Hsp*Sh)."""
     gv = envelope_heat_loss(building).gv_w_per_k
-    g = gv / (DEFAULT_CEILING_HEIGHT_M * building.living_area_m2)
+    g = gv / (ceiling_height_m(building) * building.living_area_m2)
     return i0 / (1.0 + 0.1 * (g - 1.0))
 
 

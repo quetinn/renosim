@@ -299,11 +299,12 @@ def building_from_json(data: Mapping[str, Any]) -> Building:
         return value
 
     hsp_override = _override("ceiling_height_m")
-    hsp = (
+    declared_hsp = (
         hsp_override
         if hsp_override is not None
-        else float(data.get("ceiling_height_m", DEFAULT_CEILING_HEIGHT_M))
+        else (float(data["ceiling_height_m"]) if "ceiling_height_m" in data else None)
     )
+    hsp = declared_hsp if declared_hsp is not None else DEFAULT_CEILING_HEIGHT_M
     period = ConstructionPeriod(str(data["construction_period"]))
     zone = ClimateZone(str(data["climate_zone"]))
     altitude = AltitudeClass(str(data["altitude_class"]))
@@ -481,6 +482,7 @@ def building_from_json(data: Mapping[str, Any]) -> Building:
         ),
         roof_insulated=roof_insulated,
         through_dwelling=traversant if dwelling is DwellingType.APARTMENT else None,
+        ceiling_height_m=declared_hsp,
     )
 
 
