@@ -248,3 +248,30 @@ def test_intermittence_uses_declared_ceiling_height() -> None:
     low = intermittence_factor(_house(), 1.0)
     high = intermittence_factor(_house(ceiling_height_m=3.0), 1.0)
     assert high / low == pytest.approx(1.05385, rel=1e-4)
+
+
+class TestLighting:
+    """3CL §16.1: Cecl = sum_j C * Pecl * Nh_j / 1000, Nh_j per zone and month (p.102-103)."""
+
+    def test_h1a_hand_computed(self) -> None:
+        # H1a: Nh = 1500 h/an ; 0.9 * 1.4 * 1500 / 1000 = 1.89 kWh/m2 -> 100 m2 = 189.0 kWh
+        from renosim.systems import lighting_kwh
+
+        assert lighting_kwh(_house()) == pytest.approx(189.0)
+
+    def test_h2c_hand_computed(self) -> None:
+        # H2c: Nh = 1566 h/an ; 0.9 * 1.4 * 1566 * 100 / 1000 = 197.316 kWh
+        from renosim.models import ClimateZone
+        from renosim.systems import lighting_kwh
+
+        assert lighting_kwh(_house(climate_zone=ClimateZone.H2C)) == pytest.approx(197.316)
+
+    def test_monthly_table_matches_published_totals(self) -> None:
+        # Annual totals printed under the official table (p.103).
+        from renosim.tables_io import load_table
+
+        nh = load_table("system_efficiencies")["lighting"]["nh_hours_by_zone_month"]
+        totals = {"H1a": 1500, "H1b": 1445, "H1c": 1476, "H2a": 1500,
+                  "H2b": 1531, "H2c": 1566, "H2d": 1566, "H3": 1506}  # fmt: skip
+        for zone, total in totals.items():
+            assert sum(nh[zone].values()) == total, zone

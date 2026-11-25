@@ -114,7 +114,10 @@ export type SummerComfortLevel = "insufficient" | "medium" | "good";
 /** Installation period of the cooling generator (SEER bracket, 3CL §10.3). */
 export type CoolingPeriod = "before_2008" | "2008_2014" | "from_2015" | "unknown";
 
-export type RegulationVintage = "dpe_2021" | "dpe_2026";
+export type RegulationVintage = "dpe_2021" | "dpe_2026" | "dpe_2027";
+
+/** UI choice: "current" lets the engine apply the convention in force today. */
+export type VintageChoice = "current" | RegulationVintage;
 
 export type DpeClass = "A" | "B" | "C" | "D" | "E" | "F" | "G";
 
@@ -296,6 +299,14 @@ export interface LabelTargetEntry {
 export interface SimulationOutput {
   schema_version: string;
   engine: { name: string; version: string };
+  /** Conventions the engine applied to this run (for display). */
+  conventions: {
+    regulation_vintage: RegulationVintage;
+    electricity_primary_energy_factor: number;
+    energy_prices: { label: string; date_reference: string; date_in_force: string };
+    /** Works costs are indexed to this month with the INSEE BT01 index. */
+    renovation_costs: { index: string; reference_period: string };
+  };
   baseline: {
     conventional: SimulationResult;
     personalized: SimulationResult | null;

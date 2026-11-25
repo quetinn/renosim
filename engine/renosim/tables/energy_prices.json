@@ -1,33 +1,37 @@
 {
   "_meta": {
-    "description": "Conventional energy prices used to estimate annual energy costs, per the DPE convention (annexe 7 de l'arrêté habitation). Electricity and natural gas use consumption-bracket formulas 'cost = fixed + rate * kWh_ef'; other carriers use flat EUR/kWh PCI rates (subscription included).",
-    "source": "Annexe 7 (évaluation des frais annuels d'énergie) de l'arrêté du 31 mars 2021 relatif au DPE habitation, version consolidée rt-re-batiment.developpement-durable.gouv.fr, barèmes au 1er janvier 2021 (p.14-15 des annexes). Les tarifs sont révisés annuellement par arrêté (dernière actualisation connue : arrêté du 25 mars 2024, JORFTEXT000049446315) — voir notes.",
-    "date_reference": "2021-01-01",
-    "date_accessed": "2026-07-04",
-    "notes": "TODO (non bloquant pour le moteur, bloquant pour l'affichage € final) : mettre à jour vers le barème le plus récent (arrêté du 25 mars 2024 ou postérieur) avant la Phase 4 ; le schéma JSON restera identique. En mode personnalisé, l'utilisateur peut remplacer ces prix par les siens.",
+    "description": "Conventional energy prices used to estimate annual energy costs, per the DPE convention (annexe 7 « Évaluation des frais annuels d'énergie » of the arrêté du 31 mars 2021 relatif au DPE habitation). Electricity and natural gas use consumption-bracket formulas 'cost = fixed + rate * Cef' (Cef = final energy of that carrier, no cumulative effect between brackets); other carriers use flat EUR/kWh PCI rates (subscription included).",
+    "source": "Arrêté du 25 mars 2024 modifiant les seuils des étiquettes du DPE pour les logements de petites surfaces et actualisant les tarifs annuels de l'énergie (NOR TREL2330369A, JORF n°0093 du 20 avril 2024, texte n°15, JORFTEXT000049446315), annexe 2 qui remplace l'annexe 7 de l'arrêté du 31 mars 2021 ; en vigueur le 1er juillet 2024. Version consolidée Légifrance « en vigueur au 25/11/2026 » : aucune modification ultérieure de cette annexe.",
+    "source_label_fr": "Prix conventionnels du DPE (arrêté du 25 mars 2024, prix 2022-2023)",
+    "date_reference": "2023-06-30",
+    "date_reference_note": "Electricity and gas: CGDD « Prix ménages » données premier semestre 2023. Fuel oil, propane, butane: CGDD « Les prix des produits pétroliers en 2022 ». District heating, coal, wood logs: « Bilan énergétique de la France pour 2021 ». Wood pellets: « Prix ménages bois » (see verification note).",
+    "date_in_force": "2024-07-01",
+    "date_accessed": "2026-11-25",
+    "verification": "Electricity/gas brackets and the oil, district heating, propane, butane, coal and wood-log rates were read verbatim in the ministry's text of the arrêté (Arrete-DPE-petites-surfaces_240208.pdf, ecologie.gouv.fr, annexe 2) and are identical to the JORF version as reported by two independent readings of the Légifrance page. Wood pellets: the ministry draft reads 0,10701 (données 1er semestre 2023) while both readings of the published JORF text give 0,09897 (« données quatrième trimestre 2023 ») — the JORF value is used; TO CONFIRM against the authenticated JO PDF extract.",
+    "history": "Until 2026-11-25 this table held the 2021-01-01 tariffs of the initial annexe 7 (audit 2026-11-25 §3.3).",
     "units": "EUR TTC per kWh of final energy (PCI), subscription included"
   },
   "flat_rates_eur_per_kwh": {
-    "fuel_oil": 0.09142,
-    "district_heating": 0.0787,
-    "lpg_propane": 0.14305,
-    "lpg_butane": 0.20027,
-    "coal": 0.02372,
-    "wood_pellets": 0.05991,
-    "wood_logs": 0.03201
+    "fuel_oil": 0.14821,
+    "district_heating": 0.08921,
+    "lpg_propane": 0.15672,
+    "lpg_butane": 0.23429,
+    "coal": 0.02787,
+    "wood_pellets": 0.09897,
+    "wood_logs": 0.042
   },
   "bracket_formulas": {
     "natural_gas": [
-      { "max_kwh": 5009, "fixed_eur": 0, "rate_eur_per_kwh": 0.11121 },
-      { "max_kwh": 50055, "fixed_eur": 230, "rate_eur_per_kwh": 0.06533 },
-      { "max_kwh": null, "fixed_eur": 415, "rate_eur_per_kwh": 0.06164 }
+      { "max_kwh": 5000, "fixed_eur": 0, "rate_eur_per_kwh": 0.1312, "raw": "T1g = 0,158116 ; 0 + (0,5T1g + 0,5T2g)Cef" },
+      { "max_kwh": 50000, "fixed_eur": 182, "rate_eur_per_kwh": 0.09488, "raw": "T2g = 0,104281" },
+      { "max_kwh": null, "fixed_eur": 288, "rate_eur_per_kwh": 0.09274, "raw": "T3g = 0,092743 ; 25000T2g - 25000T3g + (T3g)Cef" }
     ],
     "electricity": [
-      { "max_kwh": 1000, "fixed_eur": 0, "rate_eur_per_kwh": 0.29007 },
-      { "max_kwh": 2500, "fixed_eur": 149, "rate_eur_per_kwh": 0.14066 },
-      { "max_kwh": 5000, "fixed_eur": 122, "rate_eur_per_kwh": 0.15176 },
-      { "max_kwh": 15000, "fixed_eur": 94, "rate_eur_per_kwh": 0.15735 },
-      { "max_kwh": null, "fixed_eur": 94, "rate_eur_per_kwh": 0.15989, "note": "fixed part per annexe formula 7500*T4e-7500*T5e; V1 uses the fixed 94 EUR of the previous bracket (continuation) — negligible for houses (rare > 15 MWh). To re-check when the tariff table is updated (audit §3.3)." }
+      { "max_kwh": 1000, "fixed_eur": 0, "rate_eur_per_kwh": 0.34721, "raw": "T1e = 0,420924" },
+      { "max_kwh": 2500, "fixed_eur": 158, "rate_eur_per_kwh": 0.18954, "raw": "T2e = 0,273492" },
+      { "max_kwh": 5000, "fixed_eur": 158, "rate_eur_per_kwh": 0.18949, "raw": "T3e = 0,231721" },
+      { "max_kwh": 15000, "fixed_eur": 119, "rate_eur_per_kwh": 0.19726, "raw": "T4e = 0,210373" },
+      { "max_kwh": null, "fixed_eur": 78, "rate_eur_per_kwh": 0.20001, "raw": "T5e = 0,200007 ; 7500T4e - 7500T5e + (T5e)Cef" }
     ]
   }
 }

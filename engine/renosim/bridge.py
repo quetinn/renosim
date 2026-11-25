@@ -11,7 +11,7 @@ Input schema (``schema_version`` = :data:`renosim.SCHEMA_VERSION`)::
 
     {
       "schema_version": "0.1",
-      "regulation_vintage": "dpe_2026" | "dpe_2021",        # optional (2026)
+      "regulation_vintage": "dpe_2027" | "dpe_2026" | "dpe_2021",  # optional: in force today
       "building": {
         "living_area_m2": 100.0,
         "levels": 1,                                         # optional
@@ -103,6 +103,7 @@ from renosim.models import (
 from renosim.occupancy import CONVENTIONAL, OccupancyScenario
 from renosim.outputs import (
     DEFAULT_REGULATION_VINTAGE,
+    REGULATION_VINTAGES,
     RegulationVintage,
     annual_energy_cost_eur,
 )
@@ -753,6 +754,26 @@ def _parse_occupancy(
     return scenario, overrides
 
 
+def _conventions_to_json(vintage: RegulationVintage) -> dict[str, Any]:
+    """Conventions applied to this run, for display (vintage, PE factor, prices)."""
+    factors = load_table("emission_factors")["primary_energy_factor"][vintage]
+    prices = load_table("energy_prices")["_meta"]
+    indexation = load_table("renovation_costs")["_meta"]["indexation"]
+    return {
+        "regulation_vintage": vintage,
+        "electricity_primary_energy_factor": float(factors["electricity"]),
+        "energy_prices": {
+            "label": str(prices["source_label_fr"]),
+            "date_reference": str(prices["date_reference"]),
+            "date_in_force": str(prices["date_in_force"]),
+        },
+        "renovation_costs": {
+            "index": "BT01",
+            "reference_period": str(indexation["reference"]["period"]),
+        },
+    }
+
+
 def run_simulation(payload_json: str) -> str:
     """Single entry point called from JavaScript: JSON in, JSON out.
 
@@ -776,9 +797,9 @@ def run_simulation(payload_json: str) -> str:
             f"unsupported schema_version {version!r}; this engine speaks {SCHEMA_VERSION!r}"
         )
     vintage_raw = str(payload.get("regulation_vintage", DEFAULT_REGULATION_VINTAGE))
-    if vintage_raw not in ("dpe_2021", "dpe_2026"):
+    if vintage_raw not in REGULATION_VINTAGES:
         raise ValueError(f"unknown regulation_vintage {vintage_raw!r}")
-    vintage = cast(RegulationVintage, vintage_raw)
+    vintage: RegulationVintage = vintage_raw
 
     building = building_from_json(cast(Mapping[str, Any], payload["building"]))
     personalized, price_overrides = _parse_occupancy(
@@ -868,6 +889,7 @@ def run_simulation(payload_json: str) -> str:
     output = {
         "schema_version": SCHEMA_VERSION,
         "engine": {"name": "renosim", "version": __version__},
+        "conventions": _conventions_to_json(vintage),
         "baseline": {
             "conventional": _result_to_json(baseline_conventional),
             "personalized": (

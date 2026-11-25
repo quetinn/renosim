@@ -450,12 +450,18 @@ def dhw_auxiliary_kwh(building: Building, dhw_needs_kwh: float) -> float:
 
 
 def lighting_kwh(building: Building) -> float:
-    """Annual conventional lighting consumption (kWh electricity, 3CL §16.1)."""
+    """Annual conventional lighting consumption (kWh electricity, 3CL §16.1).
+
+    ``Cecl = sum_j C * Pecl * Nh_j * Sh / 1000`` with the monthly lighting hours
+    Nh_j of the dwelling's climate zone (§16.1 table, 1445-1566 h/an).
+    """
     cfg = load_table("system_efficiencies")["lighting"]
+    monthly = cfg["nh_hours_by_zone_month"][building.climate_zone.value]
+    annual_hours = sum(float(h) for h in monthly.values())
     return (
         float(cfg["c_switch_control"])
         * float(cfg["p_ecl_w_per_m2"])
-        * float(cfg["annual_hours_national_average"])
+        * annual_hours
         * building.living_area_m2
         / 1000.0
     )

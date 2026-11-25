@@ -20,6 +20,7 @@ import pytest
 
 from renosim import SCHEMA_VERSION, simulate
 from renosim.bridge import building_from_json, parse_measures, run_simulation
+from renosim.outputs import DEFAULT_REGULATION_VINTAGE
 
 
 def base_building_json() -> dict[str, Any]:
@@ -67,22 +68,29 @@ class TestSchema:
         assert out["schema_version"] == SCHEMA_VERSION
         assert out["engine"]["name"] == "renosim"
 
-    def test_default_vintage_is_dpe_2026(self) -> None:
-        # Electric house: omitting the vintage must equal the 2026 convention.
+    def test_default_vintage_is_the_one_in_force(self) -> None:
+        # Electric house: omitting the vintage must equal the convention in
+        # force today, and the output reports which one was applied.
         building = base_building_json()
         building["heating"] = {"generator": "electric_joule", "carrier": "electricity"}
         building["dhw"] = {"generator": "electric_storage"}
-        default = run(payload(building=building))["baseline"]["conventional"]
-        explicit = run(payload(building=building, regulation_vintage="dpe_2026"))["baseline"][
-            "conventional"
-        ]
-        old = run(payload(building=building, regulation_vintage="dpe_2021"))["baseline"][
-            "conventional"
-        ]
-        assert default["primary_energy_kwh_m2"] == explicit["primary_energy_kwh_m2"]
-        assert default["primary_energy_kwh_m2"] == pytest.approx(
-            old["primary_energy_kwh_m2"] * 1.9 / 2.3
+        out = run(payload(building=building))
+        today = DEFAULT_REGULATION_VINTAGE
+        explicit = run(payload(building=building, regulation_vintage=today))
+        assert out["conventions"]["regulation_vintage"] == today
+        assert (
+            out["baseline"]["conventional"]["primary_energy_kwh_m2"]
+            == explicit["baseline"]["conventional"]["primary_energy_kwh_m2"]
         )
+        old = run(payload(building=building, regulation_vintage="dpe_2021"))
+        assert old["conventions"]["electricity_primary_energy_factor"] == 2.3
+
+    def test_output_reports_the_energy_price_convention(self) -> None:
+        prices = run(payload())["conventions"]["energy_prices"]
+        assert prices["date_in_force"] == "2024-07-01"
+        assert "25 mars 2024" in prices["label"]
+        costs = run(payload())["conventions"]["renovation_costs"]
+        assert costs == {"index": "BT01", "reference_period": "2026-09"}
 
 
 class TestGeometry:

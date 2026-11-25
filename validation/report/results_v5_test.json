@@ -1,0 +1,295 @@
+{
+ "sample_rows": 11549,
+ "rejected": {
+  "surface_hors_bornes": 53
+ },
+ "mapped": 11496,
+ "simulation_errors": {},
+ "evaluated": 11496,
+ "cep_bias_kwhep_m2": 35.0,
+ "cep_mae_kwhep_m2": 57.0,
+ "cep_mape_pct": 38.0,
+ "label_exact_agreement": 0.444,
+ "label_within_one_class": 0.867,
+ "confusion_matrix_obs_rows_pred_cols": {
+  "A": {
+   "A": 117,
+   "B": 353,
+   "C": 268,
+   "D": 25,
+   "E": 3,
+   "F": 0,
+   "G": 0
+  },
+  "B": {
+   "A": 32,
+   "B": 321,
+   "C": 685,
+   "D": 130,
+   "E": 28,
+   "F": 12,
+   "G": 1
+  },
+  "C": {
+   "A": 2,
+   "B": 97,
+   "C": 1910,
+   "D": 1356,
+   "E": 228,
+   "F": 91,
+   "G": 30
+  },
+  "D": {
+   "A": 0,
+   "B": 5,
+   "C": 345,
+   "D": 1762,
+   "E": 916,
+   "F": 245,
+   "G": 128
+  },
+  "E": {
+   "A": 0,
+   "B": 0,
+   "C": 26,
+   "D": 305,
+   "E": 588,
+   "F": 351,
+   "G": 205
+  },
+  "F": {
+   "A": 0,
+   "B": 0,
+   "C": 7,
+   "D": 50,
+   "E": 140,
+   "F": 207,
+   "G": 214
+  },
+  "G": {
+   "A": 0,
+   "B": 0,
+   "C": 1,
+   "D": 7,
+   "E": 32,
+   "F": 69,
+   "G": 204
+  }
+ },
+ "by_stratum": {
+  "periode": {
+   "1948-1974": {
+    "n": 1195,
+    "exact": 0.298,
+    "within1": 0.721
+   },
+   "1975-1977": {
+    "n": 1195,
+    "exact": 0.417,
+    "within1": 0.888
+   },
+   "1978-1982": {
+    "n": 1198,
+    "exact": 0.461,
+    "within1": 0.913
+   },
+   "1983-1988": {
+    "n": 1195,
+    "exact": 0.472,
+    "within1": 0.927
+   },
+   "1989-2000": {
+    "n": 1197,
+    "exact": 0.51,
+    "within1": 0.94
+   },
+   "2001-2005": {
+    "n": 1195,
+    "exact": 0.56,
+    "within1": 0.952
+   },
+   "2006-2012": {
+    "n": 1194,
+    "exact": 0.588,
+    "within1": 0.962
+   },
+   "2013-2021": {
+    "n": 1032,
+    "exact": 0.477,
+    "within1": 0.869
+   },
+   "après 2021": {
+    "n": 907,
+    "exact": 0.438,
+    "within1": 0.86
+   },
+   "avant 1948": {
+    "n": 1188,
+    "exact": 0.226,
+    "within1": 0.638
+   }
+  },
+  "zone": {
+   "H1a": {
+    "n": 1458,
+    "exact": 0.433,
+    "within1": 0.859
+   },
+   "H1b": {
+    "n": 1456,
+    "exact": 0.436,
+    "within1": 0.871
+   },
+   "H1c": {
+    "n": 1466,
+    "exact": 0.472,
+    "within1": 0.872
+   },
+   "H2a": {
+    "n": 1436,
+    "exact": 0.426,
+    "within1": 0.859
+   },
+   "H2b": {
+    "n": 1435,
+    "exact": 0.443,
+    "within1": 0.869
+   },
+   "H2c": {
+    "n": 1432,
+    "exact": 0.47,
+    "within1": 0.874
+   },
+   "H2d": {
+    "n": 1385,
+    "exact": 0.395,
+    "within1": 0.843
+   },
+   "H3": {
+    "n": 1428,
+    "exact": 0.478,
+    "within1": 0.893
+   }
+  },
+  "energie": {
+   "Bois – Bûches": {
+    "n": 2393,
+    "exact": 0.416,
+    "within1": 0.89
+   },
+   "Bois – Granulés (pellets) ou briquettes": {
+    "n": 2376,
+    "exact": 0.458,
+    "within1": 0.896
+   },
+   "Fioul domestique": {
+    "n": 1979,
+    "exact": 0.513,
+    "within1": 0.915
+   },
+   "Gaz naturel": {
+    "n": 2370,
+    "exact": 0.57,
+    "within1": 0.932
+   },
+   "Électricité": {
+    "n": 2378,
+    "exact": 0.277,
+    "within1": 0.712
+   }
+  }
+ },
+ "success_criteria": {
+  "exact_target": 0.6,
+  "within1_target": 0.9,
+  "exact_met": false,
+  "within1_met": false
+ },
+ "by_dpe_year": {
+  "2021": {
+   "n": 342,
+   "cep_bias_kwhep_m2": 88.1,
+   "exact": 0.33,
+   "within1": 0.743
+  },
+  "2022": {
+   "n": 1862,
+   "cep_bias_kwhep_m2": 40.2,
+   "exact": 0.434,
+   "within1": 0.861
+  },
+  "2023": {
+   "n": 2316,
+   "cep_bias_kwhep_m2": 39.4,
+   "exact": 0.44,
+   "within1": 0.866
+  },
+  "2024": {
+   "n": 2581,
+   "cep_bias_kwhep_m2": 37.7,
+   "exact": 0.441,
+   "within1": 0.859
+  },
+  "2025": {
+   "n": 2511,
+   "cep_bias_kwhep_m2": 40.7,
+   "exact": 0.396,
+   "within1": 0.847
+  },
+  "2026": {
+   "n": 1884,
+   "cep_bias_kwhep_m2": 3.7,
+   "exact": 0.55,
+   "within1": 0.936
+  }
+ },
+ "bootstrap_95ci": {
+  "draws": 1000,
+  "seed": 2026,
+  "unweighted": {
+   "bias": [
+    33.6,
+    36.4
+   ],
+   "mae": [
+    55.8,
+    58.1
+   ],
+   "exact": [
+    0.436,
+    0.453
+   ],
+   "within1": [
+    0.861,
+    0.874
+   ]
+  },
+  "post_stratified": {
+   "bias": [
+    86.9,
+    97.9
+   ],
+   "mae": [
+    100.1,
+    110.5
+   ],
+   "exact": [
+    0.309,
+    0.344
+   ],
+   "within1": [
+    0.693,
+    0.733
+   ]
+  }
+ },
+ "post_stratified": {
+  "weights_file": "validation/report/stratum_counts_maisons.json",
+  "population_total": 4703421,
+  "population_covered_by_sample_strata": 4703361,
+  "cep_bias_kwhep_m2": 92.4,
+  "cep_mae_kwhep_m2": 105.2,
+  "label_exact_agreement": 0.327,
+  "label_within_one_class": 0.714
+ }
+}

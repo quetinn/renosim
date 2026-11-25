@@ -70,6 +70,7 @@ from __future__ import annotations
 import math
 import re
 from dataclasses import dataclass
+from datetime import date
 
 from renosim.models import (
     AltitudeClass,
@@ -90,6 +91,7 @@ from renosim.models import (
     VentilationType,
     Window,
 )
+from renosim.outputs import regulation_vintage_in_force
 from renosim.tables_io import load_table
 
 REFERENCE_YEAR = 2023
@@ -198,10 +200,12 @@ class MappingResult:
     observed_label: str | None = None
     observed_ges: float | None = None
     stratum: tuple[str, str, str] | None = None
-    #: "dpe_2021" (electricity EP factor 2.3) or "dpe_2026" (1.9), selected from
-    #: the DPE issue date — the arrete du 13/08/2025 changed the factor on
-    #: 2026-01-01, and the dataset mixes both vintages (see deviation D-13).
+    #: "dpe_2021" (2.3), "dpe_2026" (1.9) or "dpe_2027" (1.7), the convention in
+    #: force on the DPE issue date (the dataset mixes vintages, deviation D-13).
     regulation_vintage: str = "dpe_2021"
+    #: Year of the DPE issue date (``date_etablissement_dpe``), for the
+    #: by-year breakdown of the validation report.
+    dpe_year: str | None = None
 
 
 def _opaque_u(
@@ -528,7 +532,9 @@ def map_row(row: dict[str, object]) -> MappingResult:
     )
     ges = row.get("emission_ges_5_usages_par_m2")
     dpe_date = str(row.get("date_etablissement_dpe") or "")
-    vintage = "dpe_2026" if dpe_date >= "2026-01-01" else "dpe_2021"
+    vintage = (
+        regulation_vintage_in_force(date.fromisoformat(dpe_date[:10])) if dpe_date else "dpe_2021"
+    )
     return MappingResult(
         building=building,
         reason=None,
@@ -541,4 +547,5 @@ def map_row(row: dict[str, object]) -> MappingResult:
             str(row.get("type_energie_principale_chauffage") or ""),
         ),
         regulation_vintage=vintage,
+        dpe_year=dpe_date[:4] or None,
     )

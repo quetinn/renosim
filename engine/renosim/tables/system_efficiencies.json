@@ -17,9 +17,18 @@
   },
   "distribution_rd_heating": {
     "no_network": 1.0,
-    "individual_water_low_temp": { "uninsulated": 0.91, "insulated": 0.95 },
-    "individual_water_high_temp": { "uninsulated": 0.88, "insulated": 0.92 },
-    "air_network": { "uninsulated": 0.8, "insulated": 0.85 },
+    "individual_water_low_temp": {
+      "uninsulated": 0.91,
+      "insulated": 0.95
+    },
+    "individual_water_high_temp": {
+      "uninsulated": 0.88,
+      "insulated": 0.92
+    },
+    "air_network": {
+      "uninsulated": 0.8,
+      "insulated": 0.85
+    },
     "refrigerant_network": 1.0
   },
   "regulation_rr": {
@@ -39,25 +48,83 @@
     "district_heating": 0.97
   },
   "stoves_rg": {
-    "wood_log_stove": { "before_1990": 0.5, "1990_2004": 0.6, "2005_2017_label": 0.7, "after_2018_label": 0.75, "2005_no_label": 0.65 },
-    "wood_pellet_stove": { "before_2012_or_no_label": 0.8, "2012_2019_label": 0.85, "after_2020_label": 0.87 },
+    "wood_log_stove": {
+      "before_1990": 0.5,
+      "1990_2004": 0.6,
+      "2005_2017_label": 0.7,
+      "after_2018_label": 0.75,
+      "2005_no_label": 0.65
+    },
+    "wood_pellet_stove": {
+      "before_2012_or_no_label": 0.8,
+      "2012_2019_label": 0.85,
+      "after_2020_label": 0.87
+    },
     "oil_or_lpg_stove": 0.72
   },
   "boiler_efficiency_formulas": {
     "note": "Rpn/Rpint in % PCI as a function of log10(Pn[kW]). Seasonal Rg approximated in systems.py as a 0.3/0.7 weighted blend of full-load and intermediate-load efficiency (residential load profile is dominated by part load).",
     "default_nominal_power_kw": 24,
     "gas_and_oil": {
-      "standard": { "rpn": "84 + 2*log10(Pn)", "rpint": "80 + 3*log10(Pn)" },
-      "low_temperature": { "rpn": "87.5 + 1.5*log10(Pn)", "rpint": "87.5 + 1.5*log10(Pn)" },
-      "condensing_pre_2016": { "rpn": "91 + 1*log10(Pn)", "rpint": "97 + 1*log10(Pn)" },
-      "condensing_2016_plus_le_70kw": { "rpn": "91 + 3*log10(Pn)", "rpint": "103 + 2.5*log10(Pn)" }
+      "standard": {
+        "rpn": "84 + 2*log10(Pn)",
+        "rpint": "80 + 3*log10(Pn)"
+      },
+      "low_temperature": {
+        "rpn": "87.5 + 1.5*log10(Pn)",
+        "rpint": "87.5 + 1.5*log10(Pn)"
+      },
+      "condensing_pre_2016": {
+        "rpn": "91 + 1*log10(Pn)",
+        "rpint": "97 + 1*log10(Pn)"
+      },
+      "condensing_2016_plus_le_70kw": {
+        "rpn": "91 + 3*log10(Pn)",
+        "rpint": "103 + 2.5*log10(Pn)"
+      }
     },
     "log10_pn_coefficients": {
       "note": "Same formulas as 'gas_and_oil', machine-readable: R = a + b*log10(Pn[kW]) in % PCI, [a, b].",
-      "standard": { "rpn": [84.0, 2.0], "rpint": [80.0, 3.0] },
-      "low_temperature": { "rpn": [87.5, 1.5], "rpint": [87.5, 1.5] },
-      "condensing_pre_2016": { "rpn": [91.0, 1.0], "rpint": [97.0, 1.0] },
-      "condensing_2016_plus_le_70kw": { "rpn": [91.0, 3.0], "rpint": [103.0, 2.5] }
+      "standard": {
+        "rpn": [
+          84.0,
+          2.0
+        ],
+        "rpint": [
+          80.0,
+          3.0
+        ]
+      },
+      "low_temperature": {
+        "rpn": [
+          87.5,
+          1.5
+        ],
+        "rpint": [
+          87.5,
+          1.5
+        ]
+      },
+      "condensing_pre_2016": {
+        "rpn": [
+          91.0,
+          1.0
+        ],
+        "rpint": [
+          97.0,
+          1.0
+        ]
+      },
+      "condensing_2016_plus_le_70kw": {
+        "rpn": [
+          91.0,
+          3.0
+        ],
+        "rpint": [
+          103.0,
+          2.5
+        ]
+      }
     },
     "old_boiler_derating": {
       "note": "V1: pre-1991 'classique' boilers use the standard formulas (identical per the annexe); higher standby losses Qp0 (4%/2%/1.5% of Pn by age) are approximated by an extra multiplicative derating.",
@@ -69,17 +136,45 @@
   "heat_pump_scop": {
     "air_water": {
       "H1_H2": {
-        "radiators": { "before_2008": 2.2, "2008_2014": 2.4, "2015_2016": 2.6, "after_2017": 2.8 },
-        "floor_ceiling": { "before_2008": 2.4, "2008_2014": 2.6, "2015_2016": 2.9, "after_2017": 3.2 }
+        "radiators": {
+          "before_2008": 2.2,
+          "2008_2014": 2.4,
+          "2015_2016": 2.6,
+          "after_2017": 2.8
+        },
+        "floor_ceiling": {
+          "before_2008": 2.4,
+          "2008_2014": 2.6,
+          "2015_2016": 2.9,
+          "after_2017": 3.2
+        }
       },
       "H3": {
-        "radiators": { "before_2008": 2.5, "2008_2014": 2.8, "2015_2016": 3.0, "after_2017": 3.2 },
-        "floor_ceiling": { "before_2008": 2.9, "2008_2014": 3.1, "2015_2016": 3.5, "after_2017": 3.8 }
+        "radiators": {
+          "before_2008": 2.5,
+          "2008_2014": 2.8,
+          "2015_2016": 3.0,
+          "after_2017": 3.2
+        },
+        "floor_ceiling": {
+          "before_2008": 2.9,
+          "2008_2014": 3.1,
+          "2015_2016": 3.5,
+          "after_2017": 3.8
+        }
       }
     },
     "air_air": {
-      "H1_H2": { "before_2008": 2.2, "2008_2014": 2.3, "after_2015": 3.0 },
-      "H3": { "before_2008": 2.4, "2008_2014": 2.6, "after_2015": 3.3 }
+      "H1_H2": {
+        "before_2008": 2.2,
+        "2008_2014": 2.3,
+        "after_2015": 3.0
+      },
+      "H3": {
+        "before_2008": 2.4,
+        "2008_2014": 2.6,
+        "after_2015": 3.3
+      }
     }
   },
   "intermittence": {
@@ -87,10 +182,22 @@
     "default_ceiling_height_m": 2.5,
     "i0_house_individual": {
       "note": "Maison individuelle, chauffage individuel, avec régulation pièce par pièce, équipement d'intermittence 'central sans minimum de température'; colonnes = inertie légère/moyenne vs lourde/très lourde.",
-      "divided_radiator_convector": { "light_medium": 0.83, "heavy": 0.85 },
-      "central_radiator": { "light_medium": 0.87, "heavy": 0.89 },
-      "central_heated_floor": { "light_medium": 0.89, "heavy": 0.91 },
-      "blown_air": { "light_medium": 0.85, "heavy": 0.87 }
+      "divided_radiator_convector": {
+        "light_medium": 0.83,
+        "heavy": 0.85
+      },
+      "central_radiator": {
+        "light_medium": 0.87,
+        "heavy": 0.89
+      },
+      "central_heated_floor": {
+        "light_medium": 0.89,
+        "heavy": 0.91
+      },
+      "blown_air": {
+        "light_medium": 0.85,
+        "heavy": 0.87
+      }
     },
     "i0_apartment_individual": {
       "note": "Immeuble collectif avec chauffage individuel (§8, p.56), même convention d'équipement 'central sans minimum de température', avec régulation pièce par pièce ; cette table officielle ne distingue pas l'inertie. Air soufflé divisé retenu (PAC air/air).",
@@ -104,50 +211,239 @@
     "note": "§15 de l'annexe 1 (version consolidée, rt-re-batiment.developpement-durable.gouv.fr, consultée le 2026-07-10) : Paux_g = G + H*Pn (§15.1, tableau p.97), Qaux_g = Paux_g * B_g / Pn (§15.1.1-15.1.2), circulateur §15.2.1-15.2.2, Tbase §18.1 (p.121). Simplifications V1 (D-11) : radiateurs non-monotube (ΔPem 10 kPa), Fcot 'autre' 0.802, δθdim 7.5 °C (réseau basse/moyenne température, cohérent avec la ligne Rd retenue), Niv_inst_ch = 1, rat = 1 ; Qaux_g nul pour PAC (inclus au SCOP), réseau urbain (convention §15.1), effet Joule et poêles (pas de génération centrale) ; chaudière bois traitée en tirage naturel (atmosphérique).",
     "generation_power_w": {
       "formula": "Paux_g [W] = G + H * Pn [kW] ; Qaux_g [Wh] = Paux_g * B_g / Pn",
-      "gas_or_oil_boiler": { "g_w": 20, "h_w_per_kw": 1.6 },
-      "wood_boiler_atmospheric": { "g_w": 0, "h_w_per_kw": 0 },
-      "wood_boiler_fan_assisted": { "g_w": 73.3, "h_w_per_kw": 10.5 },
-      "gas_water_heater": { "g_w": 0, "h_w_per_kw": 0 }
+      "gas_or_oil_boiler": {
+        "g_w": 20,
+        "h_w_per_kw": 1.6
+      },
+      "wood_boiler_atmospheric": {
+        "g_w": 0,
+        "h_w_per_kw": 0
+      },
+      "wood_boiler_fan_assisted": {
+        "g_w": 73.3,
+        "h_w_per_kw": 10.5
+      },
+      "gas_water_heater": {
+        "g_w": 0,
+        "h_w_per_kw": 0
+      }
     },
     "circulator": {
       "formula": "Pcirc = max(30 ; 6.44*(ΔPem_nom * qv / max(1;Sh/400))^0.676 * max(1;Sh/400)) ; ΔPem_nom = 0.15*Lem + ΔPem ; Lem = 5*Fcot*[Niv + (Sh/Niv)^0.5] ; qv [m3/h] = Pnc*rat/(1.163*δθdim) ; Pnc [kW] = GV*(20-Tbase)/1000 ; Caux_dist_ch [Wh] = Pcirc * Nref",
       "linear_pressure_loss_kpa_per_m": 0.15,
-      "emitter_pressure_loss_kpa": { "radiators": 10, "radiators_monotube": 30, "heated_floor_ceiling": 15, "other": 35 },
-      "fcot": { "floor": 0.156, "other": 0.802 },
-      "delta_theta_dim_c": { "low_medium_temp": 7.5, "high_temp": 15 },
+      "emitter_pressure_loss_kpa": {
+        "radiators": 10,
+        "radiators_monotube": 30,
+        "heated_floor_ceiling": 15,
+        "other": 35
+      },
+      "fcot": {
+        "floor": 0.156,
+        "other": 0.802
+      },
+      "delta_theta_dim_c": {
+        "low_medium_temp": 7.5,
+        "high_temp": 15
+      },
       "min_power_w": 30,
       "power_coefficient": 6.44,
       "power_exponent": 0.676,
       "sh_norm_m2": 400
     },
     "base_temperature_c": {
-      "H1": { "low": -9.5, "medium": -11.5, "high": -13.5 },
-      "H2": { "low": -6.5, "medium": -8.5, "high": -10.5 },
-      "H3": { "low": -3.5, "medium": -5.5, "high": -7.5 }
+      "H1": {
+        "low": -9.5,
+        "medium": -11.5,
+        "high": -13.5
+      },
+      "H2": {
+        "low": -6.5,
+        "medium": -8.5,
+        "high": -10.5
+      },
+      "H3": {
+        "low": -3.5,
+        "medium": -5.5,
+        "high": -7.5
+      }
     }
   },
   "dhw": {
-    "distribution_rd_individual": { "production_in_living_space_adjacent_rooms": 0.93, "production_in_living_space_distant_rooms": 0.87, "production_outside_living_space": 0.83 },
+    "distribution_rd_individual": {
+      "production_in_living_space_adjacent_rooms": 0.93,
+      "production_in_living_space_distant_rooms": 0.87,
+      "production_outside_living_space": 0.83
+    },
     "electric_storage_losses": {
       "formula": "Qg,w [Wh/an] = 8592 * (45/24) * Vs * Cr ; Rs = 1 / (1 + Qg,w*Rd/Becs) (1,08 au numérateur pour catégorie C/3*)",
       "standby_hours_per_year_h": 8592,
       "storage_temperature_difference_c": 45,
       "default_volume_l": 200,
-      "cr_vertical_unknown_by_volume": { "le_100": 0.32, "100_200": 0.23, "200_300": 0.22, "gt_300": 0.22 }
+      "cr_vertical_unknown_by_volume": {
+        "le_100": 0.32,
+        "100_200": 0.23,
+        "200_300": 0.22,
+        "gt_300": 0.22
+      }
     },
-    "gas_water_heater_rg": { "before_1990": 0.81, "1990_2000": 0.84, "after_2000": 0.84, "condensing_after_1996": 0.98 },
+    "gas_water_heater_rg": {
+      "before_1990": 0.81,
+      "1990_2000": 0.84,
+      "after_2000": 0.84,
+      "condensing_after_1996": 0.98
+    },
     "heat_pump_water_heater_cop": {
-      "H1_H2": { "outdoor_or_unheated_air": { "before_2010": 2.0, "2010_2014": 2.2, "after_2015": 2.5 }, "extract_air": { "before_2010": 2.3, "2010_2014": 2.5, "after_2015": 2.8 } },
-      "H3": { "outdoor_or_unheated_air": { "before_2010": 2.3, "2010_2014": 2.5, "after_2015": 2.8 }, "extract_air": { "before_2010": 2.3, "2010_2014": 2.5, "after_2015": 2.9 } },
+      "H1_H2": {
+        "outdoor_or_unheated_air": {
+          "before_2010": 2.0,
+          "2010_2014": 2.2,
+          "after_2015": 2.5
+        },
+        "extract_air": {
+          "before_2010": 2.3,
+          "2010_2014": 2.5,
+          "after_2015": 2.8
+        }
+      },
+      "H3": {
+        "outdoor_or_unheated_air": {
+          "before_2010": 2.3,
+          "2010_2014": 2.5,
+          "after_2015": 2.8
+        },
+        "extract_air": {
+          "before_2010": 2.3,
+          "2010_2014": 2.5,
+          "after_2015": 2.9
+        }
+      },
       "iecs_formula": "Iecs = 1 / (Rd * COP)"
     },
-    "district_heating_substation": { "rs_rg_insulated": 0.9, "rs_rg_uninsulated": 0.75 }
+    "district_heating_substation": {
+      "rs_rg_insulated": 0.9,
+      "rs_rg_uninsulated": 0.75
+    }
   },
   "lighting": {
-    "formula": "Cecl [kWh/an] = C * Pecl * Nh * Sh / 1000",
+    "formula": "Cecl [kWh/an] = sum_j C * Pecl * Nh_j * Sh / 1000",
     "c_switch_control": 0.9,
     "p_ecl_w_per_m2": 1.4,
-    "annual_hours_national_average": 2123,
-    "note": "V1 uses the national average lighting hours (2123 h, §6.1 des apports internes) instead of the per-zone monthly Nh tables; documented deviation."
+    "nh_hours_by_zone_month": {
+      "H1a": {
+        "1": 217,
+        "2": 168,
+        "3": 155,
+        "4": 90,
+        "5": 62,
+        "6": 30,
+        "7": 31,
+        "8": 93,
+        "9": 120,
+        "10": 186,
+        "11": 180,
+        "12": 168
+      },
+      "H1b": {
+        "1": 186,
+        "2": 168,
+        "3": 155,
+        "4": 90,
+        "5": 62,
+        "6": 30,
+        "7": 31,
+        "8": 93,
+        "9": 120,
+        "10": 186,
+        "11": 180,
+        "12": 144
+      },
+      "H1c": {
+        "1": 186,
+        "2": 168,
+        "3": 155,
+        "4": 90,
+        "5": 62,
+        "6": 30,
+        "7": 62,
+        "8": 93,
+        "9": 120,
+        "10": 186,
+        "11": 180,
+        "12": 144
+      },
+      "H2a": {
+        "1": 217,
+        "2": 168,
+        "3": 155,
+        "4": 90,
+        "5": 62,
+        "6": 30,
+        "7": 31,
+        "8": 93,
+        "9": 120,
+        "10": 186,
+        "11": 180,
+        "12": 168
+      },
+      "H2b": {
+        "1": 217,
+        "2": 168,
+        "3": 155,
+        "4": 90,
+        "5": 62,
+        "6": 30,
+        "7": 62,
+        "8": 93,
+        "9": 120,
+        "10": 186,
+        "11": 180,
+        "12": 168
+      },
+      "H2c": {
+        "1": 186,
+        "2": 168,
+        "3": 155,
+        "4": 120,
+        "5": 62,
+        "6": 60,
+        "7": 62,
+        "8": 93,
+        "9": 150,
+        "10": 186,
+        "11": 180,
+        "12": 144
+      },
+      "H2d": {
+        "1": 186,
+        "2": 168,
+        "3": 155,
+        "4": 120,
+        "5": 62,
+        "6": 60,
+        "7": 62,
+        "8": 93,
+        "9": 150,
+        "10": 186,
+        "11": 180,
+        "12": 144
+      },
+      "H3": {
+        "1": 186,
+        "2": 168,
+        "3": 155,
+        "4": 120,
+        "5": 62,
+        "6": 60,
+        "7": 62,
+        "8": 93,
+        "9": 120,
+        "10": 186,
+        "11": 150,
+        "12": 144
+      }
+    },
+    "source": "Annexe 1 3CL-DPE 2021 consolidée (rt-re-batiment.developpement-durable.gouv.fr), §16.1 Consommation d'éclairage (Cecl), p.102-103 : C = 0,9 (commande par interrupteur), Pecl = 1,4 W/m², Nh_j = heures de fonctionnement de l'éclairage par mois et zone climatique (lever/coucher du soleil croisés avec les heures d'occupation). Totaux annuels publiés : H1a 1500, H1b 1445, H1c 1476, H2a 1500, H2b 1531, H2c 1566, H2d 1566, H3 1506 h.",
+    "date_accessed": "2026-11-25",
+    "history": "Until 2026-11-25 a single 'national average' of 2123 h was used (D-10), which overestimated lighting by ~41 % against the published DPE (validation note v2.1 §5.4)."
   }
 }

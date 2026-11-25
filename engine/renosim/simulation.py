@@ -70,9 +70,9 @@ def simulate(
     scenario
         Occupancy scenario; defaults to the conventional DPE scenario.
     regulation_vintage
-        DPE primary-energy convention: ``"dpe_2026"`` (electricity 1.9, in
-        force since 2026-01-01 — default) or ``"dpe_2021"`` (2.3, DPEs issued
-        2021-2025, used by the validation for those DPEs).
+        DPE primary-energy convention (electricity 2.3 / 1.9 / 1.7 for
+        ``"dpe_2021"`` / ``"dpe_2026"`` / ``"dpe_2027"``); defaults to the one
+        in force today (``outputs.regulation_vintage_in_force``).
 
     Returns
     -------

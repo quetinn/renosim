@@ -528,3 +528,70 @@ scénario G → G (430 kWhep/m², 1 393 €/an).
 
 **Prochaines étapes :** Sprint 1 de l'audit (prix de l'énergie à jour, échantillon test
 indépendant, note de validation v2).
+
+## 2026-11-25 (suite 2) — PR #1 fusionnée, Sprint 1 de l'audit (branche `feat/sprint1-prices-validation`)
+
+**Fait :**
+1. **Prix de l'énergie** : barème officiel de l'annexe 7 de l'arrêté du 25 mars 2024 (en
+   vigueur au 01/07/2024, aucune modification ultérieure) à la place du barème 2021. Valeurs lues
+   en texte intégral dans le texte du ministère et concordantes avec le JO, sauf les granulés
+   (0,09897 au JO contre 0,10701 dans le projet) : à confirmer sur l'extrait authentifié du JO.
+2. **Convention 2027** : coefficient électricité **1,7 au 1er janvier 2027** (arrêté publié au JO
+   le 31/08/2026, communiqué du ministère ; NOR à compléter). Calendrier daté dans
+   `emission_factors.json` : sans choix explicite, la convention du jour s'applique. L'app
+   propose « En vigueur / DPE 2026 / DPE 2021-2025 » et affiche le coefficient appliqué et la
+   source des prix. D-13 réécrit.
+3. **Coûts de travaux indexés** sur l'indice INSEE BT01 (sept. 2026 = 139,1 ; moyennes 2019 =
+   111,05 et 2025 = 133,01, relevées sur insee.fr) : ×1,253 (ONRE) et ×1,046 (guides).
+4. **Validation v5** : échantillon **test indépendant** tiré au hasard (`sort=_rand`), disjoint
+   de la calibration (11 549 lignes) ; bootstrap à 1 000 tirages ; repondération selon les
+   effectifs ADEME par strate (4,7 M DPE de maisons). **Le critère n'est pas atteint au test :
+   ±1 classe 86,7 % [86,1 ; 87,4]**, contre 90,2 % en calibration ; repondéré, 71,4 %. Cause
+   principale : l'échantillon de calibration contenait 61 % de DPE de 2026 ; sur les DPE de
+   2022-2025, le moteur surestime d'environ +40 kWhep/m² dans les deux échantillons ; segments
+   faibles : électricité et bâti d'avant 1975. Note de validation v2, et chiffres de l'app et du
+   README remplacés par ceux du test.
+5. Moteur 0.6.0, wheel régénéré.
+
+**État :** 202/202 tests, couverture 96,3 %, ruff/format/mypy OK, `npm run build` OK.
+Vérifié dans le navigateur (landing, convention, facture, coûts indexés).
+
+**Prochaines étapes :** télécharger `version_dpe` et analyser le biais par version de méthode ;
+tirer un nouvel échantillon de calibration aléatoire ; ne jamais régler sur le test v1 ;
+électricité poste par poste ; leviers v1.1 sur le bâti ancien ; mention « A0 » (arrêté du
+11/06/2026, à partir du 01/01/2027).
+
+## 2026-11-25 (suite 3) — Analyse de l'écart 2022-2025 par version de méthode
+
+- Nouveaux scripts : `validation/enrich_sample.py` (version de méthode, date de modification et
+  consommations par usage en EF/EP, récupérées par `numero_dpe`) et `validation/analyze_bias.py` ;
+  résultats agrégés dans `validation/report/bias_analysis_v5.json`.
+- **Pas de recalcul rétroactif à 1,9** : le rapport EP/EF de l'éclairage vaut 2,3 pour les DPE
+  2021-2025 et 1,9 pour 2026. Le mapping par date est correct.
+- **La rupture suit `version_dpe`** : biais ≈ +40 pour les versions 2.1 à 2.5, +4 pour la 2.6.
+  Les déperditions (0,98-0,99) et le besoin de chauffage (1,03-1,05) du moteur collent aux DPE
+  dans toutes les versions : l'écart vient de la chaîne qui passe du besoin à la consommation
+  (chauffage et ECS ×1,19 en v2.4-2.5 contre ×1,04 en v2.6). L'effet n'est pas uniforme (stable
+  pour le gaz et le fioul, variable pour le bois et l'ECS) : analyse par type de générateur à
+  faire.
+- **DPE v2.6 du test indépendant** : ±1 classe 93,6 % [92,5 ; 94,7], biais +3,7 (n = 1 885) ;
+  repondéré 86,3 % [81,9 ; 90,2].
+- **Éclairage** : +41 % constant (2,7 contre 1,9 kWh_ef/m²), à vérifier contre §16 de l'annexe 1.
+- Note de validation v2.1 (§5.4) ; panneau méthode et README complétés. Aucun réglage du moteur
+  (le test reste vierge).
+
+**Prochaines étapes :** forfait d'éclairage ; annoncer la référence « version de méthode en
+vigueur » puis tirer un échantillon de calibration aléatoire limité à la v2.6 ; analyse par
+type de générateur (électricité, PAC, bois) ; leviers v1.1 sur le bâti ancien.
+
+## 2026-11-25 (suite 4) — Correction de l'éclairage (D-10 résolu)
+
+- Lecture du §16.1 de l'annexe 1 3CL consolidée (p.102-103, dans le navigateur, le site refusant
+  les accès automatisés) : Nh est tabulé par zone et par mois (1 445 à 1 566 h/an). Le moteur
+  utilisait 2 123 h, d'où +41 %.
+- Table mensuelle encodée telle que publiée (les totaux annuels sont vérifiés par un test),
+  `lighting_kwh` corrigé, 3 tests calculés à la main (H1a 100 m² = 189,0 kWh ; H2c = 197,3 kWh).
+- Campagne v6 : éclairage moteur/DPE 1,000-1,007 ; test : biais +35,0 → +33,3, ±1 classe
+  86,7 → 87,0 %, exact 44,4 → 44,9 % ; DPE v2.6 du test : 93,6 %, biais +2,3. Note de validation
+  v2.2, D-10, app et README mis à jour.
+- État : 205/205 tests, ruff/format/mypy OK.

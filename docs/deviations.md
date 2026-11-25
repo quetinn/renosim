@@ -114,12 +114,19 @@ Format : un écart = une entrée. Statut : `décidé` (au niveau du brief, pas e
 - **Impact :** faible pour les cas types ; les valeurs Re/Rd/Rr elles-mêmes sont les valeurs
   officielles (§12.1-12.3).
 
-## D-10 — Éclairage : heures moyennes nationales
+## D-10 — Éclairage : heures de fonctionnement — RÉSOLU (25/11/2026)
 
-- **Statut :** codé (`systems.py`, `lighting_kwh`)
-- **3CL officielle :** Nh mensuel par zone climatique (croisement lever/coucher du soleil).
-- **RénoSim :** forfait annuel Nh = 2123 h (moyenne nationale citée §6.1 de l'annexe).
-- **Impact :** négligeable (l'éclairage pèse ~2-3 kWhep/m²/an).
+- **Statut :** RÉSOLU — conforme (`systems.py`, `lighting_kwh` ; table `lighting` de
+  `system_efficiencies.json`).
+- **3CL officielle :** §16.1 de l'annexe 1 (p.102-103) : `Cecl = Σj C·Pecl·Nhj/1000` avec C = 0,9,
+  Pecl = 1,4 W/m² et Nhj tabulé par zone climatique et par mois (1 445 à 1 566 h/an).
+- **Historique :** jusqu'au 25/11/2026, le moteur utilisait une durée unique de 2 123 h
+  présentée comme une « moyenne nationale », soit +41 % par rapport aux DPE publiés.
+  L'analyse par usage (note de validation v2.1, §5.4) l'a révélé.
+- **RénoSim :** table mensuelle encodée telle que publiée ; seule la somme annuelle sert, car
+  l'éclairage n'interagit avec aucun autre poste dans le moteur.
+- **Impact mesuré (campagne v6) :** éclairage moteur/DPE 1,41 → 1,00 ; biais Cep test
+  +35,0 → +33,3 kWhep/m², ±1 classe 86,7 → 87,0 %.
 
 ## D-11 — Auxiliaires de chauffage et d'ECS — RÉSOLU (10/07/2026, simplifications documentées)
 
@@ -158,22 +165,25 @@ Format : un écart = une entrée. Statut : `décidé` (au niveau du brief, pas e
   pour les maisons > 40 m² (le cas d'usage dominant). Reste une légère discontinuité officielle
   à 40 m² exactement (EGES_d = 55 côté ≤ 40 vs 50 au-delà), reproduite fidèlement.
 
-## D-13 — Coefficient d'énergie primaire électricité : choix du millésime
+## D-13 — Coefficient d'énergie primaire électricité : calendrier réglementaire
 
-- **Statut :** codé (`outputs.py`, paramètre `regulation_vintage`) — défaut 2026 depuis le 25/11/2026
-- **Contexte :** l'arrêté du 13 août 2025 (JORFTEXT000052134589) abaisse le coefficient de
-  conversion EP de l'électricité de 2,3 à **1,9 au 1er janvier 2026**. Le brief (rédigé avant)
-  mentionnait 2,3.
-- **RénoSim :** les deux conventions sont encodées. **Défaut = 1,9 (`dpe_2026`) depuis le
-  25/11/2026** (clé `default_regulation_vintage` de `emission_factors.json`, lue par
-  `simulate`, `assess_scenario`, le bridge et l'app) : l'étiquette affichée est celle de la
-  réglementation en vigueur. Jusque-là le défaut était 2,3 (`dpe_2021`), choix hérité de la
-  Phase 1. La convention `dpe_2021` reste sélectionnable dans l'app (« DPE 2021-2025 », pour
-  comparer avec un diagnostic émis avant 2026). La campagne de validation n'utilise pas le
-  défaut : elle passe le millésime correspondant à la date de chaque DPE (itération 5,
-  `validation/mapping.py`), donc les métriques publiées sont inchangées.
-- **Impact :** un logement tout-électrique gagne ~17 % de Cep en convention 2026 (souvent une
-  classe) ; le sélecteur de convention est visible sur l'écran Situation.
+- **Statut :** codé (`outputs.py`, `regulation_vintage_in_force`) — défaut daté depuis le
+  25/11/2026
+- **Contexte :** le coefficient de conversion EP de l'électricité vaut **2,3** pour les DPE
+  établis jusqu'au 31/12/2025, **1,9** en 2026 (arrêté du 13 août 2025,
+  JORFTEXT000052134589) et **1,7** à partir du 1er janvier 2027 (arrêté publié au JO le
+  31 août 2026 d'après le communiqué du ministère du même jour ; référence NOR à compléter).
+  Le brief (rédigé avant) mentionnait 2,3. Les seuils d'étiquette A-G ne changent pas.
+- **RénoSim :** les trois conventions sont encodées (`dpe_2021`, `dpe_2026`, `dpe_2027`) avec
+  leur date d'entrée en vigueur (`regulation_vintage_schedule` de `emission_factors.json`).
+  Sans choix explicite, **la convention en vigueur à la date de la simulation** s'applique
+  (dans l'app : le jour où la page est ouverte) ; l'app propose « En vigueur », « DPE 2026 » et
+  « DPE 2021-2025 » et affiche le coefficient appliqué. La campagne de validation applique à
+  chaque DPE la convention de sa date d'établissement (itération 5, `validation/mapping.py`),
+  donc les métriques publiées ne dépendent pas du défaut. Historique : défaut 2,3 jusqu'au
+  25/11/2026 (choix hérité de la Phase 1), puis 1,9 fixe, puis daté.
+- **Impact :** un logement tout-électrique gagne ~17 % de Cep en convention 2026 et ~26 % en
+  convention 2027 par rapport à 2021 (souvent une à deux classes).
 
 ## D-14 — Tables U par groupe de zone et inertie fixe — PARTIELLEMENT LEVÉ (07/07/2026)
 
@@ -240,7 +250,9 @@ Format : un écart = une entrée. Statut : `décidé` (au niveau du brief, pas e
   (`tables/conventions.json`) s'applique, comme dans la campagne de validation, qui ne
   transmet pas la hauteur ADEME au facteur d'intermittence.
 - **Justification :** mêmes hypothèses que la campagne de validation — les métriques publiées
-  (90,8 % à ±1 classe) restent donc représentatives de ce que produit l'app avec les défauts.
+  restent donc représentatives de ce que produit l'app avec les défauts (note v2 du
+  25/11/2026, campagne v6 : 87,0 % à ±1 classe sur l'échantillon test indépendant, 90,3 %
+  sur la calibration).
 - **Impact :** incertitude géométrique de l'ordre de ±10-15 % sur les surfaces déperditives pour
   les maisons de forme atypique quand les métrés ne sont pas saisis.
 
