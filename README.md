@@ -77,6 +77,8 @@ prochaine calibration.
 - **Bouquets** : trois bouquets types et des combinaisons libres, recalculés dans l'ordre
   enveloppe puis systèmes ; l'interface montre pourquoi les économies **ne s'additionnent pas**.
 - **Viser une étiquette** : recherche du bouquet le moins cher qui atteint une classe donnée.
+- **Puissance de chauffage** nécessaire par grand froid, et alerte quand une pompe à chaleur
+  est installée sur une maison trop peu isolée pour la gamme de prix affichée.
 - **Convention à jour** : coefficient d'énergie primaire de l'électricité selon le calendrier
   réglementaire (2,3 jusqu'en 2025, 1,9 en 2026, 1,7 à partir du 1er janvier 2027), seuils des
   petites surfaces, indicateur de confort d'été, refroidissement.
@@ -159,7 +161,8 @@ quarto render validation/report
 **v1.1 « conformité réglementaire »** (une seule recalibration à la fin, selon le protocole annoncé
 dans la note) : ponts thermiques par liaison et distinction ITE/ITI, matériau des murs anciens,
 inertie selon les règles Th-I, volets en hiver (Ujn), chaudières bois et ECS des PAC selon la
-méthode, PAC dimensionnée avec coût selon la puissance, geste « plancher bas », alertes sur les
+méthode, appoint des PAC et coût selon la puissance (la puissance nécessaire et l'alerte « isolez
+d'abord » sont déjà en place), geste « plancher bas », alertes sur les
 performances minimales de la réglementation thermique des bâtiments existants.
 
 **Plus tard** : étiquette probabiliste (Monte-Carlo sur les entrées inconnues), carbone gris des
