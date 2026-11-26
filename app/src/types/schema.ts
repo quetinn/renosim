@@ -264,12 +264,24 @@ export interface SummerComfortOutput {
   };
 }
 
+/** Needed heating power vs the heat-pump cost reference (audit §4.4). */
+export interface HeatPumpSizing {
+  /** Pnc = GV·(20 − Tbase)/1000 after the scenario's envelope measures (kW). */
+  design_heat_load_kw: number;
+  reference_power_low_kw: number;
+  reference_power_high_kw: number;
+  /** Needed power above the range the displayed heat-pump cost refers to. */
+  above_reference: boolean;
+}
+
 export interface ScenarioOutput {
   id: string;
   measures: MeasureInput[];
   conventional: ScenarioAssessment;
   personalized: ScenarioAssessment | null;
   summer_comfort_after: SummerComfortOutput;
+  /** Null unless the scenario installs a new air-to-water heat pump. */
+  heat_pump_sizing: HeatPumpSizing | null;
 }
 
 /** Standalone conventional preview of one measure on the current building. */
@@ -281,6 +293,7 @@ export interface MeasurePreview {
   payback_years_high: number | null;
   after_label: DpeClass | null;
   summer_comfort_level_after: SummerComfortLevel;
+  heat_pump_sizing: HeatPumpSizing | null;
 }
 
 /** Cheapest measure combination reaching a target DPE class (conventional mode). */
@@ -308,6 +321,8 @@ export interface SimulationOutput {
     renovation_costs: { index: string; reference_period: string };
   };
   baseline: {
+    /** Heating power needed at the base temperature (3CL §15.2.2), kW. */
+    design_heat_load_kw: number;
     conventional: SimulationResult;
     personalized: SimulationResult | null;
   };

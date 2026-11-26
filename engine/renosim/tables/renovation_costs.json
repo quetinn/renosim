@@ -61,7 +61,13 @@
       "low": 9000,
       "high": 18000,
       "confidence": "professional_guides",
-      "label_fr": "Pompe à chaleur air-eau (posée)"
+      "label_fr": "Pompe à chaleur air-eau (posée)",
+      "reference_power_kw": {
+        "low": 10,
+        "high": 12,
+        "source": "ADEME, « Comment ? Choisir sa pompe à chaleur », guide mis à jour en décembre 2025 (librairie.ademe.fr, attachment 8284), p.8, tableau « Coûts moyens d'installation (en € HT) » : PAC air/eau 10-12 kW, matériel 14 900 € HT, pose 2 060 € HT, d'après Observ'ER (juin 2025), « Suivi du marché 2024 des pompes à chaleur individuelles ». Lu dans le document le 2026-11-26.",
+        "use": "Puissance à laquelle se rapporte la fourchette de coût affichée. Au-delà (puissance nécessaire Pnc > 12 kW), l'app signale que le coût est probablement sous-estimé et que l'isolation préalable réduit la puissance à installer (même guide, p.7 : « Si possible, faites isoler votre logement avant de changer de chauffage »). Aucune extrapolation du coût au kW n'est faite faute de source par tranche de puissance."
+      }
     },
     "condensing_gas_boiler": {
       "unit": "eur_lump_sum",

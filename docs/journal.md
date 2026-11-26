@@ -625,3 +625,33 @@ dimensionnée, plancher bas, alertes RT existante), puis une seule recalibration
 protocole annoncé. Constat à traiter en v1.1 (capture du README) : une PAC seule sur une maison
 G non isolée affiche G → D et un retour de 2 à 5 ans (audit §4.4).
 
+## 2026-11-26 (suite) — v1.0 publiée ; v1.1, étape 1 : puissance de chauffage et PAC
+
+- **v1.0** : PR #3 fusionnée, tag `v1.0` poussé, déploiement vérifié (note en ligne à
+  `/renosim/validation/`).
+- **Puissance nécessaire au point de base** `Pnc = GV·(20 − Tbase)/1000` (3CL §15.2.2) extraite
+  dans `systems.design_heat_load_kw` et réutilisée par le circulateur (température intérieure de
+  dimensionnement déplacée dans `system_efficiencies.json`). Test calculé à la main : maison de
+  référence 29,348 kW en H1a, 27,358 kW en H3 > 800 m.
+- **Contrôle PAC** (`economics.heat_pump_sizing`) : puissance après les gestes d'enveloppe du
+  même bouquet, comparée à la gamme 10-12 kW du coût. Source lue dans le document : guide
+  ADEME « Choisir sa pompe à chaleur » (déc. 2025), p.8 (14 900 € HT + 2 060 € HT de pose,
+  Observ'ER 2025) et p.7 (« faites isoler votre logement avant de changer de chauffage »).
+  Aucune source publique par tranche de puissance trouvée (étude Observ'ER 2022 : une seule
+  référence 4-6 kW) : pas d'extrapolation du coût au kW. Test : PAC seule 29,3 kW (alerte),
+  après murs + toit + fenêtres 11,6 kW (dans la gamme).
+- **Bridge** : `baseline.design_heat_load_kw`, `heat_pump_sizing` par scénario et par aperçu
+  de geste. **App** : puissance affichée sur la situation (avec aide), alerte sur la carte
+  chauffage et encart sous le comparatif (« PAC à dimensionner » ou « Enveloppe d'abord, PAC
+  ensuite : 19 → 5 kW »). Moteur 0.7.0.
+- Nouvel écart D-23 (ni appoint ni coût au kW). Campagne v6 du test rejouée : identique au bit
+  près (aucun effet sur les consommations).
+
+**État :** 209/209 tests, ruff/format/mypy OK, `npm run build` OK, vérifié dans l'aperçu
+(maison de 1970 au fioul : 19 kW ; PAC seule → alerte ; bouquet complet → 5 kW).
+
+**Prochaines étapes v1.1 :** rendements officiels des chaudières bois (D-22), matériau des murs
+anciens et inertie Th-I, ponts thermiques par liaison et ITE/ITI, Ujn, ECS des PAC, appoint des
+PAC, geste plancher bas, alertes RT existante ; puis la recalibration unique selon le protocole
+annoncé.
+

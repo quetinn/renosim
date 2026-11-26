@@ -275,3 +275,23 @@ class TestLighting:
                   "H2b": 1531, "H2c": 1566, "H2d": 1566, "H3": 1506}  # fmt: skip
         for zone, total in totals.items():
             assert sum(nh[zone].values()) == total, zone
+
+
+def test_design_heat_load_hand_computed() -> None:
+    """Pnc = GV * (20 - Tbase) / 1000 (3CL §15.2.2, Tbase §18.1).
+
+    Reference house (H1a, altitude < 400 m): GV = 994.83 W/K, Tbase = -9.5 degC
+      Pnc = 994.83 * 29.5 / 1000 = 29.348 kW
+    Same house in H3 above 800 m: Tbase = -7.5 degC -> 994.83 * 27.5 / 1000 = 27.358 kW
+    (GV does not depend on the zone).
+    """
+    from dataclasses import replace
+
+    from renosim.models import AltitudeClass, ClimateZone
+    from renosim.systems import design_heat_load_kw
+    from tests.test_reference_cases import house_1970_oil_uninsulated
+
+    house = house_1970_oil_uninsulated()
+    assert design_heat_load_kw(house) == pytest.approx(29.348, abs=0.001)
+    h3_high = replace(house, climate_zone=ClimateZone.H3, altitude_class=AltitudeClass.HIGH)
+    assert design_heat_load_kw(h3_high) == pytest.approx(27.358, abs=0.001)

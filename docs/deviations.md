@@ -385,6 +385,23 @@ Format : un écart = une entrée. Statut : `décidé` (au niveau du brief, pas e
   les métriques publiées : elle est reportée à la v1.1, avec les rendements officiels du §13
   (annexe 1 consolidée à récupérer) et une itération de calibration documentée.
 
+## D-23 — Pompe à chaleur : ni appoint ni coût selon la puissance (26/11/2026)
+
+- **Statut :** partiellement levé (`systems.design_heat_load_kw`,
+  `economics.heat_pump_sizing`, sorties `design_heat_load_kw` et `heat_pump_sizing` du bridge).
+- **3CL officielle :** une PAC peut être associée à un appoint (installation « PAC + appoint »),
+  avec une part des besoins couverte par chaque générateur selon le dimensionnement.
+- **RénoSim :** la PAC couvre 100 % des besoins avec le SCOP de la zone, quelle que soit la
+  puissance nécessaire. Depuis le 26/11/2026, la puissance nécessaire au point de base
+  `Pnc = GV·(20 − Tbase)/1000` (§15.2.2, déjà utilisée pour le circulateur) est affichée et
+  comparée à la gamme 10-12 kW à laquelle se rapporte le coût de la PAC (guide ADEME de
+  décembre 2025, d'après Observ'ER 2025). Au-delà, l'app signale un coût probablement
+  sous-estimé et conseille d'isoler d'abord. Le coût n'est pas extrapolé au kW, faute de source
+  publique par tranche de puissance.
+- **Impact :** aucun sur les consommations ni sur la validation (campagne v6 rejouée à
+  l'identique). Reste à faire en v1.1, avec la recalibration : part de l'appoint quand
+  `Pnc` dépasse la puissance installée, coût selon la puissance si une source le permet.
+
 ---
 
 *Les choix de mapping de la validation (M-1 à M-11, dont le coefficient Ue des planchers sur

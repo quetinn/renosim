@@ -11,11 +11,12 @@ from __future__ import annotations
 from collections.abc import Sequence
 from dataclasses import dataclass
 
-from renosim.models import Building
+from renosim.models import Building, HeatingGeneratorType
 from renosim.occupancy import CONVENTIONAL, OccupancyScenario
 from renosim.outputs import DEFAULT_REGULATION_VINTAGE, RegulationVintage
 from renosim.renovation import RenovationMeasure, apply_measures
 from renosim.simulation import SimulationResult, simulate
+from renosim.systems import design_heat_load_kw
 from renosim.tables_io import load_table
 
 
@@ -74,6 +75,54 @@ def measure_cost_range(building: Building, measure: RenovationMeasure) -> tuple[
     else:  # pragma: no cover - table integrity
         raise ValueError(f"unknown cost unit: {unit}")
     return low * area, high * area
+
+
+@dataclass(frozen=True, slots=True)
+class HeatPumpSizing:
+    """Design heat load of a dwelling getting a new air-to-water heat pump (audit §4.4).
+
+    Attributes
+    ----------
+    design_heat_load_kw
+        Heating power needed at the base temperature after the scenario's
+        envelope measures, Pnc (kW, 3CL §15.2.2).
+    reference_power_low_kw, reference_power_high_kw
+        Power range (kW) the displayed heat-pump cost refers to
+        (tables/renovation_costs.json, ADEME guide, 10-12 kW).
+    """
+
+    design_heat_load_kw: float
+    reference_power_low_kw: float
+    reference_power_high_kw: float
+
+    @property
+    def above_reference(self) -> bool:
+        """True when the needed power exceeds the cost reference range."""
+        return self.design_heat_load_kw > self.reference_power_high_kw
+
+
+def heat_pump_sizing(building_before: Building, building_after: Building) -> HeatPumpSizing | None:
+    """Sizing check for a scenario that installs an air-to-water heat pump.
+
+    Returns ``None`` when the scenario keeps the existing generator or installs
+    something else. The design load is computed on ``building_after``, i.e.
+    after the envelope measures of the same bundle (envelope first, CLAUDE.md
+    §4.3). Informational only: consumptions and costs are unchanged.
+    """
+    new_generator = building_after.heating_system.generator_type
+    if (
+        new_generator is not HeatingGeneratorType.HEAT_PUMP_AIR_WATER
+        or building_before.heating_system.generator_type is new_generator
+    ):
+        return None
+    reference = load_table("renovation_costs")["measures"]["heat_pump_air_water"][
+        "reference_power_kw"
+    ]
+    return HeatPumpSizing(
+        design_heat_load_kw=design_heat_load_kw(building_after),
+        reference_power_low_kw=float(reference["low"]),
+        reference_power_high_kw=float(reference["high"]),
+    )
 
 
 def assess_scenario(
