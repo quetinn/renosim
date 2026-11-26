@@ -339,6 +339,13 @@ export function ResultsScreen() {
               {output.conventions.energy_prices.label.slice(1)}
               {isPerso ? ", sauf les prix que vous avez saisis" : ""}.
             </p>
+            <div className="-mt-2 flex items-center gap-1.5 text-xs text-ink-soft">
+              Puissance de chauffage nécessaire par grand froid : environ{" "}
+              <strong className="tabular text-ink">
+                {formatInt(output.baseline.design_heat_load_kw)} kW
+              </strong>
+              <InfoTip text="Déperditions du logement multipliées par l'écart entre 20 °C et la température extérieure de base de votre zone (de −3,5 à −13,5 °C selon la zone et l'altitude), comme dans la méthode du DPE. C'est l'ordre de grandeur de la puissance d'un nouveau chauffage : isoler d'abord permet d'installer plus petit. Seul un bilan thermique par un professionnel fixe la puissance réelle." />
+            </div>
             <div className="rounded-2xl border border-line bg-surface p-5 shadow-card">
               <h3 className="text-sm font-semibold">Répartition par usage</h3>
               <ul className="mt-3 space-y-2.5">

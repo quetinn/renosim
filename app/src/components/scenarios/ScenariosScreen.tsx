@@ -15,6 +15,7 @@ import {
   Loader2,
   PiggyBank,
   Sun,
+  TriangleAlert,
 } from "lucide-react";
 import { Suspense, lazy, type ReactNode } from "react";
 import { INSULATION_MATERIAL_ORDER, addedRPreview } from "../../data/insulationMaterials";
@@ -29,6 +30,7 @@ import {
 import { useEngine } from "../../pyodide/PyodideContext";
 import { useAppState } from "../../state/AppState";
 import type {
+  HeatPumpSizing,
   InsulationMaterial,
   MeasurePreview,
   MeasureType,
@@ -339,6 +341,16 @@ export function ScenariosScreen() {
                           <option value="condensing_boiler">Chaudière gaz à condensation</option>
                           <option value="wood_pellet_stove">Poêle à granulés</option>
                         </select>
+                        {params.heatingTarget === "heat_pump_air_water" &&
+                          output.measure_previews.heating_replacement.heat_pump_sizing
+                            ?.above_reference && (
+                            <span className="mt-1.5 block font-normal text-amber-deep">
+                              Par grand froid, votre maison demande environ{" "}
+                              {formatInt(output.baseline.design_heat_load_kw)} kW : plus que les
+                              PAC de 10 à 12 kW sur lesquelles repose le coût affiché. Isoler
+                              d'abord réduit la puissance à installer.
+                            </span>
+                          )}
                         {params.heatingTarget === "wood_pellet_stove" &&
                           form.dhw === "coupled_to_heating_system" && (
                             <span className="mt-1.5 block font-normal text-ink-faint">
@@ -543,6 +555,11 @@ export function ScenariosScreen() {
                   </span>
                 </p>
               )}
+
+              <HeatPumpSizingNote
+                sizing={(bouquet ?? scenarios.find((s) => s.heat_pump_sizing))?.heat_pump_sizing}
+                baselineKw={output.baseline.design_heat_load_kw}
+              />
             </section>
 
             {/* Cost vs gain chart */}
@@ -682,4 +699,47 @@ function pickMeasureBadges(previews: Record<MeasureType, MeasurePreview>): {
     }
   }
   return { mostProfitable, biggestCo2 };
+}
+
+/**
+ * Heat-pump sizing note (audit §4.4): needed power at the base temperature
+ * after the scenario's envelope measures, against the 10-12 kW power the
+ * displayed heat-pump cost refers to (ADEME guide). Informational only.
+ */
+function HeatPumpSizingNote({
+  sizing,
+  baselineKw,
+}: {
+  sizing: HeatPumpSizing | null | undefined;
+  baselineKw: number;
+}) {
+  if (!sizing) return null;
+  const range = `${formatInt(sizing.reference_power_low_kw)} à ${formatInt(sizing.reference_power_high_kw)} kW`;
+  const afterKw = formatInt(sizing.design_heat_load_kw);
+  if (sizing.above_reference) {
+    return (
+      <p className="mt-4 flex items-start gap-2 rounded-2xl bg-amber-soft px-5 py-4 text-sm leading-relaxed text-ink-soft">
+        <TriangleAlert size={16} className="mt-0.5 shrink-0 text-amber-deep" aria-hidden />
+        <span>
+          <strong className="text-ink">Pompe à chaleur à dimensionner :</strong> par grand froid,
+          la maison demandera environ {afterKw} kW de chauffage après ces travaux, plus que les PAC
+          de {range} auxquelles se rapporte le coût affiché. Attendez-vous à un devis plus élevé.
+          L'ADEME conseille d'isoler avant de changer de chauffage : la puissance à installer, et
+          donc le coût de la PAC, baissent d'autant.
+        </span>
+      </p>
+    );
+  }
+  if (baselineKw <= sizing.reference_power_high_kw) return null;
+  return (
+    <p className="mt-4 flex items-start gap-2 rounded-2xl border border-pine/25 bg-pine-mist px-5 py-4 text-sm leading-relaxed text-ink-soft">
+      <Info size={16} className="mt-0.5 shrink-0 text-pine" aria-hidden />
+      <span>
+        <strong className="text-ink">Enveloppe d'abord, PAC ensuite :</strong> grâce à
+        l'isolation de votre bouquet, la puissance de chauffage nécessaire par grand froid passe
+        d'environ {formatInt(baselineKw)} à {afterKw} kW, dans la gamme des PAC de {range}{" "}
+        auxquelles se rapporte le coût affiché.
+      </span>
+    </p>
+  );
 }
