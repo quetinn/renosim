@@ -33,6 +33,14 @@ jobs:
       - name: Generate wheel manifest for the Pyodide loader
         run: node app/scripts/make-wheel-manifest.mjs
 
+      - uses: quarto-dev/quarto-actions/setup@v2
+
+      - name: Render the validation note (published at <site>/validation/)
+        run: |
+          quarto render validation/report
+          mkdir -p app/public/validation
+          cp validation/report/_site/note_validation.html app/public/validation/index.html
+
       - uses: actions/setup-node@v4
         with:
           node-version: 22

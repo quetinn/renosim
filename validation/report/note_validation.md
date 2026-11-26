@@ -1,13 +1,14 @@
-# Note technique de validation — moteur RénoSim vs base DPE ADEME (v2)
+# Note technique de validation — moteur RénoSim vs base DPE ADEME (v3)
 
-**Date :** 25 novembre 2026 (v2.1 : analyse par version de méthode, §5.4 ; v2.2 : éclairage
-officiel, campagne v6) · **Moteur :** `renosim` 0.5.0 (méthode 3CL-DPE 2021 simplifiée) ·
-**Auteur :** Noé Quetin · **Version précédente :** v1 du 4 juillet 2026 (§9)
+**Date :** 26 novembre 2026 (version finale de la v1.0 ; historique au §9) · **Moteur :**
+`renosim` 0.6.0 (méthode 3CL-DPE 2021 simplifiée) ·
+**Auteur :** Noé Quetin · **Version précédente :** v2.2 du 25 novembre 2026 (§9)
 
 > La v2 ajoute ce qui manquait à la v1 : un **échantillon de test indépendant** (jamais vu
 > pendant la calibration), des **intervalles de confiance** et une **repondération** selon le parc
 > réel. Elle intègre aussi les itérations v2 à v4 de juillet et les campagnes appartements, confort
-> d'été et refroidissement. Mise en forme Quarto et figures : Phase 5.
+> d'été et refroidissement. La v3 ajoute les figures et **annonce le protocole de la prochaine
+> calibration avant de la faire** (§7).
 
 ## 0. Résumé
 
@@ -118,6 +119,9 @@ Toutes les itérations jusqu'à v4 ont été mesurées sur l'échantillon de cal
 | **v5** | **Aucun changement de moteur : évaluation sur l'échantillon test** | **+35,0** | **57,0** | **44,4 %** | **86,7 %** |
 | **v6** | **Éclairage : heures Nh officielles par zone et par mois (§16.1), test** | **+33,3** | **56,3** | **44,9 %** | **87,0 %** |
 
+![Accord d'étiquette au fil des itérations. Jusqu'à la v4, mesure sur l'échantillon de
+calibration ; v5 et v6 sur l'échantillon test indépendant.](figures/iterations.svg)
+
 Les itérations v2 à v4 ajoutent des éléments officiels de la méthode. Chacune dégrade légèrement
 les métriques de calibration, et elles ont été conservées par fidélité méthodologique. La v5
 reprend exactement le moteur de la v4 : les bascules de convention faites depuis (défaut 2026,
@@ -131,20 +135,13 @@ par une ré-exécution bit à bit de la v4.
 Voir le tableau du §0. Fichiers : `validation/report/results_v5_calibration.json` et
 `results_v5_test.json`.
 
-Matrice de confusion du **test** (lignes = observé, colonnes = prédit) :
-
-| obs\pred | A | B | C | D | E | F | G |
-|---|---:|---:|---:|---:|---:|---:|---:|
-| **A** | 117 | 353 | 268 | 25 | 3 | 0 | 0 |
-| **B** | 32 | 321 | 685 | 130 | 28 | 12 | 1 |
-| **C** | 2 | 97 | 1 910 | 1 356 | 228 | 91 | 30 |
-| **D** | 0 | 5 | 345 | 1 762 | 916 | 245 | 128 |
-| **E** | 0 | 0 | 26 | 305 | 588 | 351 | 205 |
-| **F** | 0 | 0 | 7 | 50 | 140 | 207 | 214 |
-| **G** | 0 | 0 | 1 | 7 | 32 | 69 | 204 |
+![Matrice de confusion des étiquettes sur le test indépendant (campagne v6), en part de
+chaque étiquette observée. Les pointillés délimitent l'accord à ±1 classe. Effectifs dans
+`results_v6_test.json`.](figures/confusion_test_v6.svg)
 
 La masse au-dessus de la diagonale (prédit plus mauvais qu'observé) confirme un biais
-systématique de surestimation, qui n'apparaît pas sur la calibration.
+systématique de surestimation, qui n'apparaît pas sur la calibration. Les effectifs bruts sont
+dans `results_v5_test.json` et `results_v6_test.json`.
 
 ### 5.2 Effet de l'année d'établissement du DPE
 
@@ -166,6 +163,9 @@ systématique de surestimation, qui n'apparaît pas sur la calibration.
   la seconde. L'année 2021 (n = 342 au test) est trop peu représentée pour conclure.
 
 ### 5.3 Par énergie et par époque (test)
+
+![Accord à ±1 classe sur le test indépendant (campagne v6), par époque de construction et
+par énergie de chauffage. En bleu, les strates qui atteignent le critère de 90 %.](figures/within1_by_stratum_test_v6.svg)
 
 | Énergie | n | Exact | ±1 | Part du parc diagnostiqué |
 |---|---:|---:|---:|---:|
@@ -207,6 +207,9 @@ effectif ne change pas les métriques (test identique ; biais calibration 12,9 �
 | n | 291 | 1 040 | 1 824 | 2 550 | 2 782 | 908 | 1 885 |
 | Biais | +94 | +41 | +39 | +38 | +42 | +37 | **+4** |
 | ±1 classe | 73 % | 87 % | 87 % | 86 % | 85 % | 85 % | **94 %** |
+
+![Biais moyen de Cep par version de la méthode DPE, sur les deux échantillons (campagne
+v6).](figures/bias_by_method_version_v6.svg)
 
 Le biais est stable de la v2.1 à la v2.5 et tombe à la v2.6. À l'intérieur d'une même année, le
 découpage par version donne les mêmes niveaux, et la calibration présente le même profil sur les
@@ -268,16 +271,24 @@ antérieures, et reste faible sur le bâti ancien et l'électricité une fois re
 d'audit (« calibration et évaluation sur le même échantillon ») est confirmé, et l'analyse par
 version (§5.4) en donne la cause.
 
-**Choix méthodologique proposé :** prendre comme **référence de validation les DPE de la version
-de méthode en vigueur** (2.6 aujourd'hui, la suivante à partir de 2027), puisque l'outil affiche
-l'étiquette selon la réglementation du jour. Les versions antérieures sont rapportées à titre
-d'information. Ce choix devra être annoncé dans la note avant la prochaine calibration, et pas
-choisi après coup selon les résultats.
+**Protocole retenu pour la prochaine calibration (v1.1), annoncé ici avant de la faire :**
+
+1. **Référence de validation : les DPE de la version de méthode en vigueur** (2.6 aujourd'hui,
+   la suivante quand elle sera majoritaire), puisque l'outil affiche l'étiquette selon la
+   réglementation du jour. Les métriques des versions antérieures restent publiées, à titre
+   d'information.
+2. **Calibration** sur un nouvel échantillon tiré au hasard (`--random`), limité à cette
+   version et disjoint des échantillons existants. Aucun réglage n'utilise le test v1.
+3. **Une seule mesure finale**, sur le sous-ensemble v2.6 du test v1 et sur un test v2 tiré de
+   la même façon, une fois tous les changements de la v1.1 intégrés.
+4. **Critères inchangés** (§7.2 du brief : 60 % exact, 90 % à ±1 classe), publiés **bruts et
+   repondérés** selon le parc, avec leurs intervalles de confiance.
+
+Les résultats de la v1.0 (§0) restent la référence publiée jusqu'à cette mesure.
 
 **Suites, par ordre de priorité** (l'éclairage, ex-priorité 1, est corrigé en v6) :
-1. **Tirer un nouvel échantillon de calibration aléatoire, limité à la version en vigueur**
-   (`--random`, disjoint du test). Calibrer uniquement dessus, puis mesurer une seule fois sur le
-   sous-ensemble v2.6 du test v1 (et sur un test v2 tiré de la même façon).
+1. **Appliquer le protocole ci-dessus** : nouvel échantillon de calibration aléatoire limité
+   à la version en vigueur, puis une seule mesure finale.
 2. **Électricité et bâti d'avant 1975** : analyse par type de générateur (part des PAC, joule,
    ECS électrique) et leviers v1.1 de l'audit (matériau des murs, ponts thermiques linéiques,
    inertie Th-I).
@@ -285,7 +296,7 @@ choisi après coup selon les résultats.
    versions 2.5 et 2.6 (notes de version des logiciels, contrôles de cohérence ADEME), pour
    documenter l'écart plutôt que le corriger.
 4. **Publier les chiffres complets** (calibration, test, version en vigueur, brut et repondéré)
-   dans le README et l'app.
+   dans le README et l'app : fait pour la v1.0.
 
 **Critère exact (60 %).** Il reste hors d'atteinte (44 % au test). La v1 l'attribuait à un manque
 d'information du mapping, et cette explication tient toujours en partie. Mais le biais
@@ -309,6 +320,11 @@ python validation/run_validation.py --sample data/dpe_test_v1.jsonl \
 python validation/enrich_sample.py data/dpe_test_v1.jsonl data/dpe_sample_v2.jsonl
 python validation/analyze_bias.py data/dpe_test_v1.jsonl data/dpe_sample_v2.jsonl \
     --out validation/report/bias_analysis_v5.json
+
+# figures et rendu HTML de cette note (à partir des seuls fichiers committés)
+pip install -r validation/requirements.txt
+python validation/make_figures.py
+quarto render validation/report        # -> validation/report/_site/note_validation.html
 ```
 
 Note : la base ADEME évolue (nouveaux DPE, mises à jour). Un nouveau tirage ne redonnera pas
@@ -325,3 +341,6 @@ exactement les mêmes lignes ; les fichiers de résultats committés font foi po
   repondéré (86,3 %) ; écart d'éclairage constant de +41 % identifié.
 - **v2.2 (25/11/2026)** : éclairage corrigé (heures officielles du §16.1) ; campagne v6 : test
   ±1 classe 87,0 %, biais +33,3 ; DPE v2.6 du test 93,6 %, biais +2,3.
+- **v3 (26/11/2026, version finale v1.0)** : figures (`validation/make_figures.py`), rendu Quarto
+  publié avec l'application, protocole de la calibration v1.1 annoncé à l'avance (§7). Aucun
+  changement de moteur ni de chiffre.
