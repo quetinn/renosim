@@ -1,0 +1,24 @@
+# Quarto rendering of the validation note (one self-contained HTML page).
+# The Markdown source stays readable on GitHub; the deploy workflow renders it
+# and publishes it with the app at <site>/validation/.
+#   quarto render validation/report
+project:
+  type: default
+  render:
+    - note_validation.md
+  output-dir: _site
+
+lang: fr
+pagetitle: "Note de validation — RénoSim"
+shift-heading-level-by: -1  # the Markdown H1 becomes the page title
+
+format:
+  html:
+    theme: cosmo
+    toc: true
+    toc-title: "Sommaire"
+    toc-depth: 2
+    number-sections: false
+    embed-resources: true
+    fig-align: center
+    tbl-cap-location: top

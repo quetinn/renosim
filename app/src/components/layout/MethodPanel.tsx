@@ -4,6 +4,8 @@ import { useEffect, useRef } from "react";
 import { useEngine } from "../../pyodide/PyodideContext";
 
 const REPO_URL = "https://github.com/quetinn/renosim";
+/** Quarto rendering of validation/report/note_validation.md, published by deploy.yml. */
+const VALIDATION_NOTE_URL = `${import.meta.env.BASE_URL}validation/index.html`;
 
 /**
  * "Comment est-ce calculé ?" — the transparency panel required by CLAUDE.md
@@ -88,8 +90,16 @@ export function MethodPanel({ open, onClose }: { open: boolean; onClose: () => v
                   fioul et les maisons construites entre 1975 et 2012 (environ 90 à 96 %), plus
                   faible pour le chauffage électrique et le bâti d'avant 1975, où le moteur tend à
                   surestimer la consommation. Sur les seuls DPE établis avec la version actuelle de
-                  la méthode (2026), l'accord à ±1 classe atteint 93,6 %. La note technique complète
-                  (méthode, intervalles de confiance, limites) est publiée dans le dépôt.
+                  la méthode (2026), l'accord à ±1 classe atteint 93,6 %.{" "}
+                  <a
+                    href={VALIDATION_NOTE_URL}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="font-medium text-pine hover:underline"
+                  >
+                    Lire la note de validation
+                  </a>{" "}
+                  (méthode, figures, intervalles de confiance, limites).
                 </p>
               </section>
 
@@ -115,10 +125,20 @@ export function MethodPanel({ open, onClose }: { open: boolean; onClose: () => v
               <section className="space-y-2">
                 <h3 className="text-base font-semibold text-ink">Les limites</h3>
                 <ul className="list-disc space-y-1 pl-5">
-                  <li>Maisons individuelles uniquement (pas d'appartement).</li>
+                  <li>
+                    Maisons individuelles, et appartements traités logement par logement (modèle
+                    plus simple, validé séparément) ; pas de DPE à l'immeuble.
+                  </li>
                   <li>Pas de calcul d'aides financières — voir France Rénov'.</li>
-                  <li>Confort d'été et climatisation non modélisés.</li>
+                  <li>
+                    Confort d'été estimé à partir de quelques questions ; climatisation calculée
+                    comme si toute la surface était refroidie.
+                  </li>
                   <li>Géométrie estimée à partir de la surface et du nombre de niveaux.</li>
+                  <li>
+                    Ponts thermiques et murs anciens traités de façon forfaitaire : c'est sur le
+                    bâti d'avant 1975 que l'écart au DPE officiel est le plus grand.
+                  </li>
                 </ul>
               </section>
 

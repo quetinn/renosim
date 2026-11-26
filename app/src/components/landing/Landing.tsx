@@ -143,10 +143,11 @@ export function Landing({ onOpenMethod }: { onOpenMethod: () => void }) {
           </Reveal>
           <Reveal delay={0.2} className="text-center sm:text-left">
             <p className="font-display text-4xl font-semibold text-pine">
-              6 <span className="text-2xl">gestes</span>
+              7 <span className="text-2xl">gestes</span>
             </p>
             <p className="mt-1 text-sm text-ink-soft">
-              combinables en bouquets, avec interactions calculées — pas de simple addition
+              six pour la facture d'hiver, un pour le confort d'été, combinables en bouquets avec
+              interactions calculées — pas de simple addition
             </p>
           </Reveal>
         </div>

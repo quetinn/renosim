@@ -52,3 +52,8 @@ Thumbs.db
 
 # Local shortcuts (e.g. to copyrighted regulation PDFs — never committed)
 *.lnk
+
+# Quarto render of the validation note (published by the deploy workflow)
+validation/report/_site/
+validation/report/.quarto/
+app/public/validation/

@@ -59,3 +59,17 @@ jobs:
 
       - name: Typecheck & build
         run: npm run build
+
+  note:
+    name: Validation note — Quarto render
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: quarto-dev/quarto-actions/setup@v2
+
+      # Same command as deploy.yml: catches a broken note before it reaches main.
+      - name: Render the validation note
+        run: |
+          quarto render validation/report
+          test -s validation/report/_site/note_validation.html

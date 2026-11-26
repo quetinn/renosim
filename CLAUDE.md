@@ -48,6 +48,24 @@
 - Distinction ITE/ITI, ponts thermiques détaillés (traitement forfaitaire).
 - Actualisation financière (VAN, TRI) : temps de retour simple uniquement en V1.
 
+### 2.3 Périmètre effectif de la v1.0 (mise à jour du 26/11/2026, audit §8)
+
+Extensions ajoutées **sur demande explicite** de l'auteur après la rédaction de ce brief ; elles
+font partie de la v1.0 et priment sur les exclusions du §2.2 pour les points concernés :
+
+- **Appartements**, traités logement par logement (`docs/deviations.md` D-01, D-18). Les DPE à
+  l'immeuble et les installations collectives restent exclus. La validation de référence reste
+  celle des maisons.
+- **Confort d'été passif** (indicateur de l'annexe 9, D-19) et **refroidissement** (§10, D-20).
+- **Septième geste** : protections solaires (volets, brise-soleil), sans effet sur l'hiver ; la
+  recherche « viser une étiquette » ne combine que les six gestes d'hiver.
+- **Convention datée** : coefficient d'énergie primaire de l'électricité selon le calendrier
+  réglementaire (D-13), prix conventionnels du DPE en vigueur, coûts indexés sur l'indice BT01.
+
+Restent exclus : aides financières (jamais de calcul), photovoltaïque, VAN/TRI, ITE/ITI distincts
+(prévu en v1.1 avec les ponts thermiques par liaison). Toute nouvelle extension passe par une
+demande explicite et une mise à jour de cette section.
+
 ---
 
 ## 3. Architecture

@@ -595,3 +595,33 @@ type de générateur (électricité, PAC, bois) ; leviers v1.1 sur le bâti anci
   86,7 → 87,0 %, exact 44,4 → 44,9 % ; DPE v2.6 du test : 93,6 %, biais +2,3. Note de validation
   v2.2, D-10, app et README mis à jour.
 - État : 205/205 tests, ruff/format/mypy OK.
+
+## 2026-11-26 — Sprint 2 de l'audit : Phase 5 (consolidation v1.0)
+
+- **Note de validation v3** (version finale v1.0) : 4 figures générées à partir des seuls
+  fichiers de résultats versionnés (`validation/make_figures.py`, matplotlib : matrice de
+  confusion, accord par époque et énergie, biais par version de méthode, historique des
+  itérations) ; **protocole de la calibration v1.1 annoncé avant de la faire** (référence = DPE
+  de la méthode en vigueur, échantillon aléatoire limité à cette version, une seule mesure
+  finale, critères bruts et repondérés). Aucun changement de moteur ni de chiffre.
+- **Rendu Quarto** (`validation/report/_quarto.yml`, page HTML autonome) publié par le workflow
+  de déploiement à `<site>/validation/` ; liens depuis le panneau méthode et le pied de page.
+- **README v1.0** : badges, captures (maison de 1970 au fioul), tableau de validation complet
+  (calibration, test, version en vigueur, repondéré), « ce que cet outil n'est pas », périmètre
+  réel, reproduction de la validation, feuille de route v1.1.
+- **Brief** : nouveau §2.3 « Périmètre effectif de la v1.0 » (appartements, confort d'été,
+  refroidissement, 7e geste, convention datée), comme le recommandait l'audit (§8).
+- **App** : panneau méthode (limites à jour : appartements, confort d'été, bâti ancien),
+  landing « 7 gestes », lien vers la note.
+- **Billet de blog** (al-folio) : `docs/blog/2026-11-26-renosim.md`, brouillon à relire.
+- Audit : cases des Sprints 0 à 2 cochées ; `validation/README.md` réécrit.
+
+**État :** 205/205 tests, couverture 96,3 %, `npm run build` OK, note rendue et vérifiée dans
+l'aperçu.
+
+**Prochaines étapes :** fusion puis tag `v1.0` ; v1.1 « conformité » (ponts thermiques par
+liaison et ITE/ITI, murs anciens, inertie Th-I, Ujn, chaudières bois D-22, ECS des PAC, PAC
+dimensionnée, plancher bas, alertes RT existante), puis une seule recalibration selon le
+protocole annoncé. Constat à traiter en v1.1 (capture du README) : une PAC seule sur une maison
+G non isolée affiche G → D et un retour de 2 à 5 ans (audit §4.4).
+

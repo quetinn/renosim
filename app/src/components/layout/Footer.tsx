@@ -1,4 +1,4 @@
-import { Code, ExternalLink, Lock } from "lucide-react";
+import { Code, ExternalLink, FileText, Lock } from "lucide-react";
 
 const REPO_URL = "https://github.com/quetinn/renosim";
 
@@ -35,7 +35,16 @@ export function Footer() {
               className="inline-flex items-center gap-1.5 text-ink-soft transition-colors hover:text-pine"
             >
               <Code size={14} aria-hidden />
-              Code source, méthode et note de validation
+              Code source et écarts à la méthode
+            </a>
+            <a
+              href={`${import.meta.env.BASE_URL}validation/index.html`}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1.5 text-ink-soft transition-colors hover:text-pine"
+            >
+              <FileText size={14} aria-hidden />
+              Note de validation contre la base ADEME
             </a>
           </nav>
         </div>
