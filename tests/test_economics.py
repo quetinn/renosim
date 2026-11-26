@@ -84,3 +84,34 @@ def test_energy_savings_consistency() -> None:
     assessment = assess_scenario(base, [RoofInsulation()])
     manual = assessment.before.annual_cost_eur - assessment.after.annual_cost_eur
     assert assessment.annual_savings_eur == pytest.approx(manual)
+
+
+def test_heat_pump_sizing_against_the_cost_reference_power() -> None:
+    """Design load vs the 10-12 kW reference of the heat-pump cost (audit §4.4).
+
+    Reference house, heat pump alone: Pnc = 29.348 kW (test_systems) > 12 kW.
+    After walls + roof + windows (GV 994.83 -> 391.96 W/K):
+      Pnc = 391.96 * 29.5 / 1000 = 11.563 kW, within the reference range.
+    """
+    from renosim.economics import heat_pump_sizing
+    from renosim.renovation import apply_measures
+
+    base = house_1970_oil_uninsulated()
+    hp = HeatingReplacement(new_generator=HeatingGeneratorType.HEAT_PUMP_AIR_WATER)
+
+    alone = heat_pump_sizing(base, apply_measures(base, [hp]))
+    assert alone is not None
+    assert alone.design_heat_load_kw == pytest.approx(29.348, abs=0.001)
+    assert (alone.reference_power_low_kw, alone.reference_power_high_kw) == (10.0, 12.0)
+    assert alone.above_reference
+
+    bundle = apply_measures(base, [WallInsulation(), RoofInsulation(), WindowReplacement(), hp])
+    insulated = heat_pump_sizing(base, bundle)
+    assert insulated is not None
+    assert insulated.design_heat_load_kw == pytest.approx(11.563, abs=0.001)
+    assert not insulated.above_reference
+
+    # No new heat pump in the scenario -> no sizing check.
+    assert heat_pump_sizing(base, apply_measures(base, [WallInsulation()])) is None
+    condensing = HeatingReplacement(new_generator=HeatingGeneratorType.CONDENSING_BOILER)
+    assert heat_pump_sizing(base, apply_measures(base, [condensing])) is None

@@ -682,3 +682,34 @@ def test_declared_ceiling_height_reaches_the_building() -> None:
     assert building_from_json(data).ceiling_height_m is None
     data["geometry"] = {"ceiling_height_m": 3.0}
     assert building_from_json(data).ceiling_height_m == 3.0
+
+
+class TestHeatPumpSizing:
+    """Design heat load and heat-pump check exposed to the app (audit §4.4)."""
+
+    def test_baseline_design_load_follows_pnc_formula(self) -> None:
+        out = run(payload())
+        gv = out["baseline"]["conventional"]["envelope"]["total_w_per_k"]
+        # H1a, altitude < 400 m: Tbase = -9.5 degC -> Pnc = GV * 29.5 / 1000.
+        assert out["baseline"]["design_heat_load_kw"] == pytest.approx(gv * 29.5 / 1000)
+
+    def test_sizing_only_for_a_new_heat_pump(self) -> None:
+        out = run(
+            payload(
+                scenarios=[
+                    {"id": "hp", "measures": [{"type": "heating_replacement"}]},
+                    {"id": "walls", "measures": [{"type": "wall_insulation"}]},
+                ]
+            )
+        )
+        hp, walls = out["scenarios"]
+        sizing = hp["heat_pump_sizing"]
+        assert sizing["design_heat_load_kw"] == pytest.approx(
+            out["baseline"]["design_heat_load_kw"]
+        )
+        assert (sizing["reference_power_low_kw"], sizing["reference_power_high_kw"]) == (10, 12)
+        assert sizing["above_reference"] is True  # uninsulated 1970 house
+        assert walls["heat_pump_sizing"] is None
+        previews = out["measure_previews"]
+        assert previews["heating_replacement"]["heat_pump_sizing"]["above_reference"] is True
+        assert previews["roof_insulation"]["heat_pump_sizing"] is None

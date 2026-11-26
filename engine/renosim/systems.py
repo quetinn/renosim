@@ -367,6 +367,25 @@ def _zone_group_tbase(zone: ClimateZone) -> str:
     return "H1" if zone.value.startswith("H1") else "H2"
 
 
+def design_heat_load_kw(building: Building) -> float:
+    """Heating power needed at the base temperature, Pnc (kW).
+
+    ``Pnc = GV * (20 - Tbase) / 1000`` (3CL §15.2.2), with the conventional
+    base temperature Tbase of the climate-zone group and altitude class
+    (§18.1). Used by the circulator sizing and, since v1.1, to display the
+    estimated heating power and check a heat-pump replacement (audit §4.4).
+    It does not enter any consumption beyond the circulator.
+    """
+    aux = load_table("system_efficiencies")["auxiliaries"]
+    tbase_c = float(
+        aux["base_temperature_c"][_zone_group_tbase(building.climate_zone)][
+            building.altitude_class.value
+        ]
+    )
+    t_indoor_c = float(aux["design_indoor_temperature_c"])
+    return envelope_heat_loss(building).gv_w_per_k * (t_indoor_c - tbase_c) / 1000.0
+
+
 def _generation_aux_kwh(building: Building, needs_kwh: float) -> float:
     """Qaux_g = Paux_g * B_g / Pn with Paux_g = G + H*Pn (§15.1)."""
     key = _GENERATION_AUX_KEY.get(building.heating_system.generator_type)
@@ -410,16 +429,10 @@ def heating_auxiliary_kwh(
         aux = load_table("system_efficiencies")["auxiliaries"]
         circ = aux["circulator"]
         sh = building.living_area_m2
-        gv = envelope_heat_loss(building).gv_w_per_k
-        tbase = float(
-            aux["base_temperature_c"][_zone_group_tbase(building.climate_zone)][
-                building.altitude_class.value
-            ]
-        )
         heat_capacity = float(
             load_table("occupancy_conventional")["dhw"]["water_heat_capacity_wh_per_l_k"]
         )
-        pnc_kw = gv * (20.0 - tbase) / 1000.0
+        pnc_kw = design_heat_load_kw(building)
         qv_m3_h = pnc_kw / (heat_capacity * float(circ["delta_theta_dim_c"]["low_medium_temp"]))
         lem_m = 5.0 * float(circ["fcot"]["other"]) * (1.0 + math.sqrt(sh))
         dp_kpa = float(circ["linear_pressure_loss_kpa_per_m"]) * lem_m + float(

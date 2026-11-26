@@ -77,7 +77,12 @@ from collections.abc import Mapping, Sequence
 from typing import Any, cast
 
 from renosim import SCHEMA_VERSION, __version__
-from renosim.economics import assess_scenario, measure_cost_range
+from renosim.economics import (
+    HeatPumpSizing,
+    assess_scenario,
+    heat_pump_sizing,
+    measure_cost_range,
+)
 from renosim.envelope import DEFAULT_CEILING_HEIGHT_M, default_u_values
 from renosim.models import (
     AltitudeClass,
@@ -124,6 +129,7 @@ from renosim.renovation import (
 )
 from renosim.simulation import SimulationResult, simulate
 from renosim.summer_comfort import SummerComfortAssessment, assess_summer_comfort
+from renosim.systems import design_heat_load_kw
 from renosim.tables_io import load_table
 
 #: Exposed-perimeter fraction per adjacency (square footprint, 4 facades):
@@ -641,6 +647,18 @@ def _summer_comfort_to_json(assessment: SummerComfortAssessment) -> dict[str, An
     }
 
 
+def _sizing_to_json(sizing: HeatPumpSizing | None) -> dict[str, Any] | None:
+    """Serialise a heat-pump sizing check (audit §4.4); null without a new heat pump."""
+    if sizing is None:
+        return None
+    return {
+        "design_heat_load_kw": sizing.design_heat_load_kw,
+        "reference_power_low_kw": sizing.reference_power_low_kw,
+        "reference_power_high_kw": sizing.reference_power_high_kw,
+        "above_reference": sizing.above_reference,
+    }
+
+
 def _assessment_to_json(
     before: SimulationResult,
     after: SimulationResult,
@@ -833,6 +851,11 @@ def run_simulation(payload_json: str) -> str:
             "summer_comfort_after": _summer_comfort_to_json(
                 assess_summer_comfort(assessment.building_after)
             ),
+            # Needed power vs the heat-pump cost reference, after the bundle's
+            # envelope measures (audit §4.4); null without a new heat pump.
+            "heat_pump_sizing": _sizing_to_json(
+                heat_pump_sizing(building, assessment.building_after)
+            ),
         }
         if personalized is not None:
             after_perso = simulate(assessment.building_after, personalized, vintage)
@@ -870,6 +893,7 @@ def run_simulation(payload_json: str) -> str:
             ),
             "after_label": preview.after.label,
             "summer_comfort_level_after": assess_summer_comfort(preview.building_after).level.value,
+            "heat_pump_sizing": _sizing_to_json(heat_pump_sizing(building, preview.building_after)),
         }
 
     # Label-target search (backlog #8), opt-in: 2^n - 1 extra simulations.
@@ -891,6 +915,8 @@ def run_simulation(payload_json: str) -> str:
         "engine": {"name": "renosim", "version": __version__},
         "conventions": _conventions_to_json(vintage),
         "baseline": {
+            # Heating power needed at the base temperature (3CL §15.2.2), kW.
+            "design_heat_load_kw": design_heat_load_kw(building),
             "conventional": _result_to_json(baseline_conventional),
             "personalized": (
                 _result_to_json(baseline_personalized, price_overrides)

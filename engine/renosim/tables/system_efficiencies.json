@@ -250,6 +250,8 @@
       "power_exponent": 0.676,
       "sh_norm_m2": 400
     },
+    "design_indoor_temperature_c": 20,
+    "design_heat_load_note": "Pnc [kW] = GV * (20 - Tbase) / 1000 : puissance nécessaire au point de base, §15.2.2 de l'annexe 1 3CL (circulateur) ; Tbase §18.1 (p.121). Réutilisée depuis le 2026-11-26 pour afficher la puissance de chauffage estimée et vérifier la PAC (audit 2026-11-25 §4.4) ; aucun effet sur les consommations.",
     "base_temperature_c": {
       "H1": {
         "low": -9.5,
