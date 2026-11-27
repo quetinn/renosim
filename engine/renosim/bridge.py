@@ -153,7 +153,7 @@ _ADJACENCY_EXPOSED_FRACTION = {
 }
 
 #: M-1: window area = Sh / 6 (historical DPE convention for unknown glazing area).
-WINDOW_AREA_FRACTION = 1.0 / 6.0
+WINDOW_AREA_FRACTION = float(load_table("conventions")["geometry"]["window_area_fraction"]["value"])
 
 #: Floor for the reconstructed exposed wall area (mirrors validation M-1).
 MIN_WALL_AREA_M2 = 10.0

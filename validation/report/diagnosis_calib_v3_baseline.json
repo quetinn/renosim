@@ -1,0 +1,136 @@
+{
+ "sample": "data/dpe_calib_v3.jsonl",
+ "sidecar_used": true,
+ "overall": {
+  "n": 11135,
+  "gv_ratio": 1.023,
+  "heating_need_ratio": 1.08,
+  "dhw_need_ratio": 1.0,
+  "heating_final_ratio": 1.081,
+  "cep_bias_kwhep_m2": 12.3
+ },
+ "by_period": {
+  "1948-1974": {
+   "n": 1189,
+   "gv_ratio": 1.166,
+   "heating_need_ratio": 1.269,
+   "dhw_need_ratio": 1.0,
+   "heating_final_ratio": 1.183,
+   "cep_bias_kwhep_m2": 41.0
+  },
+  "1975-1977": {
+   "n": 1173,
+   "gv_ratio": 0.935,
+   "heating_need_ratio": 0.967,
+   "dhw_need_ratio": 1.0,
+   "heating_final_ratio": 0.934,
+   "cep_bias_kwhep_m2": -11.3
+  },
+  "1978-1982": {
+   "n": 1197,
+   "gv_ratio": 0.988,
+   "heating_need_ratio": 1.03,
+   "dhw_need_ratio": 1.0,
+   "heating_final_ratio": 0.998,
+   "cep_bias_kwhep_m2": -0.8
+  },
+  "1983-1988": {
+   "n": 1193,
+   "gv_ratio": 0.979,
+   "heating_need_ratio": 1.016,
+   "dhw_need_ratio": 1.0,
+   "heating_final_ratio": 1.003,
+   "cep_bias_kwhep_m2": -0.7
+  },
+  "1989-2000": {
+   "n": 1193,
+   "gv_ratio": 0.973,
+   "heating_need_ratio": 1.015,
+   "dhw_need_ratio": 1.0,
+   "heating_final_ratio": 1.018,
+   "cep_bias_kwhep_m2": 1.4
+  },
+  "2001-2005": {
+   "n": 1181,
+   "gv_ratio": 0.962,
+   "heating_need_ratio": 0.994,
+   "dhw_need_ratio": 1.0,
+   "heating_final_ratio": 1.011,
+   "cep_bias_kwhep_m2": -0.7
+  },
+  "2006-2012": {
+   "n": 1104,
+   "gv_ratio": 0.973,
+   "heating_need_ratio": 1.011,
+   "dhw_need_ratio": 1.0,
+   "heating_final_ratio": 1.027,
+   "cep_bias_kwhep_m2": 2.2
+  },
+  "2013-2021": {
+   "n": 963,
+   "gv_ratio": 0.985,
+   "heating_need_ratio": 1.055,
+   "dhw_need_ratio": 1.0,
+   "heating_final_ratio": 1.105,
+   "cep_bias_kwhep_m2": 10.4
+  },
+  "après 2021": {
+   "n": 766,
+   "gv_ratio": 1.03,
+   "heating_need_ratio": 1.133,
+   "dhw_need_ratio": 1.0,
+   "heating_final_ratio": 1.212,
+   "cep_bias_kwhep_m2": 14.9
+  },
+  "avant 1948": {
+   "n": 1176,
+   "gv_ratio": 1.118,
+   "heating_need_ratio": 1.167,
+   "dhw_need_ratio": 1.0,
+   "heating_final_ratio": 1.292,
+   "cep_bias_kwhep_m2": 66.7
+  }
+ },
+ "by_energy": {
+  "Bois – Bûches": {
+   "n": 2315,
+   "gv_ratio": 1.035,
+   "heating_need_ratio": 1.107,
+   "dhw_need_ratio": 1.0,
+   "heating_final_ratio": 1.118,
+   "cep_bias_kwhep_m2": 12.7
+  },
+  "Bois – Granulés (pellets) ou briquettes": {
+   "n": 2289,
+   "gv_ratio": 1.073,
+   "heating_need_ratio": 1.158,
+   "dhw_need_ratio": 1.0,
+   "heating_final_ratio": 1.2,
+   "cep_bias_kwhep_m2": 14.2
+  },
+  "Fioul domestique": {
+   "n": 1817,
+   "gv_ratio": 0.906,
+   "heating_need_ratio": 0.916,
+   "dhw_need_ratio": 1.0,
+   "heating_final_ratio": 1.002,
+   "cep_bias_kwhep_m2": -5.1
+  },
+  "Gaz naturel": {
+   "n": 2339,
+   "gv_ratio": 1.075,
+   "heating_need_ratio": 1.145,
+   "dhw_need_ratio": 1.0,
+   "heating_final_ratio": 1.067,
+   "cep_bias_kwhep_m2": 10.0
+  },
+  "Électricité": {
+   "n": 2375,
+   "gv_ratio": 1.062,
+   "heating_need_ratio": 1.144,
+   "dhw_need_ratio": 1.0,
+   "heating_final_ratio": 1.026,
+   "cep_bias_kwhep_m2": 25.6
+  }
+ }
+}

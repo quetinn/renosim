@@ -8,6 +8,10 @@
     "default_ceiling_height_m": {
       "value": 2.5,
       "source": "Hauteur sous plafond conventionnelle quand elle n'est pas déclarée (convention V1, D-17 ; valeur usuelle des DPE sans relevé)."
+    },
+    "window_area_fraction": {
+      "value": 0.16666666666666666,
+      "source": "Surface de baies reconstituée = Sh / 6 quand elle n'est pas déclarée (convention de reconstruction de la géométrie, choix M-1 de la validation et D-17 de l'app ; ordre de grandeur usuel des maisons, non tiré d'un texte). Candidat de la recalibration v1.1 (docs/recalibration_v1.1.md)."
     }
   },
   "calibrated": {

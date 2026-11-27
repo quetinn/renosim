@@ -466,7 +466,7 @@ def map_row(row: dict[str, object]) -> MappingResult:
     else:
         traversant = True
         perimeter = full_perimeter
-    window_area = sh / 6.0
+    window_area = sh * float(load_table("conventions")["geometry"]["window_area_fraction"]["value"])
     min_wall = 10.0 if dwelling is DwellingType.HOUSE else 5.0
     wall_area = max(min_wall, perimeter * hsp * levels - window_area)
     if dwelling is DwellingType.APARTMENT:
