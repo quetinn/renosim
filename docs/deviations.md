@@ -449,6 +449,22 @@ Format : un écart = une entrée. Statut : `décidé` (au niveau du brief, pas e
   ±1 classe 90,3 → 91,1 %. Les libellés d'émetteurs à effet Joule ne sont pas traités ainsi
   (cas §9.4-9.5 probable, résultats mitigés).
 
+## D-25 — Murs non isolés : Umur0 par matériau, colonne d'épaisseur inférieure (27/11/2026, branche v1.1)
+
+- **Statut :** codé (`envelope.uninsulated_wall_u`, table `umur0_by_material` de
+  `u_values_default.json`, champ `wall_material` du bridge, question « Matériau des murs »).
+- **3CL officielle :** Umur0 tabulé par matériau et épaisseur (§3.2.1.2, p.14-15), plafonné à
+  2,5 (Umur_nu) ; isolation inconnue : Umur = min(Umur_nu ; Umur_tab) ; isolant connu : composition
+  des résistances.
+- **RénoSim :** idem pour dix matériaux (pierre, briques pleines simples ou doubles, briques
+  creuses, parpaing, bloc béton plein, béton banché, pisé/terre, pans de bois, rondins).
+  Simplifications : une épaisseur intermédiaire prend la colonne immédiatement inférieure
+  (pas de règle d'interpolation sur cette page) ; la pierre utilise la ligne « un seul matériau /
+  inconnu » ; non repris : remplissage tout venant, béton de mâchefer, béton cellulaire, brique
+  alvéolaire, mur sandwich, ossature bois isolée (cas où l'isolation est connue).
+- **Sans réponse :** U = 2,0 (choix M-6, inchangé). La base ADEME ne donne pas le matériau : la
+  validation n'est pas concernée ; seul le parcours utilisateur gagne en précision (audit §4.6).
+
 ---
 
 *Les choix de mapping de la validation (M-1 à M-11, dont le coefficient Ue des planchers sur

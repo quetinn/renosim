@@ -717,3 +717,18 @@ thermiques par liaison (§3.4) ; Ujn (§3.3.3).
 **Prochaines étapes :** murs anciens (table Umur0 §3.2.1, matériau et épaisseur) ; ponts
 thermiques par liaison (§3.4) ; Ujn (§3.3.3).
 
+## 2026-11-27 (suite 3) — v1.1, étape 5 : matériau des murs anciens (Umur0)
+
+- Lecture du §3.2.1.2 de l'annexe 1 (p.14-15) : Umur0 par matériau et épaisseur.
+- Moteur : `uninsulated_wall_u` (dix matériaux, plafond 2,5), tests calculés à la main (pierre
+  50 cm 2,05 ; 15 cm 3,2 → 2,5 ; brique creuse 30 cm → 1,68 ; pisé 60 cm 1,35…). Bridge :
+  `wall_material`, appliqué au mur non isolé, à la composition avec un isolant connu
+  (1/(1/2,05 + 2,5) = 0,33469) et au min(Umur_nu ; Umur_tab) quand l'isolation est d'origine.
+- App : « Matériau des murs » et « Épaisseur du mur » à l'étape Enveloppe (masqués si les murs
+  ont été rénovés), épaisseur proposée selon le matériau, ligne dans le récapitulatif.
+  Vérifié dans l'aperçu : maison de 1970, pierre 60 cm 430 kWhep/m² contre 440 sans réponse.
+- Écart D-25 ; validation non concernée (pas de matériau dans la base ADEME).
+
+**Prochaines étapes :** ponts thermiques par liaison (§3.4) et ITE/ITI ; Ujn (§3.3.3) ; puis la
+recalibration unique.
+
