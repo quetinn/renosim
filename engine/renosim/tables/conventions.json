@@ -20,8 +20,8 @@
       "source": "Majoration forfaitaire des déperditions surfaciques pour les ponts thermiques des maisons (D-03), conservée par la calibration Phase 3 (validation/report/note_validation.md)."
     },
     "solar_orientation_shading_coefficient": {
-      "value": 0.5,
-      "source": "Coefficient orientation x masques appliqué à Σ A·Sw pour la surface sud équivalente (D-06), niveau absolu calibré Phase 3."
+      "value": 0.62,
+      "source": "Coefficient orientation x masques appliqué à Σ A·Sw pour la surface sud équivalente (D-06). 0,5 calibré en Phase 3 ; 0,62 depuis la recalibration v1.1 du 27/11/2026 (docs/recalibration_v1.1.md, P4) : borne haute sourcée de la plage = moyenne des coefficients C1 verticaux des quatre orientations en saison de chauffe sans masque (§18.5, 0,56 à 0,62 selon la zone), seul paramètre de la grille à agir sur le biais (calibration v3 : biais brut +10,6 → +5,8, ±1 classe repondéré 89,9 → 90,5 %)."
     }
   },
   "boiler_seasonal_blend": {

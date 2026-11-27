@@ -120,7 +120,7 @@ class TestGeometry:
 class TestUResolution:
     def test_uninsulated_wall_uses_traditional_value(self) -> None:
         b = building_from_json(base_building_json())
-        assert b.walls[0].u_value_w_per_m2k == pytest.approx(2.0)  # M-6
+        assert b.walls[0].u_value_w_per_m2k == pytest.approx(1.7)  # P2, recalibration v1.1
         assert b.roof.u_value_w_per_m2k == pytest.approx(2.5)
         assert b.floor.u_value_w_per_m2k == pytest.approx(2.0)
 
@@ -140,14 +140,14 @@ class TestUResolution:
         data = base_building_json()
         data["wall_insulation"] = {"state": "known_r", "r_value_m2k_per_w": 3.7}
         b = building_from_json(data)
-        assert b.walls[0].u_value_w_per_m2k == pytest.approx(1.0 / (1.0 / 2.0 + 3.7))
+        assert b.walls[0].u_value_w_per_m2k == pytest.approx(1.0 / (1.0 / 1.7 + 3.7))
 
     def test_known_insulation_material_and_thickness(self) -> None:
-        # glass wool 20 cm: R = 0.20 / 0.040 = 5.0 -> U = 1/(1/2.0 + 5.0)
+        # glass wool 20 cm: R = 0.20 / 0.040 = 5.0 -> U = 1/(1/1.7 + 5.0)
         data = base_building_json()
         data["wall_insulation"] = {"state": "known_r", "material": "glass_wool", "thickness_cm": 20}
         b = building_from_json(data)
-        assert b.walls[0].u_value_w_per_m2k == pytest.approx(1.0 / (1.0 / 2.0 + 5.0))
+        assert b.walls[0].u_value_w_per_m2k == pytest.approx(1.0 / (1.0 / 1.7 + 5.0))
 
     def test_known_insulation_unlisted_material_rejected(self) -> None:
         data = base_building_json()
@@ -785,8 +785,8 @@ class TestWallMaterial:
         data["wall_insulation"] = {"state": "period_default"}
         assert building_from_json(data).walls[0].u_value_w_per_m2k <= 1.80 + 1e-9
 
-    def test_without_material_the_m6_default_stays(self) -> None:
-        assert building_from_json(base_building_json()).walls[0].u_value_w_per_m2k == 2.0
+    def test_without_material_the_default_stays(self) -> None:
+        assert building_from_json(base_building_json()).walls[0].u_value_w_per_m2k == 1.7
 
 
 class TestLinearThermalBridges:

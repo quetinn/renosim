@@ -137,3 +137,26 @@ L'ancien P3 (étiquette absente) est traité par l'étape A. Les valeurs officie
   formules officielles avant toute calibration.
 - Granulés : chauffage ×1,22 malgré des déperditions à ×1,07 ; vérifier la répartition poêle /
   chaudière et l'appoint dans les DPE v2.6.
+
+## 7. Résultats du réglage (calibration v3) et écart au plan — consignés avant la mesure finale
+
+**Étape A** (`quality_label_factors_v3.json`, `results_v7_calib_v3_stepA.json`) : ±1 classe
+93,2 → 94,8 % brut, 86,1 → 89,9 % repondéré ; biais brut +12,3 → +10,6.
+
+**Étape B** (`recalibration_v1.1_grid.json`, 100 essais) : la surface de baies (P1) et la
+pondération des chaudières (P5) n'ont presque aucun effet (±0,1 point) ; seul le coefficient
+solaire (P4) agit (biais brut moyen +12,5 à 0,45 → +5,8 à 0,62). **Aucun essai ne respecte la
+contrainte de biais brut dans [−5 ; +5]** : la règle de sélection du §5 ne désigne donc aucun
+essai.
+
+**Écart au plan, décidé par l'auteur le 27/11/2026 :** P4 = 0,62 (borne haute sourcée, « aucun
+masque »), P1 et P5 inchangés (1/6 et 0,3, valeurs actuelles, faute d'effet). Le biais brut de
+calibration (+5,9) dépasse la contrainte de 0,9 point. P2 = 1,7 (U implicite des murs
+« insuffisants » d'avant 1975 après l'étape A ; utilisé par l'application seulement).
+
+**Calibration v3 finale** (`results_v8_calib_v3_final.json`) : ±1 classe 95,2 % [94,7 ; 95,6]
+brut, 90,5 % [89,2 ; 91,8] repondéré ; exact 54,8 % brut, 47,5 % repondéré ; biais +5,9 brut,
++20,1 repondéré.
+
+Mesure finale unique : test v1 (sous-ensemble v2.6, 1 895 lignes) et test v2 (tiré le
+27/11/2026, même commande que la calibration v3, en excluant v3 et tous les autres échantillons).

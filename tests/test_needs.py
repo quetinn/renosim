@@ -11,10 +11,11 @@ Hand-computed heating reference (test_heating_needs_hand_computed):
 GV = 994.83 W/K (see test_envelope), January H1a low: DH19 = 11712.4 degC.h,
 E = 38.36 kWh/m2, Nref = 744 h.
 Ai_1 = (3.52*100 + 90*(132/168)*1.975) * 744 = 365 719 Wh
-Sse = 15 m2 * 0.56 * 0.5 = 4.2 m2 ; As_1 = 1000*4.2*38.36 = 161 112 Wh
-X = (161112+365719) / (994.83*11712.4) = 0.045216
-F = (X - X^2.9) / (1 - X^2.9) (medium inertia) ~= 0.045143
-Bch_1 = 994.83 * 11712.4 * (1-0.045143) / 1000 = 11 126.1 kWh
+Sse = 15 m2 * 0.56 * 0.62 = 5.208 m2 (solar coefficient 0.62, recalibration v1.1)
+As_1 = 1000*5.208*38.36 = 199 779 Wh
+X = (199779+365719) / (994.83*11712.4) = 0.048533
+F = (X - X^2.9) / (1 - X^2.9) (medium inertia) ~= 0.048386
+Bch_1 = 994.83 * 11712.4 * (1-0.048386) / 1000 = 11 088.1 kWh
 """
 
 from dataclasses import replace
@@ -46,7 +47,7 @@ def test_dhw_needs_hand_computed() -> None:
 def test_heating_needs_hand_computed() -> None:
     building = make_reference_building(**_bare_house_kwargs())
     heating = monthly_heating_needs(building, CONVENTIONAL)
-    assert heating[1] == pytest.approx(11126.1, rel=2e-3)
+    assert heating[1] == pytest.approx(11088.1, rel=2e-3)
     # July-August: no conventional heating season in H1a low altitude
     assert heating[7] == 0.0
     assert heating[8] == 0.0
