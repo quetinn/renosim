@@ -177,6 +177,54 @@ class InertiaClass(StrEnum):
     UNKNOWN = "unknown"
 
 
+class InsulationLayout(StrEnum):
+    """Insulation layout of a wall or floor for the thermal bridges (3CL §3.4)."""
+
+    NONE = "none"
+    ITI = "iti"  # interior insulation (floor: under the screed; ceiling: under the slab)
+    ITE = "ite"  # exterior insulation (floor: under the slab; ceiling: on top of it)
+    ITR = "itr"  # distributed insulation (timber frame, insulating masonry)
+
+
+@dataclass(frozen=True, slots=True)
+class ThermalBridgeInputs:
+    """Geometry and insulation layouts for the linear thermal bridges (3CL §3.4).
+
+    Parameters
+    ----------
+    exposed_perimeter_m
+        Exposed facade perimeter (m): length of the ground-floor/wall and
+        top-floor/wall junctions; times (levels - 1) for intermediate floors.
+    levels
+        Number of storeys.
+    window_area_m2
+        Total window area (m2), converted to a joinery perimeter with the
+        conventional square-window ratio.
+    wall_insulation, floor_insulation, roof_insulation
+        Layouts of the walls, the ground floor and the top floor.
+    heavy_walls, heavy_floor, heavy_ceiling
+        Heavy (masonry/concrete) elements; junctions with light elements are
+        neglected by the method. Defaults: masonry walls, heavy ground floor
+        (§7.2 default), light top floor (§7.1 default).
+    """
+
+    exposed_perimeter_m: float
+    levels: int
+    window_area_m2: float
+    wall_insulation: InsulationLayout
+    floor_insulation: InsulationLayout
+    roof_insulation: InsulationLayout
+    heavy_walls: bool = True
+    heavy_floor: bool = True
+    heavy_ceiling: bool = False
+
+    def __post_init__(self) -> None:
+        if self.exposed_perimeter_m < 0 or self.window_area_m2 < 0:
+            raise ValueError("thermal bridge lengths and areas must be non-negative")
+        if self.levels < 1:
+            raise ValueError(f"levels must be >= 1, got {self.levels}")
+
+
 def inertia_class_from_heavy_elements(
     heavy_floor: bool | None, heavy_ceiling: bool | None, heavy_walls: bool | None
 ) -> InertiaClass:
@@ -401,6 +449,9 @@ class Building:
         Average ceiling height Hsp in metres, used by the intermittence factor
         (3CL §8, G = GV/(Hsp*Sh)); it cancels out of the §4 infiltration
         formula. ``None`` (default) applies the conventional height.
+    thermal_bridge_inputs
+        Geometry and insulation layouts for the linear thermal bridges (3CL
+        §3.4). ``None`` (default) keeps the flat calibrated surcharge (D-03).
     heating_backup
         Wood-log stove, insert or pellet stove used as a back-up of the main
         heating (3CL §9.3): it covers 25 % of the heating need, the main system
@@ -432,6 +483,7 @@ class Building:
     through_dwelling: bool | None = None
     ceiling_height_m: float | None = None
     heating_backup: HeatingSystem | None = None
+    thermal_bridge_inputs: ThermalBridgeInputs | None = None
 
     def __post_init__(self) -> None:
         if self.living_area_m2 <= 0:

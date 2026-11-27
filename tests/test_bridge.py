@@ -787,3 +787,34 @@ class TestWallMaterial:
 
     def test_without_material_the_m6_default_stays(self) -> None:
         assert building_from_json(base_building_json()).walls[0].u_value_w_per_m2k == 2.0
+
+
+class TestLinearThermalBridges:
+    """Houses get the linear thermal bridges of 3CL §3.4; apartments keep the surcharge."""
+
+    def test_house_inputs(self) -> None:
+        building = building_from_json(base_building_json())
+        tb = building.thermal_bridge_inputs
+        assert tb is not None
+        # Uninsulated 1970 house: no insulation layout anywhere, heavy floor, light ceiling.
+        assert (tb.wall_insulation.value, tb.floor_insulation.value) == ("none", "none")
+        assert tb.heavy_floor and not tb.heavy_ceiling and tb.heavy_walls
+        assert tb.levels == 1
+
+    def test_timber_walls_and_heavy_ceiling_answers(self) -> None:
+        data = base_building_json()
+        data["wall_material"] = {"material": "timber_frame", "thickness_cm": 13}
+        data["inertia_elements"] = {
+            "heavy_floor": None,
+            "heavy_ceiling": True,
+            "heavy_walls": False,
+        }
+        tb = building_from_json(data).thermal_bridge_inputs
+        assert tb is not None
+        assert not tb.heavy_walls and tb.heavy_ceiling
+
+    def test_apartment_keeps_the_flat_surcharge(self) -> None:
+        data = base_building_json()
+        data["dwelling_type"] = "apartment"
+        data["apartment"] = {"position": "intermediate", "traversant": True}
+        assert building_from_json(data).thermal_bridge_inputs is None

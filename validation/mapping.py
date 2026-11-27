@@ -44,6 +44,14 @@ M-12 (2026-11-27, v1.1) Wood as main energy with a HEAT-PUMP main generator labe
      unknown (middle bracket). Joule-emitter labels are left as wood-heated
      (bathroom heater, §9.4-9.5): measured on the calibration sample, treating
      them as electric main systems gave mixed results (n ~ 60).
+M-13 (2026-11-27, v1.1) Linear thermal bridges (3CL §3.4, houses only): exposed
+     perimeter, levels and window area of the M-1 geometry; an element counts
+     as insulated unless its quality is "insuffisante" before 1975 (same rule
+     as its U-value, M-2/M-6), layouts by the official defaults (walls ITI,
+     roof and floor ITE); heavy elements from classe_inertie_batiment:
+     "Légère" -> light walls and floor (no wall junction counted), "Très
+     lourde" -> heavy top floor too, otherwise heavy walls and floor, light
+     top floor (§7 defaults). Apartments keep the calibrated flat surcharge.
 M-6  (calibration iteration 3) A missing insulation-quality field means missing
      DATA, not an uninsulated wall: mapped to "moyenne". Fully uninsulated
      pre-1975 walls use U = 2.0 (mid-range of the official Umur0 table for
@@ -91,6 +99,7 @@ import re
 from dataclasses import dataclass
 from datetime import date
 
+from renosim.envelope import default_insulation_layout
 from renosim.models import (
     AltitudeClass,
     Building,
@@ -106,6 +115,7 @@ from renosim.models import (
     InertiaClass,
     OpaqueEnvelopeElement,
     SolarProtectionLevel,
+    ThermalBridgeInputs,
     VentilationSystem,
     VentilationType,
     Window,
@@ -547,8 +557,38 @@ def map_row(row: dict[str, object]) -> MappingResult:
         roof_b = 1.0
         floor_b = _ground_floor_b(floor_u)
 
+    # M-13: linear thermal bridges for houses (3CL §3.4).
+    thermal_bridges: ThermalBridgeInputs | None = None
+    if dwelling is DwellingType.HOUSE:
+        inertia_label = str(row.get("classe_inertie_batiment") or "")
+
+        def _insulated(quality: str | None) -> bool:
+            early = period in (ConstructionPeriod.BEFORE_1948, ConstructionPeriod.Y1948_1974)
+            return not (quality == "insuffisante" and early)
+
+        thermal_bridges = ThermalBridgeInputs(
+            exposed_perimeter_m=perimeter,
+            levels=levels,
+            window_area_m2=window_area,
+            wall_insulation=default_insulation_layout(
+                "wall", _insulated(str(row.get("qualite_isolation_murs") or "") or None), period
+            ),
+            floor_insulation=default_insulation_layout(
+                "floor",
+                _insulated(str(row.get("qualite_isolation_plancher_bas") or "") or None),
+                period,
+            ),
+            roof_insulation=default_insulation_layout(
+                "roof", _insulated(_roof_quality(row)), period
+            ),
+            heavy_walls=inertia_label != "Légère",
+            heavy_floor=inertia_label != "Légère",
+            heavy_ceiling=inertia_label == "Très lourde",
+        )
+
     building = Building(
         living_area_m2=sh,
+        thermal_bridge_inputs=thermal_bridges,
         construction_period=period,
         climate_zone=zone,
         altitude_class=altitude,

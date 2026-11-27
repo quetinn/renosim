@@ -87,7 +87,12 @@ from renosim.economics import (
     heat_pump_sizing,
     measure_cost_range,
 )
-from renosim.envelope import DEFAULT_CEILING_HEIGHT_M, default_u_values, uninsulated_wall_u
+from renosim.envelope import (
+    DEFAULT_CEILING_HEIGHT_M,
+    default_insulation_layout,
+    default_u_values,
+    uninsulated_wall_u,
+)
 from renosim.models import (
     AltitudeClass,
     Building,
@@ -102,9 +107,11 @@ from renosim.models import (
     HeatingGeneratorType,
     HeatingSystem,
     InertiaClass,
+    InsulationLayout,
     OpaqueEnvelopeElement,
     SolarProtectionLevel,
     SolarShading,
+    ThermalBridgeInputs,
     VentilationSystem,
     VentilationType,
     Window,
@@ -199,6 +206,10 @@ _POST_2001_PERIODS = frozenset(
         ConstructionPeriod.AFTER_2013,
     }
 )
+
+
+#: Timber walls: wall junctions are neglected in the thermal bridges (§3.4).
+_LIGHT_WALL_MATERIALS = ("timber_frame", "log_wall")
 
 
 def _declared_wall_u_nu(data: Mapping[str, Any]) -> float | None:
@@ -466,6 +477,33 @@ def building_from_json(data: Mapping[str, Any]) -> Building:
             _optional_bool(elements.get("heavy_walls")),
         )
 
+    # Linear thermal bridges for houses (3CL §3.4). An element counts as
+    # insulated unless declared uninsulated (same reading as its U-value);
+    # layouts by the official defaults; heavy elements from the inertia answers
+    # (defaults: heavy floor, light top floor) and the wall material.
+    thermal_bridges: ThermalBridgeInputs | None = None
+    if dwelling is DwellingType.HOUSE:
+
+        def _layout(key: str, element: str) -> InsulationLayout:
+            state = str(cast(Mapping[str, Any], data[key]).get("state", "period_default"))
+            return default_insulation_layout(element, state != "uninsulated", period)
+
+        answers = elements or {}
+        wall_material = cast(Mapping[str, Any], data.get("wall_material") or {})
+        heavy_floor = _optional_bool(answers.get("heavy_floor"))
+        heavy_ceiling = _optional_bool(answers.get("heavy_ceiling"))
+        thermal_bridges = ThermalBridgeInputs(
+            exposed_perimeter_m=perimeter,
+            levels=levels,
+            window_area_m2=window_area,
+            wall_insulation=_layout("wall_insulation", "wall"),
+            floor_insulation=_layout("floor_insulation", "floor"),
+            roof_insulation=_layout("roof_insulation", "roof"),
+            heavy_walls=wall_material.get("material") not in _LIGHT_WALL_MATERIALS,
+            heavy_floor=True if heavy_floor is None else heavy_floor,
+            heavy_ceiling=False if heavy_ceiling is None else heavy_ceiling,
+        )
+
     # Summer-comfort inputs (#16 brique 1). The roof-insulation state declared
     # for the winter U-value doubles as the annexe 9 roof criterion:
     # "period_default" means unknown -> official pre/post-1975 default.
@@ -535,6 +573,7 @@ def building_from_json(data: Mapping[str, Any]) -> Building:
         ),
         heating_system=heating,
         heating_backup=heating_backup,
+        thermal_bridge_inputs=thermal_bridges,
         dhw_system=DHWSystem(generator_type=dhw_generator, energy_carrier=dhw_carrier),
         ventilation_system=ventilation,
         number_of_occupants=int(occupants_raw) if occupants_raw is not None else None,

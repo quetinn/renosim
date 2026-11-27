@@ -243,3 +243,34 @@ class TestHeatingReplacementDHW:
         for bundle in bundles:
             after = apply_measures(base, bundle)
             assert after.dhw_system.generator_type is DHWGeneratorType.HEAT_PUMP_WATER_HEATER
+
+
+def test_insulation_measures_update_thermal_bridge_layouts() -> None:
+    """3CL §3.4: insulating an uninsulated wall makes it ITI, the attic ITE; the
+    need still drops (surface gains dominate the bridge changes)."""
+    from dataclasses import replace
+
+    from renosim.envelope import envelope_heat_loss
+    from renosim.models import InsulationLayout, ThermalBridgeInputs
+    from renosim.renovation import RoofInsulation, WallInsulation, apply_measures
+    from renosim.simulation import simulate
+    from tests.test_reference_cases import house_1970_oil_uninsulated
+
+    base = replace(
+        house_1970_oil_uninsulated(),
+        thermal_bridge_inputs=ThermalBridgeInputs(
+            exposed_perimeter_m=40.0,
+            levels=2,
+            window_area_m2=15.0,
+            wall_insulation=InsulationLayout.NONE,
+            floor_insulation=InsulationLayout.NONE,
+            roof_insulation=InsulationLayout.NONE,
+        ),
+    )
+    after = apply_measures(base, [WallInsulation(), RoofInsulation()])
+    tb = after.thermal_bridge_inputs
+    assert tb is not None
+    assert tb.wall_insulation is InsulationLayout.ITI
+    assert tb.roof_insulation is InsulationLayout.ITE
+    assert envelope_heat_loss(after).gv_w_per_k < envelope_heat_loss(base).gv_w_per_k
+    assert simulate(after).needs.heating_kwh < simulate(base).needs.heating_kwh

@@ -1,0 +1,41 @@
+{
+  "_meta": {
+    "description": "Linear thermal bridge values k (W/(m.K)) by junction and insulation layout, 3CL-DPE 2021. PT = sum k_pb*l_pb + k_pi*l_pi + k_rf*l_rf + k_ph*l_ph + k_men*l_men.",
+    "source": "Annexe 1 3CL-DPE 2021 consolidée (rt-re-batiment.developpement-durable.gouv.fr), §3.4 « Calcul des déperditions par les ponts thermiques » (p.32-37) : règles d'isolation inconnue (p.33), k plancher bas/mur §3.4.1 (p.35), plancher intermédiaire/mur §3.4.2 (p.35), plancher haut/mur §3.4.3 (p.36, terrasse ou plancher haut lourd), refend/mur §3.4.4 (p.36), menuiserie/mur §3.4.5 (p.37). Lu le 2026-11-27.",
+    "date_accessed": "2026-11-27",
+    "layouts": "none = non isolé, iti = isolation thermique par l'intérieur, ite = par l'extérieur, itr = isolation répartie (ossature bois, monomur…). Combined layouts (ITI+ITE…) are not used by the engine.",
+    "rules": "Only junctions between heavy walls and heavy floors count (§3.4.1-3.4.4); light (timber) top floors and wall/joinery junctions on timber walls are neglected (§3.4.3, §3.4.5). Unknown layout: walls ITI, top floors ITE, ground floors ITE (§3.4.1, §3.4.3); unknown insulation state: uninsulated before 1975, insulated from 1975 (walls ITI, ceilings ITE, floors ITE) (p.33). Door and French-window sills are not counted (§3.4.5)."
+  },
+  "ground_floor_wall": {
+    "note": "k_pb, rows = wall layout, columns = ground-floor layout (§3.4.1, p.35). Floor ITI = insulation under the screed, ITE = under the slab.",
+    "none": { "none": 0.39, "iti": 0.47, "ite": 0.8 },
+    "iti": { "none": 0.31, "iti": 0.08, "ite": 0.71 },
+    "ite": { "none": 0.49, "iti": 0.48, "ite": 0.64 },
+    "itr": { "none": 0.35, "iti": 0.1, "ite": 0.45 }
+  },
+  "intermediate_floor_wall": {
+    "note": "k_pi by wall layout (§3.4.2, p.35); light intermediate floors neglected.",
+    "none": 0.86,
+    "iti": 0.92,
+    "ite": 0.13,
+    "itr": 0.24
+  },
+  "top_floor_wall": {
+    "note": "k_ph, rows = wall layout, columns = heavy top-floor layout (§3.4.3, p.36). Top-floor ITI = insulation under the slab, ITE = on top of it. Light top floors: 0.",
+    "none": { "none": 0.3, "iti": 0.83, "ite": 0.4 },
+    "iti": { "none": 0.27, "iti": 0.07, "ite": 0.75 },
+    "ite": { "none": 0.55, "iti": 0.76, "ite": 0.58 },
+    "itr": { "none": 0.4, "iti": 0.3, "ite": 0.48 }
+  },
+  "joinery_wall": {
+    "note": "k_men by wall layout (§3.4.5, p.37), conventional joinery: in tunnel, frame width Lp = 5 cm, no insulation return (choices of RénoSim, D-03). Values for that column: non isolé 0.31, ITI sans retour 0.31, ITE sans retour 0.45, ITR 0.2.",
+    "none": 0.31,
+    "iti": 0.31,
+    "ite": 0.45,
+    "itr": 0.2
+  },
+  "window_perimeter_per_m2": {
+    "value": 3.26599,
+    "note": "Perimeter of joinery per m2 of window for square 1.5 m2 windows (4 / sqrt(1.5)); same 1.5 m2 per window convention as renovation_costs.json. RénoSim convention (the DPE measures each window)."
+  }
+}
