@@ -675,3 +675,27 @@ annoncé.
 **Prochaines étapes :** installations PAC + appoint bois (deux générateurs, §9 de l'annexe) ;
 rendements des chaudières bois (§13.2) ; murs anciens et inertie ; ponts thermiques.
 
+## 2026-11-27 (suite) — v1.1, étape 3 : appoint bois et chaudières bois
+
+- Lecture dans le navigateur de l'annexe 1 : §9.3 (appoint bois, p.62 : 75 % / 25 % du besoin)
+  et §13.2.2.3 (chaudières bois, p.89-90 : Rpn/Rpint par combustible et année).
+- **Appoint bois** (`Building.heating_backup`, D-24) : test calculé à la main (joule + poêle
+  bûches, Bch 1 000 kWh : 509,95 kWh élec + 300,51 kWh bois), test de bout en bout, bridge
+  (`heating_backup`) et app (question « Poêle ou insert en appoint ? », masquée si le chauffage
+  principal est déjà au bois ; ligne dans le récapitulatif imprimable). Vérifié dans l'aperçu :
+  PAC seule 198 kWhep/m², avec poêle à bûches 244.
+- **Mapping M-12** : « énergie bois + générateur PAC » → PAC + appoint bois. Calibration : biais
+  du groupe +39/+49 → +2/+7. Les libellés « radiateur/convecteur » sont exclus (cas salle de
+  bains §9.4-9.5, résultats mitigés).
+- **Chaudières bois** officielles (D-22 levé) : test à la main (bûches > 2019 : Rg 0,89260 ;
+  2004-2012 : 0,65981 ; avant 2004 : 0,55981 ; granulés 2013-2019 : 0,81627 ; chaîne 0,73307).
+  Mapping : libellés « Chaudière bois » → WOOD_BOILER ; libellés absents → approximation
+  explicite « poêle à granulés ». App : « Chaudière à granulés ».
+- **Calibration cumulée de la branche** (jamais le test) : ±1 classe 90,3 → 91,2 %, exact
+  50,0 → 51,6 %, biais +11,3 → +8,8 ; bois bûches ±1 87,9 → 90,5 %.
+
+**État :** 217 tests, ruff/format/mypy OK, `npm run build` OK.
+
+**Prochaines étapes :** murs anciens (table Umur0 §3.2.1) et inertie (§7, p.53) ; ponts
+thermiques par liaison (§3.4) ; Ujn (§3.3.3).
+
