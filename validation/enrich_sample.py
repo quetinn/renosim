@@ -45,6 +45,16 @@ EXTRA_COLUMNS = [
     "conso_refroidissement_ep",
     "conso_refroidissement_ef",
     "type_energie_principale_ecs",
+    # Per-component envelope losses (W/K) and gains (kWh), recalibration v1.1 diagnosis.
+    "deperditions_murs",
+    "deperditions_planchers_hauts",
+    "deperditions_planchers_bas",
+    "deperditions_portes",
+    "deperditions_baies_vitrees",
+    "deperditions_ponts_thermiques",
+    "deperditions_renouvellement_air",
+    "apport_solaire_saison_chauffe",
+    "apport_interne_saison_chauffe",
 ]
 
 BATCH = 50

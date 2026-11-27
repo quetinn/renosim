@@ -1,0 +1,181 @@
+{
+ "sample": "data/dpe_calib_v3.jsonl",
+ "note": "Ratios = sum(engine) / sum(DPE) per component; implied window-area fraction = deperditions_baies_vitrees / (U_window * b) / Sh.",
+ "by_period": {
+  "1948-1974": {
+   "n": 1189,
+   "ratios": {
+    "walls": 1.397,
+    "roof": 1.872,
+    "floor": 0.561,
+    "windows_doors": 0.957,
+    "thermal_bridges": 0.957,
+    "air_renewal": 1.025
+   },
+   "implied_window_area_fraction": {
+    "median": 0.143,
+    "p10": 0.087,
+    "p90": 0.22
+   }
+  },
+  "1975-1977": {
+   "n": 1173,
+   "ratios": {
+    "walls": 0.997,
+    "roof": 0.796,
+    "floor": 0.61,
+    "windows_doors": 0.957,
+    "thermal_bridges": 1.093,
+    "air_renewal": 0.961
+   },
+   "implied_window_area_fraction": {
+    "median": 0.14,
+    "p10": 0.09,
+    "p90": 0.215
+   }
+  },
+  "1978-1982": {
+   "n": 1197,
+   "ratios": {
+    "walls": 1.079,
+    "roof": 0.942,
+    "floor": 0.653,
+    "windows_doors": 1.017,
+    "thermal_bridges": 1.068,
+    "air_renewal": 0.984
+   },
+   "implied_window_area_fraction": {
+    "median": 0.129,
+    "p10": 0.086,
+    "p90": 0.196
+   }
+  },
+  "1983-1988": {
+   "n": 1193,
+   "ratios": {
+    "walls": 1.074,
+    "roof": 0.775,
+    "floor": 0.685,
+    "windows_doors": 1.038,
+    "thermal_bridges": 1.009,
+    "air_renewal": 1.007
+   },
+   "implied_window_area_fraction": {
+    "median": 0.122,
+    "p10": 0.083,
+    "p90": 0.196
+   }
+  },
+  "1989-2000": {
+   "n": 1193,
+   "ratios": {
+    "walls": 0.969,
+    "roof": 0.773,
+    "floor": 0.766,
+    "windows_doors": 1.057,
+    "thermal_bridges": 1.004,
+    "air_renewal": 1.027
+   },
+   "implied_window_area_fraction": {
+    "median": 0.121,
+    "p10": 0.081,
+    "p90": 0.192
+   }
+  },
+  "2001-2005": {
+   "n": 1181,
+   "ratios": {
+    "walls": 0.933,
+    "roof": 0.871,
+    "floor": 0.804,
+    "windows_doors": 0.991,
+    "thermal_bridges": 0.896,
+    "air_renewal": 1.04
+   },
+   "implied_window_area_fraction": {
+    "median": 0.128,
+    "p10": 0.085,
+    "p90": 0.201
+   }
+  },
+  "2006-2012": {
+   "n": 1104,
+   "ratios": {
+    "walls": 0.914,
+    "roof": 0.899,
+    "floor": 0.895,
+    "windows_doors": 0.959,
+    "thermal_bridges": 0.948,
+    "air_renewal": 1.057
+   },
+   "implied_window_area_fraction": {
+    "median": 0.134,
+    "p10": 0.088,
+    "p90": 0.211
+   }
+  },
+  "2013-2021": {
+   "n": 963,
+   "ratios": {
+    "walls": 0.937,
+    "roof": 1.05,
+    "floor": 1.004,
+    "windows_doors": 0.839,
+    "thermal_bridges": 0.986,
+    "air_renewal": 1.098
+   },
+   "implied_window_area_fraction": {
+    "median": 0.157,
+    "p10": 0.103,
+    "p90": 0.234
+   }
+  },
+  "après 2021": {
+   "n": 766,
+   "ratios": {
+    "walls": 0.97,
+    "roof": 1.022,
+    "floor": 0.996,
+    "windows_doors": 0.838,
+    "thermal_bridges": 1.258,
+    "air_renewal": 1.095
+   },
+   "implied_window_area_fraction": {
+    "median": 0.16,
+    "p10": 0.105,
+    "p90": 0.24
+   }
+  },
+  "avant 1948": {
+   "n": 1176,
+   "ratios": {
+    "walls": 1.075,
+    "roof": 1.709,
+    "floor": 0.62,
+    "windows_doors": 1.173,
+    "thermal_bridges": 1.217,
+    "air_renewal": 1.046
+   },
+   "implied_window_area_fraction": {
+    "median": 0.111,
+    "p10": 0.064,
+    "p90": 0.186
+   }
+  }
+ },
+ "overall": {
+  "ratios": {
+   "walls": 1.089,
+   "roof": 1.2,
+   "floor": 0.705,
+   "windows_doors": 0.997,
+   "thermal_bridges": 1.035,
+   "air_renewal": 1.024
+  },
+  "implied_window_area_fraction": {
+   "median": 0.133,
+   "p10": 0.084,
+   "p90": 0.211
+  }
+ }
+}

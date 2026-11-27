@@ -68,40 +68,68 @@ chauffage au bois granulés ×1,22, bois bûches ×1,12, gaz ×1,07, électricit
 3. **La chaîne besoin → consommation** ajoute encore 1 à 7 % pour le bois et les maisons
    récentes (agrégats), mais retire 7 % pour 1948-1974 et 3 % pour 1975-1977.
 
-## 4. Paramètres autorisés à bouger
+## 4. Paramètres autorisés à bouger (révision 1 du 27/11/2026, avant tout réglage)
 
-Seuls des paramètres **de convention ou de calibration** bougent, chacun dans une plage justifiée.
-Les valeurs officielles de la méthode (tables de U, k de ponts thermiques, rendements, Umur0…) ne
-sont jamais retouchées.
+La révision 1 remplace la version initiale de cette section après deux constats faits **avant
+tout réglage** : les plages ont été sourcées, et la base ADEME publie les déperditions **par
+poste** et les apports, ce qui permet de caler les entrées sur des données observées plutôt que
+sur le résultat. Diagnostic par poste : `validation/diagnose_envelope.py`,
+`validation/report/diagnosis_envelope_calib_v3.json`.
 
-| # | Paramètre | Valeur actuelle | Plage autorisée | Justification de la plage | Cible du diagnostic |
-|---|---|---:|---|---|---|
-| P1 | Surface de baies reconstituée (`conventions.geometry.window_area_fraction`) | 1/6 | 1/8 à 1/5 | ordre de grandeur des maisons ; non sourcé par un texte | enveloppe avant 1975 |
-| P2 | U des murs anciens non isolés sans matériau connu (M-6, `wall_u_nu_traditional`) | 2,0 | 1,5 à 2,5 | plage de la table Umur0 pour les maçonneries traditionnelles épaisses ; 2,5 = plafond officiel | enveloppe avant 1975 |
-| P3 | Qualité d'isolation absente (M-6) | « moyenne » | « moyenne » ou règle du §3.4 (non isolé avant 1975) | règle officielle des parois d'état inconnu | enveloppe avant 1975 |
-| P4 | Coefficient orientation × masques (`calibrated.solar_orientation_shading_coefficient`, D-06) | 0,5 | 0,4 à 1,0 | 1,0 = aucune réduction ; seuil bas déjà calibré | besoin des maisons récentes |
-| P5 | Poids de la pleine charge du Rg saisonnier des chaudières (D-08) | 0,3 | 0,2 à 0,5 | approximation des profils de charge §13.2.1.1 | chaîne chaudières |
+| Poste (moteur / DPE, calibration v3) | 1948-1974 | avant 1948 | tout le parc |
+|---|---:|---:|---:|
+| Murs | 1,40 | 1,08 | 1,09 |
+| Plancher haut | 1,87 | 1,71 | 1,20 |
+| Plancher bas | 0,56 | 0,62 | 0,71 |
+| Baies et portes | 0,96 | 1,17 | 1,00 |
+| Ponts thermiques | 0,96 | 1,22 | 1,04 |
+| Renouvellement d'air | 1,03 | 1,05 | 1,02 |
 
-Le forfait de ponts thermiques des maisons (0,08) n'est plus un paramètre : il est remplacé par le
-modèle officiel. Les choix structurels (mapping M-1 à M-13) peuvent être corrigés s'ils sont faux,
-mais pas utilisés comme leviers de réglage.
+Les écarts viennent surtout de la **traduction des étiquettes de qualité d'isolation ADEME en U**
+(choix de mapping M-2/M-6) : par exemple, une toiture d'avant 1975 « insuffisante » est traitée
+comme non isolée (165 W/K en moyenne) alors que les DPE publient 78 W/K. Le recalage se fait donc
+en deux temps.
+
+### Étape A — reconstitution des entrées (mapping, validation seulement)
+
+- **A1. U par étiquette de qualité (M-14).** Pour chaque paroi (murs, plancher haut, plancher
+  bas), chaque étiquette (insuffisante, moyenne, bonne, très bonne, absente) et chaque époque
+  (avant/après 1975), un facteur multiplie le U du mapping actuel pour que les déperditions
+  agrégées de la paroi égalent celles publiées par les DPE de la **calibration v3**. Calage sur
+  les déperditions par poste, **jamais sur la consommation** ; cellules d'au moins 30 lignes,
+  facteur 1 sinon. Script `validation/fit_quality_labels.py`, résultat versionné
+  `validation/report/quality_label_factors_v3.json`. Les seuils officiels de qualité (annexe 8.2
+  de l'arrêté DPE) n'ont pas pu être relus dans le texte aujourd'hui : ce calage empirique les
+  remplace et sera confronté à ces seuils plus tard.
+- A1 n'affecte pas l'application (elle ne lit pas d'étiquettes ADEME) ; elle rend la validation
+  plus fidèle aux entrées réelles des DPE, de sorte que l'écart restant mesure le moteur.
+
+### Étape B — conventions du moteur (calées sur la consommation, calibration v3)
+
+| # | Paramètre | Valeur actuelle | Plage autorisée | Source de la plage |
+|---|---|---:|---|---|
+| P1 | Surface de baies reconstituée (`window_area_fraction`) | 1/6 (0,167) | **0,084 à 0,211** | Surface de baies implicite des DPE de la calibration v3 (déperditions des baies / U de la baie / Sh) : médiane 0,133, déciles p10 0,084 et p90 0,211. Repère : l'arrêté RE2020 du 4 août 2021, art. 23-II, impose au moins 1/6 de la surface de référence dans le neuf. |
+| P2 | U d'un mur non isolé de matériau inconnu (app, `wall_u_nu_traditional`) | 2,0 | **1,5 à 2,5** | Table Umur0 §3.2.1.2 (pierre 40-80 cm : 2,3 à 1,5 ; brique pleine 34 cm : 2,0) ; 2,5 = plafond officiel Umur_nu. Valeur retenue = U implicite des murs « insuffisants » d'avant 1975 après l'étape A, bornée à la plage. |
+| P4 | Coefficient orientation × masques (`solar_orientation_shading_coefficient`, D-06) | 0,5 | **0,45 à 0,62** | Borne haute : moyenne des coefficients C1 verticaux des quatre orientations en saison de chauffe, sans masque (§18.5 ; 0,56 à 0,62 selon la zone, `solar_orientation.json`). Borne basse : la même moyenne avec un masque partiel (facteur 0,8 de la table Fe2), soit 0,45 à 0,50 selon la zone. |
+| P5 | Poids de la pleine charge du Rg saisonnier des chaudières (D-08) | 0,3 | **0,10 à 0,30** | Profil de charge conventionnel §13.2.1.1 (p.79), avec interpolation du rendement entre Rpint (30 % de charge) et Rpn (100 %) : poids effectif ≈ 0,13 pour une chaudière dimensionnée au plus juste, moins si elle est surdimensionnée ; 0,30 = valeur actuelle, borne haute. |
+
+L'ancien P3 (étiquette absente) est traité par l'étape A. Les valeurs officielles de la méthode
+(tables de U, k, rendements, Umur0, C1) ne sont jamais retouchées.
 
 ## 5. Méthode
 
-1. **Sensibilités une à une** de P1 à P5 sur la calibration v3 (métriques brutes et repondérées,
-   diagnostic par étape), pour vérifier que chaque paramètre agit sur l'étape visée et pas
-   ailleurs.
-2. **Réglage conjoint** sur une grille des paramètres retenus, sur la calibration v3 uniquement.
-   Objectif principal : l'accord à ±1 classe **repondéré selon le parc**, pour ne pas sur-ajuster
-   les segments rares. Objectifs secondaires : l'accord exact et la MAE. Contrainte : le biais
-   brut reste entre −5 et +5 kWhep/m². En cas d'égalité à 0,5 point près, garder la valeur la plus
-   proche de la valeur actuelle.
-3. **Journal de chaque essai** dans `validation/report/` (valeurs testées, métriques), repris
-   dans la note.
-4. **Mesure finale, une seule fois** : test v1 (sous-ensemble v2.6) et test v2 tiré à ce moment,
-   métriques brutes et repondérées avec intervalles de confiance, par époque, énergie et
-   version. Aucun retour en arrière après cette mesure.
-5. Note de validation v4, chiffres de l'app et du README, moteur 0.8.0, fusion de la branche v1.1.
+1. **Étape A** sur la calibration v3, puis nouvelle mesure et nouveau diagnostic par étape.
+2. **Sensibilités une à une** de P1, P4 et P5 dans leurs plages.
+3. **Réglage conjoint** sur une grille de P1, P4 et P5, sur la calibration v3 uniquement.
+   Objectif principal : l'accord à ±1 classe **repondéré selon le parc** ; objectifs secondaires :
+   l'accord exact et la MAE. Contrainte : biais brut entre −5 et +5 kWhep/m². En cas d'égalité à
+   0,5 point près, garder la valeur la plus proche de la valeur actuelle. P2 est fixé par
+   l'étape A (il ne sert qu'à l'application).
+4. **Journal de chaque essai** dans `validation/report/recalibration_v1.1_grid.json`.
+5. **Mesure finale, une seule fois** : test v1 (sous-ensemble v2.6) et test v2 tiré à ce moment,
+   métriques brutes et repondérées avec intervalles de confiance. Aucun retour en arrière après
+   cette mesure.
+6. Note de validation v4, chiffres de l'app et du README, moteur 0.8.0, fusion de la branche v1.1.
 
 ## 6. Hors réglage, à l'étude séparément
 
