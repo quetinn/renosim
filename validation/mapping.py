@@ -27,12 +27,23 @@ M-5  Wood heating (revised 2026-11-27, v1.1). The generator label decides:
      a log stove, insert, closed fireplace or cooker ("Poêle bûche", "insert",
      "Foyer fermé", "Cuisinière") maps onto WOOD_LOG_STOVE (official §13.1
      efficiencies, period from the label, M-4); a pellet stove onto
-     WOOD_PELLET_STOVE; anything else, including a missing label (~75 % of the
-     wood-log rows) and real wood boilers, keeps the former mapping
-     (WOOD_LOG -> WOOD_BOILER on the pellet proxy, D-22). Known gap: ~23 % of
+     WOOD_PELLET_STOVE; a "Chaudière bois bûche/granulés" label onto
+     WOOD_BOILER (official §13.2.2.3 efficiencies, pellet or log rows by fuel).
+     Anything else, including a missing label (~40 % of the wood rows), keeps
+     the former efficiency proxy, now explicit in the mapping: pellet-stove
+     efficiencies with the carrier of the fuel (D-22). Those rows behave in the
+     DPE neither like labelled stoves nor like boilers (consumption/need 1.14-
+     1.17 vs 1.46-1.48), so no official row is assumed for them. Known gap: ~23 % of
      the wood rows of the calibration sample carry a HEAT-PUMP main generator
-     label with wood as the main energy (heat pump + wood back-up); they are
-     still simulated as all-wood (next v1.1 step, two-generator installations).
+     label with wood as the main energy: see M-12.
+M-12 (2026-11-27, v1.1) Wood as main energy with a HEAT-PUMP main generator label
+     is a heat pump with a wood stove/insert back-up (3CL §9.3: 75 % / 25 %
+     of the need; the stove's lower efficiency makes wood the main energy in
+     final energy). Mapped onto the heat pump + heating_backup
+     (log stove for wood-log energy, pellet stove for pellets), back-up age
+     unknown (middle bracket). Joule-emitter labels are left as wood-heated
+     (bathroom heater, §9.4-9.5): measured on the calibration sample, treating
+     them as electric main systems gave mixed results (n ~ 60).
 M-6  (calibration iteration 3) A missing insulation-quality field means missing
      DATA, not an uninsulated wall: mapped to "moyenne". Fully uninsulated
      pre-1975 walls use U = 2.0 (mid-range of the official Umur0 table for
@@ -271,11 +282,36 @@ def _parse_generator_age(label: str | None, construction_year: int) -> float:
 _LOG_STOVE_KEYWORDS = ("poêle bûche", "insert", "foyer fermé", "cuisinière")
 
 
+#: Heat-pump main-generator labels, choice M-12. Joule emitters are excluded:
+#: with wood as the main energy they are usually the bathroom heater of a
+#: wood-heated house (3CL §9.4-9.5), not a main system with a wood back-up.
+_HEAT_PUMP_KEYWORDS = ("pac ", "pompe à chaleur")
+
+
+def _wood_with_electric_main(row: dict[str, object]) -> bool:
+    """Choice M-12: wood main energy but a heat-pump main generator label."""
+    energy = str(row.get("type_energie_principale_chauffage") or "")
+    low = str(row.get("type_generateur_chauffage_principal") or "").lower() + " "
+    return energy.startswith("Bois") and any(k in low for k in _HEAT_PUMP_KEYWORDS)
+
+
+def _heating_backup(row: dict[str, object]) -> HeatingSystem | None:
+    """Choice M-12: the wood stove/insert back-up of an electric main system."""
+    if not _wood_with_electric_main(row):
+        return None
+    energy = str(row.get("type_energie_principale_chauffage") or "").lower()
+    if "granulé" in energy:
+        return HeatingSystem(HeatingGeneratorType.WOOD_PELLET_STOVE, EnergyCarrier.WOOD_PELLETS)
+    return HeatingSystem(HeatingGeneratorType.WOOD_LOG_STOVE, EnergyCarrier.WOOD_LOGS)
+
+
 def _heating_system(row: dict[str, object], construction_year: int) -> HeatingSystem | None:
     energy = str(row.get("type_energie_principale_chauffage") or "")
     label = str(row.get("type_generateur_chauffage_principal") or "")
     low = label.lower()
     age = _parse_generator_age(label, construction_year)
+    if _wood_with_electric_main(row):
+        energy = "Électricité"  # main system; the wood part is the back-up (M-12)
 
     if energy == "Électricité":
         if "pac" in low or "pompe" in low:
@@ -303,12 +339,14 @@ def _heating_system(row: dict[str, object], construction_year: int) -> HeatingSy
     if energy.startswith("Bois"):
         pellets = "granulé" in energy.lower() or "granulé" in low
         carrier = EnergyCarrier.WOOD_PELLETS if pellets else EnergyCarrier.WOOD_LOGS
-        if not pellets and any(k in low for k in _LOG_STOVE_KEYWORDS):
+        if "chaudière bois" in low:
+            gen = HeatingGeneratorType.WOOD_BOILER  # official §13.2.2.3 rows
+        elif not pellets and any(k in low for k in _LOG_STOVE_KEYWORDS):
             gen = HeatingGeneratorType.WOOD_LOG_STOVE
-        elif pellets:
-            gen = HeatingGeneratorType.WOOD_PELLET_STOVE
         else:
-            gen = HeatingGeneratorType.WOOD_BOILER
+            # Pellet stoves, and the efficiency proxy kept for missing or other
+            # labels (M-5): pellet-stove efficiencies, carrier of the fuel.
+            gen = HeatingGeneratorType.WOOD_PELLET_STOVE
         return HeatingSystem(gen, carrier, age)
     return None
 
@@ -533,6 +571,7 @@ def map_row(row: dict[str, object]) -> MappingResult:
             ),
         ),
         heating_system=heating,
+        heating_backup=_heating_backup(row),
         dhw_system=_dhw_system(row, heating),
         ventilation_system=_ventilation(row),
         inertia=inertia,

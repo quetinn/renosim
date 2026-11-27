@@ -14,6 +14,7 @@ import {
   GLAZING_LABELS,
   GLAZING_ORIENTATION_LABELS,
   HEATING_AGE_LABELS,
+  HEATING_BACKUP_LABELS,
   HEATING_LABELS,
   HELP_TEXTS,
   INERTIA_LABELS,
@@ -26,6 +27,7 @@ import {
 } from "../../i18n/fr";
 import { useAppState } from "../../state/AppState";
 import type { GeometryState, InsulationChoice } from "../../state/model";
+import { WOOD_MAIN_HEATING } from "../../state/model";
 import type { InsulationMaterial } from "../../types/schema";
 import { Button } from "../ui/Button";
 import { Field, NumberInput, RadioCards, Segmented, type Option } from "../form/fields";
@@ -518,6 +520,16 @@ export function Wizard() {
                     onChange={(heatingAge) => updateForm({ heatingAge })}
                   />
                 </Field>
+                {!WOOD_MAIN_HEATING.includes(form.heating) && (
+                  <Field label="Poêle ou insert en appoint ?" help={HELP_TEXTS.heatingBackup}>
+                    <Segmented
+                      name="Poêle ou insert en appoint"
+                      options={typedOptions(HEATING_BACKUP_LABELS)}
+                      value={form.heatingBackup}
+                      onChange={(heatingBackup) => updateForm({ heatingBackup })}
+                    />
+                  </Field>
+                )}
                 <Field label="Eau chaude sanitaire" help={HELP_TEXTS.dhw}>
                   <RadioCards
                     name="Eau chaude sanitaire"

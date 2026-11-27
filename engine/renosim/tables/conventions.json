@@ -66,6 +66,28 @@
         { "min_age_years": 0, "bracket": "after_2018_label" }
       ]
     },
+    "wood_boiler_logs": {
+      "note": "Wood-log (and chip) boilers, 3CL §13.2.2.3 (p.89-90), by installation year with reference year 2026. Unknown age -> 2013-2017. Added 2026-11-27 (v1.1, D-22).",
+      "unknown": "2013_2017",
+      "rules": [
+        { "min_age_years": 23, "bracket": "before_2004" },
+        { "min_age_years": 14, "bracket": "2004_2012" },
+        { "min_age_years": 9, "bracket": "2013_2017" },
+        { "min_age_years": 7, "bracket": "2018_2019" },
+        { "min_age_years": 0, "bracket": "after_2019" }
+      ]
+    },
+    "wood_boiler_pellets": {
+      "note": "Wood-pellet boilers, 3CL §13.2.2.3 (p.89-90), by installation year with reference year 2026. Unknown age -> 2013-2019. Added 2026-11-27 (v1.1, D-22).",
+      "unknown": "2013_2019",
+      "rules": [
+        { "min_age_years": 32, "bracket": "before_1995" },
+        { "min_age_years": 23, "bracket": "1995_2003" },
+        { "min_age_years": 14, "bracket": "2004_2012" },
+        { "min_age_years": 7, "bracket": "2013_2019" },
+        { "min_age_years": 0, "bracket": "after_2019" }
+      ]
+    },
     "standard_boiler_derating": {
       "unknown": null,
       "rules": [

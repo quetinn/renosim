@@ -48,6 +48,7 @@ Input schema (``schema_version`` = :data:`renosim.SCHEMA_VERSION`)::
             "air_conditioning_period": "before_2008" | "2008_2014"
                                        | "from_2015" | "unknown"},
         "heating": {"generator": "...", "carrier": "...", "age_years": 30},
+        "heating_backup": null | {"generator": "wood_log_stove" | "wood_pellet_stove"},
         "dhw": {"generator": "...", "carrier": "..."},       # carrier optional
         "ventilation": {"type": "...", "installed_after_2012": false},
         "occupants": 4                                       # optional
@@ -196,6 +197,13 @@ _POST_2001_PERIODS = frozenset(
 )
 
 
+#: Carrier of each supported wood back-up generator (3CL §9.3).
+_BACKUP_CARRIER = {
+    HeatingGeneratorType.WOOD_LOG_STOVE: EnergyCarrier.WOOD_LOGS,
+    HeatingGeneratorType.WOOD_PELLET_STOVE: EnergyCarrier.WOOD_PELLETS,
+}
+
+
 def _interpolate_ue(upb_w_per_m2k: float, table: Mapping[str, Any]) -> float:
     """Linear interpolation of Ue between the tabulated Upb columns."""
     upb_col = [float(v) for v in table["upb_w_per_m2k"]]
@@ -329,6 +337,22 @@ def building_from_json(data: Mapping[str, Any]) -> Building:
         generator_age_years=float(age_raw) if age_raw is not None else None,
     )
     joule = generator is HeatingGeneratorType.ELECTRIC_JOULE
+
+    # Wood stove/insert used as back-up (3CL §9.3, 25 % of the need); the
+    # carrier follows the stove type.
+    backup_data = cast(Mapping[str, Any] | None, data.get("heating_backup"))
+    heating_backup: HeatingSystem | None = None
+    if backup_data is not None:
+        backup_generator = HeatingGeneratorType(str(backup_data["generator"]))
+        backup_carrier = _BACKUP_CARRIER.get(backup_generator)
+        if backup_carrier is None:
+            raise ValueError(f"unsupported heating_backup generator {backup_generator.value!r}")
+        backup_age = backup_data.get("age_years")
+        heating_backup = HeatingSystem(
+            generator_type=backup_generator,
+            energy_carrier=backup_carrier,
+            generator_age_years=float(backup_age) if backup_age is not None else None,
+        )
 
     dhw_data = cast(Mapping[str, Any], data["dhw"])
     dhw_generator = DHWGeneratorType(str(dhw_data["generator"]))
@@ -473,6 +497,7 @@ def building_from_json(data: Mapping[str, Any]) -> Building:
             ),
         ),
         heating_system=heating,
+        heating_backup=heating_backup,
         dhw_system=DHWSystem(generator_type=dhw_generator, energy_carrier=dhw_carrier),
         ventilation_system=ventilation,
         number_of_occupants=int(occupants_raw) if occupants_raw is not None else None,

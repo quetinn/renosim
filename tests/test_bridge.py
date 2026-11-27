@@ -713,3 +713,29 @@ class TestHeatPumpSizing:
         previews = out["measure_previews"]
         assert previews["heating_replacement"]["heat_pump_sizing"]["above_reference"] is True
         assert previews["roof_insulation"]["heat_pump_sizing"] is None
+
+
+class TestHeatingBackup:
+    """Wood stove/insert back-up from the form (3CL §9.3)."""
+
+    def test_backup_parsed_with_its_carrier(self) -> None:
+        data = base_building_json()
+        data["heating_backup"] = {"generator": "wood_log_stove"}
+        building = building_from_json(data)
+        assert building.heating_backup is not None
+        assert building.heating_backup.energy_carrier.value == "wood_logs"
+        assert building.heating_backup.generator_age_years is None
+
+    def test_backup_adds_wood_to_the_carriers(self) -> None:
+        data = base_building_json()
+        data["heating_backup"] = {"generator": "wood_pellet_stove", "age_years": 3}
+        out = run(payload(building=data))
+        carriers = out["baseline"]["conventional"]["final_energy_kwh_by_carrier"]
+        assert carriers["wood_pellets"] > 0
+        assert carriers["fuel_oil"] > 0
+
+    def test_non_stove_backup_rejected(self) -> None:
+        data = base_building_json()
+        data["heating_backup"] = {"generator": "condensing_boiler"}
+        with pytest.raises(ValueError, match="heating_backup"):
+            building_from_json(data)

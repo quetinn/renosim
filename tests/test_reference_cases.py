@@ -247,3 +247,29 @@ def test_invariant_2026_vintage_lowers_electric_primary_energy() -> None:
     ep_2021 = simulate(building, regulation_vintage="dpe_2021").primary_energy_kwh_m2
     ep_2026 = simulate(building, regulation_vintage="dpe_2026").primary_energy_kwh_m2
     assert ep_2026 == pytest.approx(ep_2021 * 1.9 / 2.3, rel=1e-6)
+
+
+def test_wood_backup_end_to_end_adds_a_wood_carrier() -> None:
+    """Heat pump + wood-log insert back-up (3CL §9.3): the wood line appears and
+    the heat pump covers 75 % of the need; total heating energy rises (the stove
+    is far less efficient than the heat pump)."""
+    from dataclasses import replace
+
+    base = replace(
+        house_1970_oil_uninsulated(),
+        heating_system=HeatingSystem(
+            HeatingGeneratorType.HEAT_PUMP_AIR_WATER, EnergyCarrier.ELECTRICITY, 5.0
+        ),
+    )
+    with_backup = replace(
+        base,
+        heating_backup=HeatingSystem(
+            HeatingGeneratorType.WOOD_LOG_STOVE, EnergyCarrier.WOOD_LOGS, 10.0
+        ),
+    )
+    alone, mixed = simulate(base), simulate(with_backup)
+    assert EnergyCarrier.WOOD_LOGS not in alone.final_energy_kwh_by_carrier
+    assert mixed.final_energy_kwh_by_carrier[EnergyCarrier.WOOD_LOGS] > 0
+    assert mixed.final_energy_kwh_by_use["heating"] > alone.final_energy_kwh_by_use["heating"]
+    # Same needs: the back-up does not change the envelope or the need.
+    assert mixed.needs.heating_kwh == pytest.approx(alone.needs.heating_kwh)

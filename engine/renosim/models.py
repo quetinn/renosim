@@ -375,6 +375,10 @@ class Building:
         Average ceiling height Hsp in metres, used by the intermittence factor
         (3CL §8, G = GV/(Hsp*Sh)); it cancels out of the §4 infiltration
         formula. ``None`` (default) applies the conventional height.
+    heating_backup
+        Wood-log stove, insert or pellet stove used as a back-up of the main
+        heating (3CL §9.3): it covers 25 % of the heating need, the main system
+        75 %. ``None`` (default): the main system covers everything.
     """
 
     living_area_m2: float
@@ -401,6 +405,7 @@ class Building:
     roof_insulated: bool | None = None
     through_dwelling: bool | None = None
     ceiling_height_m: float | None = None
+    heating_backup: HeatingSystem | None = None
 
     def __post_init__(self) -> None:
         if self.living_area_m2 <= 0:
@@ -411,6 +416,14 @@ class Building:
             raise ValueError("a Building must have at least one window element")
         if self.ceiling_height_m is not None and self.ceiling_height_m <= 0:
             raise ValueError(f"ceiling_height_m must be positive, got {self.ceiling_height_m}")
+        if self.heating_backup is not None and self.heating_backup.generator_type not in (
+            HeatingGeneratorType.WOOD_LOG_STOVE,
+            HeatingGeneratorType.WOOD_PELLET_STOVE,
+        ):
+            raise ValueError(
+                "heating_backup must be a wood-log or pellet stove/insert (3CL §9.3), got "
+                f"{self.heating_backup.generator_type.value}"
+            )
         if self.number_of_occupants is not None and self.number_of_occupants <= 0:
             raise ValueError(
                 f"number_of_occupants must be positive, got {self.number_of_occupants}"

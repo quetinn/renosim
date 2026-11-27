@@ -47,6 +47,7 @@ export type HeatingChoice =
   | "wood_pellet_stove"
   | "wood_log_stove"
   | "wood_boiler"
+  | "wood_pellet_boiler"
   | "district_heating";
 
 export const HEATING_SYSTEMS: Record<
@@ -62,10 +63,22 @@ export const HEATING_SYSTEMS: Record<
   wood_pellet_stove: { generator: "wood_pellet_stove", carrier: "wood_pellets" },
   wood_log_stove: { generator: "wood_log_stove", carrier: "wood_logs" },
   wood_boiler: { generator: "wood_boiler", carrier: "wood_logs" },
+  wood_pellet_boiler: { generator: "wood_boiler", carrier: "wood_pellets" },
   district_heating: { generator: "district_heating_substation", carrier: "district_heating" },
 };
 
 export type HeatingAgeChoice = "recent" | "mid" | "old" | "unknown";
+
+/** Wood stove/insert used alongside the main heating (3CL §9.3). */
+export type HeatingBackupChoice = "none" | "wood_log_stove" | "wood_pellet_stove";
+
+/** Main heating choices that are themselves wood appliances (no wood back-up asked). */
+export const WOOD_MAIN_HEATING: readonly HeatingChoice[] = [
+  "wood_pellet_stove",
+  "wood_log_stove",
+  "wood_boiler",
+  "wood_pellet_boiler",
+];
 
 /** Representative ages (years) for the efficiency-bracket lookup. */
 export const HEATING_AGE_YEARS: Record<HeatingAgeChoice, number | null> = {
@@ -119,6 +132,7 @@ export interface FormState {
   inertia: InertiaClass;
   heating: HeatingChoice;
   heatingAge: HeatingAgeChoice;
+  heatingBackup: HeatingBackupChoice;
   dhw: DHWGeneratorType;
   ventilation: VentilationType;
   /** Confort d'été (#16 brique 1) : volets/BSO, brasseurs d'air fixes, clim.
@@ -199,6 +213,7 @@ export const INITIAL_FORM: FormState = {
   fixedAirCirculators: false,
   airConditioning: false,
   airConditioningPeriod: "from_2015",
+  heatingBackup: "none",
   ...(defaultsForPeriod("1948_1974") as Pick<
     FormState,
     | "wallInsulation"
@@ -280,6 +295,10 @@ export function buildingInput(form: FormState): BuildingInput {
       carrier: heating.carrier,
       age_years: HEATING_AGE_YEARS[form.heatingAge],
     },
+    heating_backup:
+      form.heatingBackup !== "none" && !WOOD_MAIN_HEATING.includes(form.heating)
+        ? { generator: form.heatingBackup }
+        : null,
     dhw: { generator: form.dhw },
     ventilation: { type: form.ventilation },
     summer: {

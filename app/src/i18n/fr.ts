@@ -20,7 +20,7 @@ import type {
   SummerComfortLevel,
   VentilationType,
 } from "../types/schema";
-import type { HeatingAgeChoice, HeatingChoice } from "../state/model";
+import type { HeatingAgeChoice, HeatingBackupChoice, HeatingChoice } from "../state/model";
 
 export const PERIOD_LABELS: Record<ConstructionPeriod, string> = {
   before_1948: "Avant 1948",
@@ -142,7 +142,14 @@ export const HEATING_LABELS: Record<HeatingChoice, string> = {
   wood_pellet_stove: "Poêle à granulés",
   wood_log_stove: "Poêle ou insert à bûches",
   wood_boiler: "Chaudière bois (bûches)",
+  wood_pellet_boiler: "Chaudière à granulés",
   district_heating: "Réseau de chaleur",
+};
+
+export const HEATING_BACKUP_LABELS: Record<HeatingBackupChoice, string> = {
+  none: "Non",
+  wood_log_stove: "Poêle ou insert à bûches",
+  wood_pellet_stove: "Poêle à granulés",
 };
 
 export const HEATING_AGE_LABELS: Record<HeatingAgeChoice, string> = {
@@ -272,6 +279,8 @@ export const HELP_TEXTS = {
   geometry:
     "Facultatif : si vous connaissez vos surfaces réelles (plans, diagnostic précédent), elles remplacent l'estimation automatique déduite de la surface habitable.",
   heatingAge: "Le rendement d'un générateur se dégrade avec l'âge ; l'année figure souvent sur la plaque de l'appareil.",
+  heatingBackup:
+    "Un poêle ou un insert utilisé en complément du chauffage principal (en mi-saison, le soir…). Comme dans le DPE, on considère qu'il fournit un quart de la chaleur.",
   dhw: "« Produit par le chauffage » : votre chaudière ou votre PAC fait aussi l'eau chaude.",
   ventilation: "Si vous entendez un léger souffle dans les bouches de la salle de bain, vous avez probablement une VMC simple flux.",
   solarProtections:
