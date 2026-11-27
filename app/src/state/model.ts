@@ -28,6 +28,7 @@ import {
   type MeasureType,
   type OccupancyInput,
   type VintageChoice,
+  type WallMaterial,
   type ScenarioInput,
   type SimulationPayload,
   type SolarProtectionLevel,
@@ -68,6 +69,23 @@ export const HEATING_SYSTEMS: Record<
 };
 
 export type HeatingAgeChoice = "recent" | "mid" | "old" | "unknown";
+
+/** Wall material as asked in the form; "unknown" keeps the M-6 default. */
+export type WallMaterialChoice = "unknown" | WallMaterial;
+
+/** Typical thickness proposed when a material is picked (input default, not physics). */
+export const WALL_MATERIAL_DEFAULT_THICKNESS_CM: Record<WallMaterial, number> = {
+  stone: 50,
+  solid_brick: 34,
+  solid_brick_double_air_gap: 30,
+  hollow_brick: 20,
+  hollow_concrete_block: 20,
+  solid_concrete_block: 20,
+  poured_concrete: 20,
+  rammed_earth: 50,
+  timber_frame: 13,
+  log_wall: 20,
+};
 
 /** Answer to one of the three inertia questions (3CL §7.4). */
 export type TriState = "yes" | "no" | "unknown";
@@ -138,6 +156,8 @@ export interface FormState {
   adjacency: Adjacency;
   geometry: GeometryState;
   wallInsulation: InsulationChoice;
+  wallMaterial: WallMaterialChoice;
+  wallStructureThicknessCm: number;
   roofInsulation: InsulationChoice;
   floorInsulation: InsulationChoice;
   floorType: FloorType;
@@ -224,6 +244,8 @@ export const INITIAL_FORM: FormState = {
   glazingOrientation: "unknown",
   solarShading: "clear_or_unknown",
   inertia: "unknown",
+  wallMaterial: "unknown",
+  wallStructureThicknessCm: 50,
   inertiaElements: UNKNOWN_INERTIA_ELEMENTS,
   // Volets quasi systématiques sur l'habitat français : défaut « oui »,
   // corrigeable en un clic (l'engin traite « unknown » comme « full », D-19).
@@ -301,6 +323,10 @@ export function buildingInput(form: FormState): BuildingInput {
     adjacency: form.adjacency,
     ...(geometry ? { geometry } : {}),
     wall_insulation: insulationSpec(form.wallInsulation),
+    wall_material:
+      form.wallMaterial !== "unknown"
+        ? { material: form.wallMaterial, thickness_cm: form.wallStructureThicknessCm }
+        : null,
     roof_insulation: insulationSpec(form.roofInsulation),
     floor_insulation: insulationSpec(form.floorInsulation),
     floor_type: form.floorType,

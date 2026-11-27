@@ -14,6 +14,7 @@ import {
   HEATING_LABELS,
   INERTIA_LABELS,
   TRI_STATE_LABELS,
+  WALL_MATERIAL_LABELS,
   INSULATION_MATERIAL_LABELS,
   INSULATION_STATE_LABELS,
   PERIOD_LABELS,
@@ -59,6 +60,14 @@ export function PrintHypotheses({ form }: { form: FormState }) {
       : ([["Mitoyenneté", ADJACENCY_LABELS[form.adjacency]]] as [string, string][])),
     ["Combles / toiture", insulationText(form.roofInsulation)],
     ["Murs extérieurs", insulationText(form.wallInsulation)],
+    ...(form.wallMaterial !== "unknown" && form.wallInsulation.state !== "renovated"
+      ? ([
+          [
+            "Matériau des murs",
+            `${WALL_MATERIAL_LABELS[form.wallMaterial]}, ${formatInt(form.wallStructureThicknessCm)} cm`,
+          ],
+        ] as [string, string][])
+      : []),
     ["Plancher bas", insulationText(form.floorInsulation)],
     ["Sous le plancher bas", FLOOR_TYPE_LABELS[form.floorType]],
     ["Vitrage", GLAZING_LABELS[form.glazing]],

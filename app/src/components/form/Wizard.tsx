@@ -18,6 +18,7 @@ import {
   HEATING_LABELS,
   HELP_TEXTS,
   TRI_STATE_LABELS,
+  WALL_MATERIAL_LABELS,
   INSULATION_MATERIAL_LABELS,
   INSULATION_STATE_LABELS,
   PERIOD_LABELS,
@@ -27,7 +28,8 @@ import {
 } from "../../i18n/fr";
 import { useAppState } from "../../state/AppState";
 import type { GeometryState, InsulationChoice } from "../../state/model";
-import { WOOD_MAIN_HEATING } from "../../state/model";
+import { WALL_MATERIAL_DEFAULT_THICKNESS_CM, WOOD_MAIN_HEATING } from "../../state/model";
+import type { WallMaterialChoice } from "../../state/model";
 import type { InsulationMaterial } from "../../types/schema";
 import { Button } from "../ui/Button";
 import { InfoTip } from "../ui/InfoTip";
@@ -432,6 +434,49 @@ export function Wizard() {
                   choice={form.wallInsulation}
                   onChange={(wallInsulation) => updateForm({ wallInsulation })}
                 />
+                {form.wallInsulation.state !== "renovated" && (
+                  <div className="grid gap-4 sm:grid-cols-[2fr_1fr]">
+                    <Field label="Matériau des murs" help={HELP_TEXTS.wallMaterial}>
+                      <select
+                        className="min-h-11 w-full cursor-pointer rounded-2xl border border-line bg-surface px-4 py-2 text-sm font-medium text-ink outline-none focus:border-pine"
+                        aria-label="Matériau des murs"
+                        value={form.wallMaterial}
+                        onChange={(e) => {
+                          const wallMaterial = e.target.value as WallMaterialChoice;
+                          updateForm(
+                            wallMaterial === "unknown"
+                              ? { wallMaterial }
+                              : {
+                                  wallMaterial,
+                                  wallStructureThicknessCm:
+                                    WALL_MATERIAL_DEFAULT_THICKNESS_CM[wallMaterial],
+                                },
+                          );
+                        }}
+                      >
+                        {typedOptions(WALL_MATERIAL_LABELS).map((o) => (
+                          <option key={o.value} value={o.value}>
+                            {o.label}
+                          </option>
+                        ))}
+                      </select>
+                    </Field>
+                    {form.wallMaterial !== "unknown" && (
+                      <Field label="Épaisseur du mur">
+                        <NumberInput
+                          value={form.wallStructureThicknessCm}
+                          onChange={(wallStructureThicknessCm) =>
+                            updateForm({ wallStructureThicknessCm })
+                          }
+                          min={5}
+                          max={120}
+                          suffix="cm"
+                          ariaLabel="Épaisseur du mur"
+                        />
+                      </Field>
+                    )}
+                  </div>
+                )}
                 <InsulationField
                   label="Plancher bas"
                   choice={form.floorInsulation}

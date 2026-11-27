@@ -155,3 +155,30 @@ class TestCeilingHeight:
     def test_nonpositive_height_rejected(self) -> None:
         with pytest.raises(ValueError, match="ceiling_height_m"):
             make_reference_building(**_bare_house_kwargs(), ceiling_height_m=0.0)
+
+
+def test_uninsulated_wall_u_from_material_hand_computed() -> None:
+    """Umur0 by material and thickness (3CL §3.2.1.2, p.14-15), Umur_nu = min(Umur0; 2.5).
+
+    The thickness takes the largest tabulated column not above it:
+      stone 50 cm -> 2.05 ; stone 52 cm -> 2.05 ; stone 15 cm -> 3.2 capped at 2.5
+      hollow brick 30 cm -> 28 cm column 1.68 ; hollow concrete block 20 cm -> 2.8 -> 2.5
+      rammed earth 60 cm -> 1.35 ; log wall 30 cm -> 0.8 ; solid brick 34 cm -> 2.0
+    """
+    from renosim.envelope import WALL_MATERIALS, uninsulated_wall_u
+
+    cases = (
+        ("stone", 50.0, 2.05),
+        ("stone", 52.0, 2.05),
+        ("stone", 15.0, 2.5),
+        ("hollow_brick", 30.0, 1.68),
+        ("hollow_concrete_block", 20.0, 2.5),
+        ("rammed_earth", 60.0, 1.35),
+        ("log_wall", 30.0, 0.8),
+        ("solid_brick", 34.0, 2.0),
+    )
+    for material, thickness, expected in cases:
+        assert uninsulated_wall_u(material, thickness) == pytest.approx(expected)
+    assert "stone" in WALL_MATERIALS
+    with pytest.raises(ValueError, match="wall material"):
+        uninsulated_wall_u("cardboard", 20.0)

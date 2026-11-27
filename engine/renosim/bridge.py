@@ -37,6 +37,7 @@ Input schema (``schema_version`` = :data:`renosim.SCHEMA_VERSION`)::
         "glazing": "single_glazing" | ... | "triple_glazing",
         "glazing_orientation": "unknown" | "south" | "east_west" | "north",  # optional
         "solar_shading": "clear_or_unknown" | "partial" | "heavy",          # optional
+        "wall_material": {"material": "stone" | ..., "thickness_cm": 50},  # optional
         "inertia": "unknown" | "light" | "medium" | "heavy",                # optional
         "inertia_elements": {"heavy_floor": bool | null, "heavy_ceiling": ...,
                              "heavy_walls": ...},   # optional, overrides "inertia"
@@ -86,7 +87,7 @@ from renosim.economics import (
     heat_pump_sizing,
     measure_cost_range,
 )
-from renosim.envelope import DEFAULT_CEILING_HEIGHT_M, default_u_values
+from renosim.envelope import DEFAULT_CEILING_HEIGHT_M, default_u_values, uninsulated_wall_u
 from renosim.models import (
     AltitudeClass,
     Building,
@@ -200,6 +201,14 @@ _POST_2001_PERIODS = frozenset(
 )
 
 
+def _declared_wall_u_nu(data: Mapping[str, Any]) -> float | None:
+    """Umur_nu of a declared wall material and thickness (3CL §3.2.1), else None."""
+    wall = cast(Mapping[str, Any] | None, data.get("wall_material"))
+    if wall is None or wall.get("material") in (None, "unknown"):
+        return None
+    return uninsulated_wall_u(str(wall["material"]), float(wall["thickness_cm"]))
+
+
 def _optional_bool(value: object) -> bool | None:
     """JSON true/false/null -> bool | None (anything else is rejected)."""
     if value is None or isinstance(value, bool):
@@ -273,13 +282,16 @@ def _resolve_opaque_u(
     period: ConstructionPeriod,
     zone: ClimateZone,
     electric_joule: bool,
+    uninsulated_wall_u_override: float | None = None,
 ) -> float:
     """U-value from the form insulation state, official table values only."""
     state = str(spec.get("state", "period_default"))
     if state not in _INSULATION_STATES:
         raise ValueError(f"unknown insulation state {state!r} for {element}")
+    # Declared wall material: official Umur_nu (3CL §3.2.1) instead of the M-6 default.
+    base_override = uninsulated_wall_u_override if element == "wall" else None
     if state == "uninsulated":
-        return _uninsulated_u(element)
+        return base_override if base_override is not None else _uninsulated_u(element)
     if state == "known_r":
         if spec.get("material") is not None:
             added_r = added_r_from_insulation(str(spec["material"]), float(spec["thickness_cm"]))
@@ -287,11 +299,13 @@ def _resolve_opaque_u(
             added_r = float(spec["r_value_m2k_per_w"])
             if added_r <= 0:
                 raise ValueError(f"r_value_m2k_per_w must be positive, got {added_r}")
-        base_u = _uninsulated_u(element)
+        base_u = base_override if base_override is not None else _uninsulated_u(element)
         return 1.0 / (1.0 / base_u + added_r)
     lookup_period = ConstructionPeriod.AFTER_2013 if state == "renovated" else period
     defaults = default_u_values(lookup_period, zone, insulated=True, electric_joule=electric_joule)
-    return {"wall": defaults.wall, "roof": defaults.roof, "floor": defaults.floor}[element]
+    tabulated = {"wall": defaults.wall, "roof": defaults.roof, "floor": defaults.floor}[element]
+    # Insulation of unknown kind on a known wall: Umur = min(Umur_nu; Umur_tab) (§3.2.1.1).
+    return min(tabulated, base_override) if base_override is not None else tabulated
 
 
 def building_from_json(data: Mapping[str, Any]) -> Building:
@@ -419,7 +433,12 @@ def building_from_json(data: Mapping[str, Any]) -> Building:
     floor_area = floor_override if floor_override is not None else footprint
 
     wall_u = _resolve_opaque_u(
-        cast(Mapping[str, Any], data["wall_insulation"]), "wall", period, zone, joule
+        cast(Mapping[str, Any], data["wall_insulation"]),
+        "wall",
+        period,
+        zone,
+        joule,
+        _declared_wall_u_nu(data),
     )
     roof_u = _resolve_opaque_u(
         cast(Mapping[str, Any], data["roof_insulation"]), "roof", period, zone, joule

@@ -25,6 +25,7 @@ import type {
   HeatingBackupChoice,
   HeatingChoice,
   TriState,
+  WallMaterialChoice,
 } from "../state/model";
 
 export const PERIOD_LABELS: Record<ConstructionPeriod, string> = {
@@ -120,6 +121,20 @@ export const COOLING_PERIOD_LABELS: Record<Exclude<CoolingPeriod, "unknown">, st
   from_2015: "2015 ou après",
   "2008_2014": "Entre 2008 et 2014",
   before_2008: "Avant 2008",
+};
+
+export const WALL_MATERIAL_LABELS: Record<WallMaterialChoice, string> = {
+  unknown: "Je ne sais pas",
+  stone: "Pierre",
+  solid_brick: "Brique pleine",
+  solid_brick_double_air_gap: "Brique pleine double, avec lame d'air",
+  hollow_brick: "Brique creuse",
+  hollow_concrete_block: "Parpaing (bloc béton creux)",
+  solid_concrete_block: "Bloc béton plein",
+  poured_concrete: "Béton banché",
+  rammed_earth: "Pisé, terre",
+  timber_frame: "Pans de bois",
+  log_wall: "Rondins de bois",
 };
 
 export const TRI_STATE_LABELS: Record<TriState, string> = {
@@ -287,6 +302,8 @@ export const HELP_TEXTS = {
     "Immeubles, collines ou arbres proches réduisent le soleil reçu. « Très masqué » = obstacles hauts qui bouchent l'horizon la majeure partie de la journée.",
   inertia:
     "Des murs et planchers lourds stockent la chaleur et valorisent mieux les apports du soleil : c'est l'inertie thermique. En cas de doute, laissez « Je ne sais pas » : le calcul applique une inertie moyenne.",
+  wallMaterial:
+    "Le matériau et l'épaisseur des murs (hors isolant et enduits intérieurs) fixent leur résistance thermique, comme dans le DPE : 50 cm de pierre isolent environ deux fois mieux que 20 cm de parpaing. En cas de doute, laissez « Je ne sais pas ».",
   inertiaFloor:
     "Sol en dalle béton (10 cm ou plus), poutrelles et hourdis béton ou terre cuite, ou matériau lourd ancien (pierre, brique, terre), sans isolant posé dessus. Dans le doute, le DPE le considère lourd.",
   inertiaCeiling:

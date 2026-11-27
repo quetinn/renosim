@@ -758,3 +758,32 @@ class TestInertiaElements:
         data = base_building_json()
         data["inertia_elements"] = {"heavy_floor": None, "heavy_ceiling": None, "heavy_walls": None}
         assert building_from_json(data).inertia.value == "medium"
+
+
+class TestWallMaterial:
+    """Declared wall material and thickness -> official Umur0 (3CL §3.2.1.2)."""
+
+    def test_uninsulated_stone_wall(self) -> None:
+        data = base_building_json()
+        data["wall_material"] = {"material": "stone", "thickness_cm": 60}
+        building = building_from_json(data)
+        assert building.walls[0].u_value_w_per_m2k == pytest.approx(1.80)
+
+    def test_known_r_composes_with_the_material(self) -> None:
+        # 1 / (1/2.05 + 2.5) = 1 / (0.48780 + 2.5) = 0.33469
+        data = base_building_json()
+        data["wall_material"] = {"material": "stone", "thickness_cm": 50}
+        data["wall_insulation"] = {"state": "known_r", "r_value_m2k_per_w": 2.5}
+        assert building_from_json(data).walls[0].u_value_w_per_m2k == pytest.approx(
+            0.33469, abs=1e-5
+        )
+
+    def test_unknown_insulation_takes_the_minimum(self) -> None:
+        # period_default for 1948-1974 reads Umur_tab 2.5; stone 60 cm gives 1.80.
+        data = base_building_json()
+        data["wall_material"] = {"material": "stone", "thickness_cm": 60}
+        data["wall_insulation"] = {"state": "period_default"}
+        assert building_from_json(data).walls[0].u_value_w_per_m2k <= 1.80 + 1e-9
+
+    def test_without_material_the_m6_default_stays(self) -> None:
+        assert building_from_json(base_building_json()).walls[0].u_value_w_per_m2k == 2.0

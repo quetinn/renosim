@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
-from typing import cast
+from typing import Any, cast
 
 from renosim.models import (
     Building,
@@ -31,6 +31,39 @@ THERMAL_BRIDGE_SURCHARGE = float(
 DEFAULT_CEILING_HEIGHT_M = float(
     load_table("conventions")["geometry"]["default_ceiling_height_m"]["value"]
 )
+
+
+def _umur0_table() -> dict[str, Any]:
+    table: dict[str, Any] = load_table("u_values_default")["umur0_by_material"]
+    return table
+
+
+#: Wall materials with an official Umur0 row (3CL §3.2.1.2).
+WALL_MATERIALS: tuple[str, ...] = tuple(_umur0_table()["materials"])
+
+
+def uninsulated_wall_u(material: str, thickness_cm: float) -> float:
+    """Uninsulated wall U, Umur_nu = min(Umur0; 2.5) (3CL §3.2.1, W/(m2.K)).
+
+    Parameters
+    ----------
+    material
+        One of :data:`WALL_MATERIALS`.
+    thickness_cm
+        Wall thickness (cm); it takes the largest tabulated column not above
+        it, the first column standing for "less than or equal".
+    """
+    table = _umur0_table()
+    columns = table["materials"].get(material)
+    if columns is None:
+        raise ValueError(f"unknown wall material {material!r}")
+    if thickness_cm <= 0:
+        raise ValueError(f"thickness_cm must be positive, got {thickness_cm}")
+    u0 = float(columns[0][1])
+    for column_cm, u in columns:
+        if thickness_cm >= float(column_cm):
+            u0 = float(u)
+    return min(u0, float(table["max_u_nu"]))
 
 
 def ceiling_height_m(building: Building) -> float:
