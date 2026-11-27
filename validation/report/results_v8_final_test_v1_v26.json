@@ -1,0 +1,257 @@
+{
+ "sample_rows": 1895,
+ "rejected": {
+  "surface_hors_bornes": 10
+ },
+ "mapped": 1885,
+ "simulation_errors": {},
+ "evaluated": 1885,
+ "cep_bias_kwhep_m2": 7.2,
+ "cep_mae_kwhep_m2": 37.6,
+ "cep_mape_pct": 24.4,
+ "label_exact_agreement": 0.524,
+ "label_within_one_class": 0.944,
+ "confusion_matrix_obs_rows_pred_cols": {
+  "A": {
+   "A": 90,
+   "B": 82,
+   "C": 13,
+   "D": 0,
+   "E": 0,
+   "F": 0,
+   "G": 0
+  },
+  "B": {
+   "A": 21,
+   "B": 109,
+   "C": 77,
+   "D": 2,
+   "E": 0,
+   "F": 0,
+   "G": 0
+  },
+  "C": {
+   "A": 4,
+   "B": 48,
+   "C": 359,
+   "D": 167,
+   "E": 14,
+   "F": 3,
+   "G": 0
+  },
+  "D": {
+   "A": 0,
+   "B": 0,
+   "C": 89,
+   "D": 276,
+   "E": 156,
+   "F": 35,
+   "G": 4
+  },
+  "E": {
+   "A": 0,
+   "B": 0,
+   "C": 4,
+   "D": 46,
+   "E": 96,
+   "F": 47,
+   "G": 10
+  },
+  "F": {
+   "A": 0,
+   "B": 0,
+   "C": 0,
+   "D": 8,
+   "E": 30,
+   "F": 41,
+   "G": 11
+  },
+  "G": {
+   "A": 0,
+   "B": 0,
+   "C": 0,
+   "D": 0,
+   "E": 9,
+   "F": 17,
+   "G": 17
+  }
+ },
+ "by_stratum": {
+  "periode": {
+   "1948-1974": {
+    "n": 178,
+    "exact": 0.416,
+    "within1": 0.843
+   },
+   "1975-1977": {
+    "n": 197,
+    "exact": 0.482,
+    "within1": 0.954
+   },
+   "1978-1982": {
+    "n": 189,
+    "exact": 0.455,
+    "within1": 0.974
+   },
+   "1983-1988": {
+    "n": 192,
+    "exact": 0.521,
+    "within1": 0.974
+   },
+   "1989-2000": {
+    "n": 169,
+    "exact": 0.663,
+    "within1": 0.982
+   },
+   "2001-2005": {
+    "n": 181,
+    "exact": 0.641,
+    "within1": 1.0
+   },
+   "2006-2012": {
+    "n": 165,
+    "exact": 0.648,
+    "within1": 1.0
+   },
+   "2013-2021": {
+    "n": 182,
+    "exact": 0.61,
+    "within1": 0.945
+   },
+   "après 2021": {
+    "n": 235,
+    "exact": 0.528,
+    "within1": 0.966
+   },
+   "avant 1948": {
+    "n": 197,
+    "exact": 0.32,
+    "within1": 0.807
+   }
+  },
+  "zone": {
+   "H1a": {
+    "n": 227,
+    "exact": 0.445,
+    "within1": 0.943
+   },
+   "H1b": {
+    "n": 239,
+    "exact": 0.506,
+    "within1": 0.958
+   },
+   "H1c": {
+    "n": 240,
+    "exact": 0.55,
+    "within1": 0.942
+   },
+   "H2a": {
+    "n": 213,
+    "exact": 0.502,
+    "within1": 0.925
+   },
+   "H2b": {
+    "n": 250,
+    "exact": 0.508,
+    "within1": 0.94
+   },
+   "H2c": {
+    "n": 208,
+    "exact": 0.553,
+    "within1": 0.942
+   },
+   "H2d": {
+    "n": 276,
+    "exact": 0.533,
+    "within1": 0.938
+   },
+   "H3": {
+    "n": 232,
+    "exact": 0.595,
+    "within1": 0.961
+   }
+  },
+  "energie": {
+   "Bois – Bûches": {
+    "n": 285,
+    "exact": 0.498,
+    "within1": 0.933
+   },
+   "Bois – Granulés (pellets) ou briquettes": {
+    "n": 483,
+    "exact": 0.511,
+    "within1": 0.957
+   },
+   "Fioul domestique": {
+    "n": 312,
+    "exact": 0.529,
+    "within1": 0.952
+   },
+   "Gaz naturel": {
+    "n": 357,
+    "exact": 0.602,
+    "within1": 0.978
+   },
+   "Électricité": {
+    "n": 448,
+    "exact": 0.489,
+    "within1": 0.904
+   }
+  }
+ },
+ "success_criteria": {
+  "exact_target": 0.6,
+  "within1_target": 0.9,
+  "exact_met": false,
+  "within1_met": true
+ },
+ "bootstrap_95ci": {
+  "draws": 1000,
+  "seed": 2026,
+  "unweighted": {
+   "bias": [
+    5.0,
+    9.6
+   ],
+   "mae": [
+    36.0,
+    39.3
+   ],
+   "exact": [
+    0.501,
+    0.546
+   ],
+   "within1": [
+    0.933,
+    0.954
+   ]
+  },
+  "post_stratified": {
+   "bias": [
+    14.9,
+    30.4
+   ],
+   "mae": [
+    46.9,
+    58.3
+   ],
+   "exact": [
+    0.413,
+    0.515
+   ],
+   "within1": [
+    0.812,
+    0.901
+   ]
+  }
+ },
+ "post_stratified": {
+  "weights_file": "validation/report/stratum_counts_maisons.json",
+  "population_total": 4703421,
+  "population_covered_by_sample_strata": 4492189,
+  "cep_bias_kwhep_m2": 22.8,
+  "cep_mae_kwhep_m2": 52.6,
+  "label_exact_agreement": 0.464,
+  "label_within_one_class": 0.858
+ }
+}
