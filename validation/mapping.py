@@ -23,8 +23,16 @@ M-3  Windows: "insuffisante" -> single glazing, "moyenne" -> old double,
 M-4  Generator age parsed from the generator label when it embeds a period
      (e.g. "Chaudière gaz à condensation 2001-2015" -> midpoint), else from the
      construction year; reference year 2023 (median DPE vintage of the sample).
-M-5  Wood log heating maps onto WOOD_BOILER and is evaluated with the pellet
-     efficiency brackets (engine V1 limitation) — analysed separately.
+M-5  Wood heating (revised 2026-11-27, v1.1). The generator label decides:
+     a log stove, insert, closed fireplace or cooker ("Poêle bûche", "insert",
+     "Foyer fermé", "Cuisinière") maps onto WOOD_LOG_STOVE (official §13.1
+     efficiencies, period from the label, M-4); a pellet stove onto
+     WOOD_PELLET_STOVE; anything else, including a missing label (~75 % of the
+     wood-log rows) and real wood boilers, keeps the former mapping
+     (WOOD_LOG -> WOOD_BOILER on the pellet proxy, D-22). Known gap: ~23 % of
+     the wood rows of the calibration sample carry a HEAT-PUMP main generator
+     label with wood as the main energy (heat pump + wood back-up); they are
+     still simulated as all-wood (next v1.1 step, two-generator installations).
 M-6  (calibration iteration 3) A missing insulation-quality field means missing
      DATA, not an uninsulated wall: mapped to "moyenne". Fully uninsulated
      pre-1975 walls use U = 2.0 (mid-range of the official Umur0 table for
@@ -259,6 +267,10 @@ def _parse_generator_age(label: str | None, construction_year: int) -> float:
     return max(0.0, REFERENCE_YEAR - construction_year)
 
 
+#: Generator labels of wood-log stoves and inserts (3CL §13.1 rows), choice M-5.
+_LOG_STOVE_KEYWORDS = ("poêle bûche", "insert", "foyer fermé", "cuisinière")
+
+
 def _heating_system(row: dict[str, object], construction_year: int) -> HeatingSystem | None:
     energy = str(row.get("type_energie_principale_chauffage") or "")
     label = str(row.get("type_generateur_chauffage_principal") or "")
@@ -291,9 +303,12 @@ def _heating_system(row: dict[str, object], construction_year: int) -> HeatingSy
     if energy.startswith("Bois"):
         pellets = "granulé" in energy.lower() or "granulé" in low
         carrier = EnergyCarrier.WOOD_PELLETS if pellets else EnergyCarrier.WOOD_LOGS
-        gen = (
-            HeatingGeneratorType.WOOD_PELLET_STOVE if pellets else HeatingGeneratorType.WOOD_BOILER
-        )
+        if not pellets and any(k in low for k in _LOG_STOVE_KEYWORDS):
+            gen = HeatingGeneratorType.WOOD_LOG_STOVE
+        elif pellets:
+            gen = HeatingGeneratorType.WOOD_PELLET_STOVE
+        else:
+            gen = HeatingGeneratorType.WOOD_BOILER
         return HeatingSystem(gen, carrier, age)
     return None
 

@@ -172,9 +172,14 @@ def heating_system_efficiency(building: Building) -> HeatingEfficiency:
     if gtype in (
         HeatingGeneratorType.WOOD_PELLET_STOVE,
         HeatingGeneratorType.WOOD_BOILER,
+        HeatingGeneratorType.WOOD_LOG_STOVE,
     ):
-        stoves = eff["stoves_rg"]["wood_pellet_stove"]
-        rg = float(stoves[str(_bracket_by_age("pellet_stove_rg", age))])
+        if gtype is HeatingGeneratorType.WOOD_LOG_STOVE:
+            stoves = eff["stoves_rg"]["wood_log_stove"]
+            rg = float(stoves[str(_bracket_by_age("wood_log_stove_rg", age))])
+        else:  # pellet stove; wood boiler still on the pellet proxy (D-22)
+            stoves = eff["stoves_rg"]["wood_pellet_stove"]
+            rg = float(stoves[str(_bracket_by_age("pellet_stove_rg", age))])
         return HeatingEfficiency(
             generation=rg,
             emission=float(re_t["other_equipment"]),

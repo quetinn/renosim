@@ -39,6 +39,7 @@ export type HeatingGeneratorType =
   | "heat_pump_air_water"
   | "heat_pump_air_air"
   | "wood_pellet_stove"
+  | "wood_log_stove"
   | "wood_boiler"
   | "district_heating_substation";
 

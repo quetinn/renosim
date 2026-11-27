@@ -56,6 +56,16 @@
         { "min_age_years": 0, "bracket": "after_2020_label" }
       ]
     },
+    "wood_log_stove_rg": {
+      "note": "Wood-log stoves, inserts, closed fireplaces and cookers, 3CL §13.1 (p.78): installed before 1990 / 1990-2004 / from 2005 (label or not) / from 2018 with label. Ages >= 9 y and < 22 y are taken as labelled 2005-2017 appliances (the form does not ask for the Flamme Verte label); unknown age -> the same middle bracket. Added 2026-11-27 (v1.1, deviation D-22).",
+      "unknown": "2005_2017_label",
+      "rules": [
+        { "min_age_years": 37, "bracket": "before_1990" },
+        { "min_age_years": 22, "bracket": "1990_2004" },
+        { "min_age_years": 9, "bracket": "2005_2017_label" },
+        { "min_age_years": 0, "bracket": "after_2018_label" }
+      ]
+    },
     "standard_boiler_derating": {
       "unknown": null,
       "rules": [

@@ -45,6 +45,7 @@ export type HeatingChoice =
   | "heat_pump_air_water"
   | "heat_pump_air_air"
   | "wood_pellet_stove"
+  | "wood_log_stove"
   | "wood_boiler"
   | "district_heating";
 
@@ -59,6 +60,7 @@ export const HEATING_SYSTEMS: Record<
   heat_pump_air_water: { generator: "heat_pump_air_water", carrier: "electricity" },
   heat_pump_air_air: { generator: "heat_pump_air_air", carrier: "electricity" },
   wood_pellet_stove: { generator: "wood_pellet_stove", carrier: "wood_pellets" },
+  wood_log_stove: { generator: "wood_log_stove", carrier: "wood_logs" },
   wood_boiler: { generator: "wood_boiler", carrier: "wood_logs" },
   district_heating: { generator: "district_heating_substation", carrier: "district_heating" },
 };

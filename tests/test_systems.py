@@ -295,3 +295,32 @@ def test_design_heat_load_hand_computed() -> None:
     assert design_heat_load_kw(house) == pytest.approx(29.348, abs=0.001)
     h3_high = replace(house, climate_zone=ClimateZone.H3, altitude_class=AltitudeClass.HIGH)
     assert design_heat_load_kw(h3_high) == pytest.approx(27.358, abs=0.001)
+
+
+def test_wood_log_stove_efficiency_hand_computed() -> None:
+    """Wood-log stove / insert (3CL §13.1, p.78): Rg by installation period.
+
+    Age -> period with reference year 2026 (tables/conventions.json):
+      40 y (installed ~1986) -> before 1990          Rg 0.50
+      25 y (~2001)           -> 1990-2004            Rg 0.60
+      10 y (~2016)           -> 2005-2017, label     Rg 0.70
+       3 y (~2023)           -> from 2018, label     Rg 0.75
+      unknown                -> 2005-2017, label     Rg 0.70
+    Re 0.95 (other equipment), Rd 1 (no network), Rr 0.80 (stove or insert):
+      overall(10 y) = 0.70 * 0.95 * 1 * 0.80 = 0.532
+    """
+
+    def stove(age: float | None) -> Building:
+        return _house(
+            heating_system=HeatingSystem(
+                HeatingGeneratorType.WOOD_LOG_STOVE, EnergyCarrier.WOOD_LOGS, age
+            )
+        )
+
+    for age, rg in ((40.0, 0.50), (25.0, 0.60), (10.0, 0.70), (3.0, 0.75), (None, 0.70)):
+        assert heating_system_efficiency(stove(age)).generation == pytest.approx(rg)
+    eff = heating_system_efficiency(stove(10.0))
+    assert (eff.emission, eff.distribution, eff.regulation) == pytest.approx((0.95, 1.0, 0.80))
+    assert eff.overall == pytest.approx(0.532)
+    # No hydraulic network: no circulator, no generation auxiliaries.
+    assert heating_auxiliary_kwh(stove(10.0), 10_000.0, 5_000.0) == 0.0

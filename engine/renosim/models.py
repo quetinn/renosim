@@ -66,6 +66,8 @@ class HeatingGeneratorType(StrEnum):
     HEAT_PUMP_AIR_WATER = "heat_pump_air_water"
     HEAT_PUMP_AIR_AIR = "heat_pump_air_air"
     WOOD_PELLET_STOVE = "wood_pellet_stove"
+    #: Wood-log stove, insert, closed fireplace or cooker (3CL §13.1).
+    WOOD_LOG_STOVE = "wood_log_stove"
     WOOD_BOILER = "wood_boiler"
     DISTRICT_HEATING_SUBSTATION = "district_heating_substation"
 

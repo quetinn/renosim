@@ -140,6 +140,7 @@ export const HEATING_LABELS: Record<HeatingChoice, string> = {
   heat_pump_air_water: "Pompe à chaleur air/eau",
   heat_pump_air_air: "Pompe à chaleur air/air",
   wood_pellet_stove: "Poêle à granulés",
+  wood_log_stove: "Poêle ou insert à bûches",
   wood_boiler: "Chaudière bois (bûches)",
   district_heating: "Réseau de chaleur",
 };
