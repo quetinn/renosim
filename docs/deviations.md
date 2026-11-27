@@ -30,7 +30,28 @@ Format : un écart = une entrée. Statut : `décidé` (au niveau du brief, pas e
   créait un biais structurel de la validation pour les ~21 % de maisons climatisées. Levé par
   la proposition #16 (`docs/proposal_confort_ete.md`), campagne v4 du 11/07/2026.
 
-## D-03 — Ponts thermiques forfaitaires
+## D-03 — Ponts thermiques forfaitaires — LEVÉ POUR LES MAISONS (27/11/2026, branche v1.1)
+
+- **Mise à jour du 27/11/2026 :** les maisons utilisent le modèle linéaire du §3.4
+  (`envelope.linear_thermal_bridges_w_per_k`, table `thermal_bridges.json`, entrées
+  `Building.thermal_bridge_inputs` construites par le bridge et par le mapping M-13) :
+  plancher bas/mur, plancher intermédiaire/mur, plancher haut/mur (plancher haut lourd
+  seulement) et menuiserie/mur, k officiels selon l'isolation (non isolé, ITI, ITE, ITR) et
+  défauts du §3.4 (avant 1975 non isolé ; à partir de 1975 murs ITI, plafonds et planchers ITE).
+  Simplifications : linéaires déduits de la géométrie reconstituée (périmètre exposé,
+  périmètre × (niveaux − 1), tour des fenêtres par la convention de fenêtres carrées de
+  1,5 m²) ; menuiseries en tunnel, dormant de 5 cm, sans retour d'isolant ; refends non comptés
+  (pas de géométrie intérieure) ; plancher haut léger par défaut (§7.1). Le geste « isolation des
+  murs » rend un mur non isolé ITI (le choix ITE viendra avec D-04), le geste « combles » ITE.
+  Les appartements gardent la majoration forfaitaire calibrée.
+- **Mesure sur la calibration :** les déperditions du moteur rapportées à
+  `deperditions_enveloppe` passent de 0,85-0,93 à **0,98-1,01** pour les maisons de 1975 à 2021
+  (le forfait sous-estimait l'enveloppe). Mais les consommations se dégradent (±1 classe
+  91,2 → 88,5 %, biais +8,8 → +22,8), car des paramètres calés en juillet (D-16 : orientation et
+  masques solaires, entre autres) compensaient ce déficit : à reprendre lors de la recalibration
+  unique. Avant 1975, les déperditions étaient déjà surestimées de 13 à 28 % avec le forfait :
+  le problème du bâti ancien vient des surfaces et des U, pas des ponts thermiques.
+- **Historique :** jusqu'au 27/11/2026, toutes les maisons utilisaient le forfait ci-dessous.
 
 - **Statut :** calibré (`envelope.py`, valeur dans `tables/conventions.json` depuis le
   25/11/2026)

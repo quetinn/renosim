@@ -732,3 +732,34 @@ thermiques par liaison (§3.4) ; Ujn (§3.3.3).
 **Prochaines étapes :** ponts thermiques par liaison (§3.4) et ITE/ITI ; Ujn (§3.3.3) ; puis la
 recalibration unique.
 
+## 2026-11-27 (suite 4) — v1.1, étape 6 : ponts thermiques linéaires (§3.4)
+
+- Lecture du §3.4 de l'annexe 1 (p.32-37) : formules, règles d'isolation inconnue, k plancher
+  bas/mur, plancher intermédiaire/mur, plancher haut/mur, refend/mur, menuiserie/mur.
+- Moteur : `InsulationLayout`, `ThermalBridgeInputs`, `default_insulation_layout`,
+  `linear_thermal_bridges_w_per_k` (table `thermal_bridges.json`) ; tests calculés à la main
+  (30,787 W/K et 81,525 W/K ; murs bois → 0) ; gestes d'isolation qui font basculer les
+  isolations (mur → ITI, combles → ITE) avec invariant « le besoin baisse ».
+- Bridge (maisons) et mapping M-13 construisent les entrées ; appartements inchangés.
+- **Diagnostic sur la calibration** (déperditions moteur / `deperditions_enveloppe`) :
+
+  | Période | forfait | linéaire |
+  |---|---:|---:|
+  | avant 1948 | 1,277 | 1,316 |
+  | 1948-1974 | 1,132 | 1,171 |
+  | 1975-2012 (6 tranches) | 0,875-0,926 | 0,955-1,007 |
+  | 2013-2021 | 0,853 | 0,978 |
+  | après 2021 | 0,901 | 1,059 |
+
+  Le modèle linéaire rend l'enveloppe des maisons d'après 1975 fidèle au DPE ; les consommations
+  se dégradent (calibration ±1 classe 91,2 → 88,5 %, biais +8,8 → +22,8) parce que des
+  paramètres calés en juillet compensaient le déficit. Avant 1975, l'enveloppe est déjà trop
+  déperditive de 13 à 28 % : surfaces et U à revoir (fenêtres à Sh/6, murs à 2,0, planchers).
+  Ces deux constats guident la recalibration unique.
+
+**État :** 231 tests, ruff/format/mypy OK.
+
+**Prochaines étapes :** Ujn (§3.3.3) ; puis préparer la recalibration : reprendre les paramètres
+calés D-16 et la géométrie du bâti ancien sur un nouvel échantillon de calibration limité à la
+version de méthode en vigueur (protocole de la note §7).
+
