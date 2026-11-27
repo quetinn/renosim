@@ -203,6 +203,16 @@ Format : un écart = une entrée. Statut : `décidé` (au niveau du brief, pas e
   à partir de la composition des parois (ici déclarative) et les données climatiques §18.3
   « parois anciennes », non encodées.
 - **Impact :** modéré ; à réexaminer si la validation montre un biais sur le bâti ancien.
+- **Mise à jour du 27/11/2026 (branche v1.1) — classe déterminée comme dans la méthode :**
+  le parcours pose désormais les trois questions du §7 (plancher bas lourd, plafond lourd,
+  murs lourds, avec les définitions des §7.1-7.3 en aide) et le moteur en déduit la classe par
+  le tableau §7.4 (`models.inertia_class_from_heavy_elements`, table
+  `occupancy_conventional.json`) : 3 parois lourdes → très lourde, 2 → lourde, 1 → moyenne,
+  0 → légère ; inconnu = défauts officiels (plafond léger, plancher bas lourd, murs légers),
+  soit « moyenne » quand rien n'est renseigné, comme avant. Simplifications : l'exception
+  « plancher sur terre-plein » du défaut n'est pas modélisée ; lourde et très lourde sont
+  confondues (même exposant et même colonne I0). La validation lit toujours la classe ADEME
+  (M-8) : aucun effet sur ses métriques.
 
 ## D-15 — Débits de ventilation indexés sur l'époque de construction
 

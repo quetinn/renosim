@@ -699,3 +699,21 @@ rendements des chaudières bois (§13.2) ; murs anciens et inertie ; ponts therm
 **Prochaines étapes :** murs anciens (table Umur0 §3.2.1) et inertie (§7, p.53) ; ponts
 thermiques par liaison (§3.4) ; Ujn (§3.3.3).
 
+## 2026-11-27 (suite 2) — v1.1, étape 4 : inertie déterminée par la méthode (§7)
+
+- Lecture du §7 de l'annexe 1 (p.53-54) : définitions des parois lourdes et tableau §7.4.
+- Moteur : `inertia_class_from_heavy_elements` (règle et défauts dans
+  `occupancy_conventional.json`), test des 8 combinaisons et des défauts ; bridge :
+  `inertia_elements` prioritaire sur `inertia`.
+- App : la question « type de construction » est remplacée par trois questions Oui/Non/Je ne
+  sais pas avec les définitions officielles en aide ; récapitulatif imprimable à jour ; les
+  sessions enregistrées gardent leur ancienne réponse tant que les trois questions sont à « Je
+  ne sais pas ». Vérifié dans l'aperçu : maison de 1970, trois parois lourdes 435 kWhep/m²
+  contre 427 sans réponse (effets opposés de l'exposant et de l'intermittence, D-14).
+- Validation : non concernée (classe ADEME lue directement, M-8).
+- Incident d'aperçu : un rechargement à chaud a réinitialisé la session locale de l'app ; elle a
+  été restaurée depuis la copie faite au début des vérifications.
+
+**Prochaines étapes :** murs anciens (table Umur0 §3.2.1, matériau et épaisseur) ; ponts
+thermiques par liaison (§3.4) ; Ujn (§3.3.3).
+
