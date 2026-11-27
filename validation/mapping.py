@@ -23,8 +23,43 @@ M-3  Windows: "insuffisante" -> single glazing, "moyenne" -> old double,
 M-4  Generator age parsed from the generator label when it embeds a period
      (e.g. "Chaudière gaz à condensation 2001-2015" -> midpoint), else from the
      construction year; reference year 2023 (median DPE vintage of the sample).
-M-5  Wood log heating maps onto WOOD_BOILER and is evaluated with the pellet
-     efficiency brackets (engine V1 limitation) — analysed separately.
+M-5  Wood heating (revised 2026-11-27, v1.1). The generator label decides:
+     a log stove, insert, closed fireplace or cooker ("Poêle bûche", "insert",
+     "Foyer fermé", "Cuisinière") maps onto WOOD_LOG_STOVE (official §13.1
+     efficiencies, period from the label, M-4); a pellet stove onto
+     WOOD_PELLET_STOVE; a "Chaudière bois bûche/granulés" label onto
+     WOOD_BOILER (official §13.2.2.3 efficiencies, pellet or log rows by fuel).
+     Anything else, including a missing label (~40 % of the wood rows), keeps
+     the former efficiency proxy, now explicit in the mapping: pellet-stove
+     efficiencies with the carrier of the fuel (D-22). Those rows behave in the
+     DPE neither like labelled stoves nor like boilers (consumption/need 1.14-
+     1.17 vs 1.46-1.48), so no official row is assumed for them. Known gap: ~23 % of
+     the wood rows of the calibration sample carry a HEAT-PUMP main generator
+     label with wood as the main energy: see M-12.
+M-12 (2026-11-27, v1.1) Wood as main energy with a HEAT-PUMP main generator label
+     is a heat pump with a wood stove/insert back-up (3CL §9.3: 75 % / 25 %
+     of the need; the stove's lower efficiency makes wood the main energy in
+     final energy). Mapped onto the heat pump + heating_backup
+     (log stove for wood-log energy, pellet stove for pellets), back-up age
+     unknown (middle bracket). Joule-emitter labels are left as wood-heated
+     (bathroom heater, §9.4-9.5): measured on the calibration sample, treating
+     them as electric main systems gave mixed results (n ~ 60).
+M-13 (2026-11-27, v1.1) Linear thermal bridges (3CL §3.4, houses only): exposed
+     perimeter, levels and window area of the M-1 geometry; an element counts
+     as insulated unless its quality is "insuffisante" before 1975 (same rule
+     as its U-value, M-2/M-6), layouts by the official defaults (walls ITI,
+     roof and floor ITE); heavy elements from classe_inertie_batiment:
+     "Légère" -> light walls and floor (no wall junction counted), "Très
+     lourde" -> heavy top floor too, otherwise heavy walls and floor, light
+     top floor (§7 defaults). Apartments keep the calibrated flat surcharge.
+M-14 (2026-11-27, recalibration v1.1, step A) Houses: the U of the walls, top
+     floor and ground floor from M-2/M-6 is multiplied by a factor per
+     (element, era before/from 1975, ADEME quality label or "absent") so that
+     the aggregated element losses match the per-component losses published
+     in the DPE of the calibration sample v3 (validation/fit_quality_labels.py,
+     validation/report/quality_label_factors_v3.json). Fitted on input losses,
+     never on consumption; cells under 30 rows keep a factor of 1. Set
+     ``QUALITY_LABEL_FACTORS = {}`` to disable (used by the fitting script).
 M-6  (calibration iteration 3) A missing insulation-quality field means missing
      DATA, not an uninsulated wall: mapped to "moyenne". Fully uninsulated
      pre-1975 walls use U = 2.0 (mid-range of the official Umur0 table for
@@ -67,11 +102,14 @@ M-11 (#16 brique 2) Cooling: a non-empty ``type_generateur_froid`` declares an
 
 from __future__ import annotations
 
+import json
 import math
 import re
 from dataclasses import dataclass
 from datetime import date
+from pathlib import Path
 
+from renosim.envelope import default_insulation_layout
 from renosim.models import (
     AltitudeClass,
     Building,
@@ -87,6 +125,7 @@ from renosim.models import (
     InertiaClass,
     OpaqueEnvelopeElement,
     SolarProtectionLevel,
+    ThermalBridgeInputs,
     VentilationSystem,
     VentilationType,
     Window,
@@ -259,11 +298,60 @@ def _parse_generator_age(label: str | None, construction_year: int) -> float:
     return max(0.0, REFERENCE_YEAR - construction_year)
 
 
+def _load_quality_label_factors() -> dict[str, float]:
+    """Choice M-14: per-label U factors fitted on calibration v3 (empty if absent)."""
+    path = Path(__file__).parent / "report" / "quality_label_factors_v3.json"
+    if not path.exists():
+        return {}
+    data = json.loads(path.read_text(encoding="utf-8"))
+    return {key: float(cell["factor"]) for key, cell in data["factors"].items()}
+
+
+#: Choice M-14 factors keyed "element|era|label" (era: "pre1975" / "1975+").
+QUALITY_LABEL_FACTORS: dict[str, float] = _load_quality_label_factors()
+
+
+def quality_label_factor(element: str, period: ConstructionPeriod, label: str | None) -> float:
+    """Choice M-14: U factor of an element for its ADEME quality label and era."""
+    early = period in (ConstructionPeriod.BEFORE_1948, ConstructionPeriod.Y1948_1974)
+    key = f"{element}|{'pre1975' if early else '1975+'}|{label or 'absent'}"
+    return QUALITY_LABEL_FACTORS.get(key, 1.0)
+
+
+#: Generator labels of wood-log stoves and inserts (3CL §13.1 rows), choice M-5.
+_LOG_STOVE_KEYWORDS = ("poêle bûche", "insert", "foyer fermé", "cuisinière")
+
+
+#: Heat-pump main-generator labels, choice M-12. Joule emitters are excluded:
+#: with wood as the main energy they are usually the bathroom heater of a
+#: wood-heated house (3CL §9.4-9.5), not a main system with a wood back-up.
+_HEAT_PUMP_KEYWORDS = ("pac ", "pompe à chaleur")
+
+
+def _wood_with_electric_main(row: dict[str, object]) -> bool:
+    """Choice M-12: wood main energy but a heat-pump main generator label."""
+    energy = str(row.get("type_energie_principale_chauffage") or "")
+    low = str(row.get("type_generateur_chauffage_principal") or "").lower() + " "
+    return energy.startswith("Bois") and any(k in low for k in _HEAT_PUMP_KEYWORDS)
+
+
+def _heating_backup(row: dict[str, object]) -> HeatingSystem | None:
+    """Choice M-12: the wood stove/insert back-up of an electric main system."""
+    if not _wood_with_electric_main(row):
+        return None
+    energy = str(row.get("type_energie_principale_chauffage") or "").lower()
+    if "granulé" in energy:
+        return HeatingSystem(HeatingGeneratorType.WOOD_PELLET_STOVE, EnergyCarrier.WOOD_PELLETS)
+    return HeatingSystem(HeatingGeneratorType.WOOD_LOG_STOVE, EnergyCarrier.WOOD_LOGS)
+
+
 def _heating_system(row: dict[str, object], construction_year: int) -> HeatingSystem | None:
     energy = str(row.get("type_energie_principale_chauffage") or "")
     label = str(row.get("type_generateur_chauffage_principal") or "")
     low = label.lower()
     age = _parse_generator_age(label, construction_year)
+    if _wood_with_electric_main(row):
+        energy = "Électricité"  # main system; the wood part is the back-up (M-12)
 
     if energy == "Électricité":
         if "pac" in low or "pompe" in low:
@@ -291,9 +379,14 @@ def _heating_system(row: dict[str, object], construction_year: int) -> HeatingSy
     if energy.startswith("Bois"):
         pellets = "granulé" in energy.lower() or "granulé" in low
         carrier = EnergyCarrier.WOOD_PELLETS if pellets else EnergyCarrier.WOOD_LOGS
-        gen = (
-            HeatingGeneratorType.WOOD_PELLET_STOVE if pellets else HeatingGeneratorType.WOOD_BOILER
-        )
+        if "chaudière bois" in low:
+            gen = HeatingGeneratorType.WOOD_BOILER  # official §13.2.2.3 rows
+        elif not pellets and any(k in low for k in _LOG_STOVE_KEYWORDS):
+            gen = HeatingGeneratorType.WOOD_LOG_STOVE
+        else:
+            # Pellet stoves, and the efficiency proxy kept for missing or other
+            # labels (M-5): pellet-stove efficiencies, carrier of the fuel.
+            gen = HeatingGeneratorType.WOOD_PELLET_STOVE
         return HeatingSystem(gen, carrier, age)
     return None
 
@@ -403,7 +496,7 @@ def map_row(row: dict[str, object]) -> MappingResult:
     else:
         traversant = True
         perimeter = full_perimeter
-    window_area = sh / 6.0
+    window_area = sh * float(load_table("conventions")["geometry"]["window_area_fraction"]["value"])
     min_wall = 10.0 if dwelling is DwellingType.HOUSE else 5.0
     wall_area = max(min_wall, perimeter * hsp * levels - window_area)
     if dwelling is DwellingType.APARTMENT:
@@ -493,9 +586,48 @@ def map_row(row: dict[str, object]) -> MappingResult:
     else:
         roof_b = 1.0
         floor_b = _ground_floor_b(floor_u)
+        # M-14: per-label U factors (houses), applied after b so losses scale linearly.
+        wall_u *= quality_label_factor(
+            "walls", period, str(row.get("qualite_isolation_murs") or "") or None
+        )
+        walls = [OpaqueEnvelopeElement(area_m2=wall_area, u_value_w_per_m2k=wall_u)]
+        roof_u *= quality_label_factor("roof", period, _roof_quality(row))
+        floor_u *= quality_label_factor(
+            "floor", period, str(row.get("qualite_isolation_plancher_bas") or "") or None
+        )
+
+    # M-13: linear thermal bridges for houses (3CL §3.4).
+    thermal_bridges: ThermalBridgeInputs | None = None
+    if dwelling is DwellingType.HOUSE:
+        inertia_label = str(row.get("classe_inertie_batiment") or "")
+
+        def _insulated(quality: str | None) -> bool:
+            early = period in (ConstructionPeriod.BEFORE_1948, ConstructionPeriod.Y1948_1974)
+            return not (quality == "insuffisante" and early)
+
+        thermal_bridges = ThermalBridgeInputs(
+            exposed_perimeter_m=perimeter,
+            levels=levels,
+            window_area_m2=window_area,
+            wall_insulation=default_insulation_layout(
+                "wall", _insulated(str(row.get("qualite_isolation_murs") or "") or None), period
+            ),
+            floor_insulation=default_insulation_layout(
+                "floor",
+                _insulated(str(row.get("qualite_isolation_plancher_bas") or "") or None),
+                period,
+            ),
+            roof_insulation=default_insulation_layout(
+                "roof", _insulated(_roof_quality(row)), period
+            ),
+            heavy_walls=inertia_label != "Légère",
+            heavy_floor=inertia_label != "Légère",
+            heavy_ceiling=inertia_label == "Très lourde",
+        )
 
     building = Building(
         living_area_m2=sh,
+        thermal_bridge_inputs=thermal_bridges,
         construction_period=period,
         climate_zone=zone,
         altitude_class=altitude,
@@ -518,6 +650,7 @@ def map_row(row: dict[str, object]) -> MappingResult:
             ),
         ),
         heating_system=heating,
+        heating_backup=_heating_backup(row),
         dhw_system=_dhw_system(row, heating),
         ventilation_system=_ventilation(row),
         inertia=inertia,

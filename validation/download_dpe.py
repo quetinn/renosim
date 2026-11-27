@@ -34,6 +34,7 @@ API_BASE = "https://data.ademe.fr/data-fair/api/v1/datasets/dpe03existant/lines"
 
 SELECT_COLUMNS = [
     "numero_dpe",
+    "version_dpe",
     "date_etablissement_dpe",
     "methode_application_dpe",
     "etiquette_dpe",
@@ -123,13 +124,21 @@ def fetch_stratum(
     size: int,
     building_type: str = "maison",
     sort: str | None = None,
+    method_version: str | None = None,
 ) -> list[dict[str, object]]:
-    """Fetch up to ``size`` rows of one building type for one stratum."""
+    """Fetch up to ``size`` rows of one building type for one stratum.
+
+    ``method_version`` restricts the rows to one DPE method version
+    (``version_dpe``, e.g. "2.6"), as required by the validation protocol
+    announced in the note (§7).
+    """
     qs = (
         f'type_batiment:{building_type} AND periode_construction:"{period}" '
         f'AND zone_climatique:"{zone}" '
         f'AND type_energie_principale_chauffage:"{energy}"'
     )
+    if method_version is not None:
+        qs += f' AND version_dpe:"{method_version}"'
     query = {"size": str(size), "qs": qs, "select": ",".join(SELECT_COLUMNS)}
     if sort is not None:
         query["sort"] = sort
@@ -153,6 +162,11 @@ def main() -> None:
     parser.add_argument(
         "--exclude", type=Path, nargs="*", default=[], help="JSONL files whose DPE to skip"
     )
+    parser.add_argument(
+        "--method-version",
+        default=None,
+        help='keep only one DPE method version (field version_dpe, e.g. "2.6")',
+    )
     args = parser.parse_args()
 
     excluded: set[str] = set()
@@ -173,7 +187,13 @@ def main() -> None:
                 for energy in ENERGIES:
                     try:
                         rows = fetch_stratum(
-                            period, zone, energy, fetch_size, args.building_type, sort
+                            period,
+                            zone,
+                            energy,
+                            fetch_size,
+                            args.building_type,
+                            sort,
+                            args.method_version,
                         )
                     except Exception as exc:
                         print(f"WARN {period}/{zone}/{energy}: {exc}")

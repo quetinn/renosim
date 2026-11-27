@@ -655,3 +655,159 @@ anciens et inertie Th-I, ponts thermiques par liaison et ITE/ITI, Ujn, ECS des P
 PAC, geste plancher bas, alertes RT existante ; puis la recalibration unique selon le protocole
 annoncé.
 
+## 2026-11-27 — v1.1, étape 2 : chauffage au bois (poêles et inserts à bûches)
+
+- Branche longue `feat/v1.1-conformity` : les étapes qui modifient les consommations y
+  restent jusqu'à la recalibration unique (le site et la note gardent les chiffres de la v1.0).
+- **Diagnostic sur la calibration** (jamais sur le test) des maisons « bois » par libellé de
+  générateur : poêles/inserts à bûches 429 (consommation/besoin DPE 1,46), chaudières 263,
+  libellé absent 2 087, et **1 121 lignes bois avec une PAC comme générateur principal**
+  (consommation/besoin 0,59-0,70 : PAC + appoint bois, simulées en tout-bois, biais +39 à +49).
+- **Moteur :** générateur `WOOD_LOG_STOVE` (rendements §13.1, tranches d'âge dans
+  `conventions.json`), test calculé à la main (Rg 0,50/0,60/0,70/0,75 ; chaîne 0,532 à 10 ans ;
+  pas d'auxiliaire). **Mapping M-5 révisé** (libellés poêle bûche, insert, foyer fermé,
+  cuisinière). **App :** choix « Poêle ou insert à bûches ».
+- Calibration : biais +11,3 → +12,5, ±1 classe 90,3 % inchangé ; le rendement corrigé dévoile
+  un besoin surestimé de 14 % sur les maisons anciennes au bois. D-22 partiellement levé.
+- Lecture du §13.2 (chaudières bois) reportée : le lecteur PDF ne s'affiche pas quand le volet
+  navigateur est masqué.
+
+**Prochaines étapes :** installations PAC + appoint bois (deux générateurs, §9 de l'annexe) ;
+rendements des chaudières bois (§13.2) ; murs anciens et inertie ; ponts thermiques.
+
+## 2026-11-27 (suite) — v1.1, étape 3 : appoint bois et chaudières bois
+
+- Lecture dans le navigateur de l'annexe 1 : §9.3 (appoint bois, p.62 : 75 % / 25 % du besoin)
+  et §13.2.2.3 (chaudières bois, p.89-90 : Rpn/Rpint par combustible et année).
+- **Appoint bois** (`Building.heating_backup`, D-24) : test calculé à la main (joule + poêle
+  bûches, Bch 1 000 kWh : 509,95 kWh élec + 300,51 kWh bois), test de bout en bout, bridge
+  (`heating_backup`) et app (question « Poêle ou insert en appoint ? », masquée si le chauffage
+  principal est déjà au bois ; ligne dans le récapitulatif imprimable). Vérifié dans l'aperçu :
+  PAC seule 198 kWhep/m², avec poêle à bûches 244.
+- **Mapping M-12** : « énergie bois + générateur PAC » → PAC + appoint bois. Calibration : biais
+  du groupe +39/+49 → +2/+7. Les libellés « radiateur/convecteur » sont exclus (cas salle de
+  bains §9.4-9.5, résultats mitigés).
+- **Chaudières bois** officielles (D-22 levé) : test à la main (bûches > 2019 : Rg 0,89260 ;
+  2004-2012 : 0,65981 ; avant 2004 : 0,55981 ; granulés 2013-2019 : 0,81627 ; chaîne 0,73307).
+  Mapping : libellés « Chaudière bois » → WOOD_BOILER ; libellés absents → approximation
+  explicite « poêle à granulés ». App : « Chaudière à granulés ».
+- **Calibration cumulée de la branche** (jamais le test) : ±1 classe 90,3 → 91,2 %, exact
+  50,0 → 51,6 %, biais +11,3 → +8,8 ; bois bûches ±1 87,9 → 90,5 %.
+
+**État :** 217 tests, ruff/format/mypy OK, `npm run build` OK.
+
+**Prochaines étapes :** murs anciens (table Umur0 §3.2.1) et inertie (§7, p.53) ; ponts
+thermiques par liaison (§3.4) ; Ujn (§3.3.3).
+
+## 2026-11-27 (suite 2) — v1.1, étape 4 : inertie déterminée par la méthode (§7)
+
+- Lecture du §7 de l'annexe 1 (p.53-54) : définitions des parois lourdes et tableau §7.4.
+- Moteur : `inertia_class_from_heavy_elements` (règle et défauts dans
+  `occupancy_conventional.json`), test des 8 combinaisons et des défauts ; bridge :
+  `inertia_elements` prioritaire sur `inertia`.
+- App : la question « type de construction » est remplacée par trois questions Oui/Non/Je ne
+  sais pas avec les définitions officielles en aide ; récapitulatif imprimable à jour ; les
+  sessions enregistrées gardent leur ancienne réponse tant que les trois questions sont à « Je
+  ne sais pas ». Vérifié dans l'aperçu : maison de 1970, trois parois lourdes 435 kWhep/m²
+  contre 427 sans réponse (effets opposés de l'exposant et de l'intermittence, D-14).
+- Validation : non concernée (classe ADEME lue directement, M-8).
+- Incident d'aperçu : un rechargement à chaud a réinitialisé la session locale de l'app ; elle a
+  été restaurée depuis la copie faite au début des vérifications.
+
+**Prochaines étapes :** murs anciens (table Umur0 §3.2.1, matériau et épaisseur) ; ponts
+thermiques par liaison (§3.4) ; Ujn (§3.3.3).
+
+## 2026-11-27 (suite 3) — v1.1, étape 5 : matériau des murs anciens (Umur0)
+
+- Lecture du §3.2.1.2 de l'annexe 1 (p.14-15) : Umur0 par matériau et épaisseur.
+- Moteur : `uninsulated_wall_u` (dix matériaux, plafond 2,5), tests calculés à la main (pierre
+  50 cm 2,05 ; 15 cm 3,2 → 2,5 ; brique creuse 30 cm → 1,68 ; pisé 60 cm 1,35…). Bridge :
+  `wall_material`, appliqué au mur non isolé, à la composition avec un isolant connu
+  (1/(1/2,05 + 2,5) = 0,33469) et au min(Umur_nu ; Umur_tab) quand l'isolation est d'origine.
+- App : « Matériau des murs » et « Épaisseur du mur » à l'étape Enveloppe (masqués si les murs
+  ont été rénovés), épaisseur proposée selon le matériau, ligne dans le récapitulatif.
+  Vérifié dans l'aperçu : maison de 1970, pierre 60 cm 430 kWhep/m² contre 440 sans réponse.
+- Écart D-25 ; validation non concernée (pas de matériau dans la base ADEME).
+
+**Prochaines étapes :** ponts thermiques par liaison (§3.4) et ITE/ITI ; Ujn (§3.3.3) ; puis la
+recalibration unique.
+
+## 2026-11-27 (suite 4) — v1.1, étape 6 : ponts thermiques linéaires (§3.4)
+
+- Lecture du §3.4 de l'annexe 1 (p.32-37) : formules, règles d'isolation inconnue, k plancher
+  bas/mur, plancher intermédiaire/mur, plancher haut/mur, refend/mur, menuiserie/mur.
+- Moteur : `InsulationLayout`, `ThermalBridgeInputs`, `default_insulation_layout`,
+  `linear_thermal_bridges_w_per_k` (table `thermal_bridges.json`) ; tests calculés à la main
+  (30,787 W/K et 81,525 W/K ; murs bois → 0) ; gestes d'isolation qui font basculer les
+  isolations (mur → ITI, combles → ITE) avec invariant « le besoin baisse ».
+- Bridge (maisons) et mapping M-13 construisent les entrées ; appartements inchangés.
+- **Diagnostic sur la calibration** (déperditions moteur / `deperditions_enveloppe`) :
+
+  | Période | forfait | linéaire |
+  |---|---:|---:|
+  | avant 1948 | 1,277 | 1,316 |
+  | 1948-1974 | 1,132 | 1,171 |
+  | 1975-2012 (6 tranches) | 0,875-0,926 | 0,955-1,007 |
+  | 2013-2021 | 0,853 | 0,978 |
+  | après 2021 | 0,901 | 1,059 |
+
+  Le modèle linéaire rend l'enveloppe des maisons d'après 1975 fidèle au DPE ; les consommations
+  se dégradent (calibration ±1 classe 91,2 → 88,5 %, biais +8,8 → +22,8) parce que des
+  paramètres calés en juillet compensaient le déficit. Avant 1975, l'enveloppe est déjà trop
+  déperditive de 13 à 28 % : surfaces et U à revoir (fenêtres à Sh/6, murs à 2,0, planchers).
+  Ces deux constats guident la recalibration unique.
+
+**État :** 231 tests, ruff/format/mypy OK.
+
+**Prochaines étapes :** Ujn (§3.3.3) ; puis préparer la recalibration : reprendre les paramètres
+calés D-16 et la géométrie du bâti ancien sur un nouvel échantillon de calibration limité à la
+version de méthode en vigueur (protocole de la note §7).
+
+## 2026-11-27 (suite 5) — Préparation de la recalibration v1.1
+
+- `download_dpe.py --method-version` (filtre `version_dpe` de l'API, vérifié : 782 740 maisons
+  en 2.6) ; colonne `version_dpe` ajoutée aux extractions.
+- **Échantillon de calibration v3** : 11 192 maisons, aléatoire, 100 % version 2.6, disjoint de
+  tous les échantillons existants ; enrichi des consommations par usage.
+- **Mesure de départ** (branche v1.1, aucun réglage) : ±1 classe 93,2 % [92,7 ; 93,7], exact
+  53,2 %, biais +12,3 ; repondéré 86,1 % / 42,6 % / +39,3
+  (`results_v7_calib_v3_baseline.json`).
+- Nouvel outil `validation/diagnose_components.py` : rapport moteur/DPE à chaque étape
+  (déperditions, besoin chauffage, besoin ECS, conso chauffage, biais Cep) par époque et énergie
+  (`diagnosis_calib_v3_baseline.json`). Avant 1975 : l'enveloppe dérive (+12 à +17 %) ; après
+  2013 : le besoin dérive plus que l'enveloppe (apports sous-estimés) ; ECS exacte partout.
+- Surface de baies reconstituée (Sh/6) déplacée dans `conventions.json` (règle 3), résultat
+  identique vérifié sur v3.
+- **Plan de recalibration** écrit avant de régler : `docs/recalibration_v1.1.md` (échantillons,
+  mesure de départ, 5 paramètres autorisés avec leurs plages, méthode, mesure finale unique).
+
+**Prochaine étape :** sensibilités une à une de P1 à P5 sur la calibration v3, puis réglage
+conjoint, puis mesure finale unique sur le test.
+
+## 2026-11-27 (suite 6) — Recalibration v1.1 et mesure finale
+
+- **Plages sourcées** (plan révisé et commité avant tout réglage) : surface de baies implicite des
+  DPE (médiane 0,133, p10 0,084, p90 0,211) et RE2020 art. 23-II (≥ 1/6, lu sur Légifrance) ;
+  Umur0 ; C1 §18.5 (coefficient solaire 0,45-0,62) ; profil de charge §13.2.1.1 (poids pleine
+  charge ≈ 0,13). Seuils de l'annexe 8.2 de l'arrêté DPE non relus (volet trop petit ; extraction
+  par script refusée par le classificateur, non contournée).
+- **Données par poste** : l'ADEME publie déperditions par paroi et apports ; `enrich_sample.py`
+  les récupère, `diagnose_envelope.py` compare poste par poste. Coupable avant 1975 : traduction
+  des étiquettes de qualité en U (toiture « insuffisante » 165 W/K contre 78 publiés).
+- **Étape A (M-14)** : facteurs de U par paroi/étiquette/époque calés sur les déperditions par
+  poste de la calibration v3 (`fit_quality_labels.py`). ±1 classe repondéré 86,1 → 89,9 %.
+- **Étape B** : grille de 100 essais (`recalibrate_grid.py`) ; seule le coefficient solaire agit ;
+  aucun essai ne tient le biais ±5 ; **écart décidé par l'auteur** : solaire 0,62, consigné avant
+  la mesure finale. P2 (U mur ancien non isolé de l'app) 2,0 → 1,7.
+- **Mesure finale unique** : test v2 (8 046 maisons v2.6, tiré après la calibration) : ±1 classe
+  95,0 % brut, 89,4 % repondéré, exact 54,7 %, biais +7,4 ; v1.0 sur les mêmes DPE : 93,2 %,
+  86,4 %, 55,5 %, +3,2. Avant 1948 76,2 → 83,5 %, 1948-1974 86,1 → 92,9 %. Test v1 (v2.6, 1 885) :
+  94,4 % / 85,8 %.
+- Note de validation v4, D-06, README, landing et panneau méthode à jour ; moteur 0.8.0.
+
+**État :** 231 tests, ruff/format/mypy OK, `npm run build` OK.
+
+**Prochaines étapes :** fusion de la branche v1.1 (sur accord) ; électricité (ECS ×1,10,
+auxiliaires) ; relire l'annexe 8.2 pour confronter M-14 ; rejouer les campagnes confort d'été et
+refroidissement (coefficient solaire modifié) ; figures de la note à régénérer pour la v4.
+

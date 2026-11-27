@@ -5,10 +5,10 @@ Hand-computed reference (June, H1a, 100 m2 uninsulated house below):
 - Nadeq: Shmoy = 100 -> Nmax = 0.025*100 = 2.5 -> Nadeq = 1.75 + 0.3*0.75 = 1.975
 - Internal gains: (3.52*100 + 90*(132/168)*1.975) * Nref28(19 h) = 9341.6 Wh
 - Solar aperture: 16.67 m2 * Sw 0.78 = 13.0026 m2; summer coefficient =
-  0.5 * mean(C1_summer H1a = (1.0+1.0+0.598+0.955)/4 = 0.88825) / 0.6 (winter
-  vertical mean) = 0.74021 -> Sse_fr = 9.6246 m2
-- Solar gains: 1000 * 9.6246 * E_fr28(5.98) = 57 555.3 Wh -> gains = 66 896.9 Wh
-- DH28 June H1a = 22.5 degC.h; Rbth = 66896.9 / (GV * 22.5)
+  0.62 * mean(C1_summer H1a = (1.0+1.0+0.598+0.955)/4 = 0.88825) / 0.6 (winter
+  vertical mean) = 0.917858 -> Sse_fr = 11.9346 m2 (solar coefficient 0.62, v1.1)
+- Solar gains: 1000 * 11.9346 * E_fr28(5.98) = 71 368.9 Wh -> gains = 80 710.5 Wh
+- DH28 June H1a = 22.5 degC.h; Rbth = 80710.5 / (GV * 22.5)
 - Medium inertia: Cin = 165000*100 J/K, t = Cin/(3600*GV) h, a = 1 + t/15
 - fut = (1 - Rbth^-a) / (1 - Rbth^-(a+1))
 - Bfr_June = gains/1000 + fut * GV * 22.5 / 1000    [(Tint-Text)*Nref = -DH28]
@@ -72,15 +72,15 @@ class TestCoolingNeeds:
     def test_hand_computed_june_need(self) -> None:
         building = make_house()
         gv = envelope_heat_loss(building).gv_w_per_k
-        gains_wh = 9341.6 + 57555.3  # internal + solar, see module docstring
+        gains_wh = 9341.6 + 71368.9  # internal + solar, see module docstring
         rbth = gains_wh / (gv * 22.5)
         a = 1.0 + 165000.0 * 100.0 / (3600.0 * gv) / 15.0
         fut = (1.0 - rbth**-a) / (1.0 - rbth ** -(a + 1.0))
         expected = gains_wh / 1000.0 + fut * gv * 22.5 / 1000.0
         needs = monthly_cooling_needs(building, CONVENTIONAL)
         assert needs[6] == pytest.approx(expected, rel=1e-3)
-        # order of magnitude sanity: an uninsulated H1a house needs ~80 kWh in June
-        assert 60.0 < needs[6] < 100.0
+        # order of magnitude sanity: an uninsulated H1a house needs ~95 kWh in June
+        assert 70.0 < needs[6] < 115.0
 
     def test_south_of_france_needs_much_more_cooling(self) -> None:
         north = annual_needs(make_house(), CONVENTIONAL).cooling_kwh

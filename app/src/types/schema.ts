@@ -39,6 +39,7 @@ export type HeatingGeneratorType =
   | "heat_pump_air_water"
   | "heat_pump_air_air"
   | "wood_pellet_stove"
+  | "wood_log_stove"
   | "wood_boiler"
   | "district_heating_substation";
 
@@ -131,6 +132,19 @@ export interface InsulationSpec {
   thickness_cm?: number;
 }
 
+/** Wall materials with an official Umur0 row (engine envelope.WALL_MATERIALS). */
+export type WallMaterial =
+  | "stone"
+  | "solid_brick"
+  | "solid_brick_double_air_gap"
+  | "hollow_brick"
+  | "hollow_concrete_block"
+  | "solid_concrete_block"
+  | "poured_concrete"
+  | "rammed_earth"
+  | "timber_frame"
+  | "log_wall";
+
 export interface BuildingInput {
   living_area_m2: number;
   levels: number;
@@ -150,6 +164,16 @@ export interface BuildingInput {
   inertia?: InertiaClass;
   geometry?: GeometryOverrides;
   heating: { generator: HeatingGeneratorType; carrier: EnergyCarrier; age_years: number | null };
+  /** Uninsulated wall material and thickness (official Umur0, 3CL §3.2.1). */
+  wall_material?: { material: WallMaterial; thickness_cm: number } | null;
+  /** Heavy floor / ceiling / walls (3CL §7.4); overrides `inertia` when present. */
+  inertia_elements?: {
+    heavy_floor: boolean | null;
+    heavy_ceiling: boolean | null;
+    heavy_walls: boolean | null;
+  };
+  /** Wood stove/insert used as back-up: 25 % of the heating need (3CL §9.3). */
+  heating_backup?: { generator: "wood_log_stove" | "wood_pellet_stove"; age_years?: number | null } | null;
   dhw: { generator: DHWGeneratorType; carrier?: EnergyCarrier | null };
   ventilation: { type: VentilationType; installed_after_2012?: boolean };
   /** Summer-comfort inputs (#16 brique 1); the roof criterion reuses roof_insulation. */

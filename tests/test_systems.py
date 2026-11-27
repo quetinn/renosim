@@ -295,3 +295,112 @@ def test_design_heat_load_hand_computed() -> None:
     assert design_heat_load_kw(house) == pytest.approx(29.348, abs=0.001)
     h3_high = replace(house, climate_zone=ClimateZone.H3, altitude_class=AltitudeClass.HIGH)
     assert design_heat_load_kw(h3_high) == pytest.approx(27.358, abs=0.001)
+
+
+def test_wood_log_stove_efficiency_hand_computed() -> None:
+    """Wood-log stove / insert (3CL §13.1, p.78): Rg by installation period.
+
+    Age -> period with reference year 2026 (tables/conventions.json):
+      40 y (installed ~1986) -> before 1990          Rg 0.50
+      25 y (~2001)           -> 1990-2004            Rg 0.60
+      10 y (~2016)           -> 2005-2017, label     Rg 0.70
+       3 y (~2023)           -> from 2018, label     Rg 0.75
+      unknown                -> 2005-2017, label     Rg 0.70
+    Re 0.95 (other equipment), Rd 1 (no network), Rr 0.80 (stove or insert):
+      overall(10 y) = 0.70 * 0.95 * 1 * 0.80 = 0.532
+    """
+
+    def stove(age: float | None) -> Building:
+        return _house(
+            heating_system=HeatingSystem(
+                HeatingGeneratorType.WOOD_LOG_STOVE, EnergyCarrier.WOOD_LOGS, age
+            )
+        )
+
+    for age, rg in ((40.0, 0.50), (25.0, 0.60), (10.0, 0.70), (3.0, 0.75), (None, 0.70)):
+        assert heating_system_efficiency(stove(age)).generation == pytest.approx(rg)
+    eff = heating_system_efficiency(stove(10.0))
+    assert (eff.emission, eff.distribution, eff.regulation) == pytest.approx((0.95, 1.0, 0.80))
+    assert eff.overall == pytest.approx(0.532)
+    # No hydraulic network: no circulator, no generation auxiliaries.
+    assert heating_auxiliary_kwh(stove(10.0), 10_000.0, 5_000.0) == 0.0
+
+
+def test_wood_backup_splits_heating_75_25_hand_computed() -> None:
+    """Insert or wood stove used as back-up (3CL §9.3, p.62).
+
+    Cch1 = 0.75 * Bch * INT1 * Ich1 (main system), Cch2 = 0.25 * Bch * INT2 * Ich2.
+    Reference house (GV 994.83 W/K, G = 3.9793), Bch = 1000 kWh:
+      main = electric joule: INT1 = 0.83/1.29793 = 0.63948, Ich1 = 1/0.9405
+        Cch1 = 750 * 0.63948 / 0.9405 = 509.95 kWh electricity
+      back-up = wood-log stove, 10 y: I0 0.83 (divided) -> INT2 = 0.63948,
+        Ich2 = 1/0.532 -> Cch2 = 250 * 0.63948 / 0.532 = 300.51 kWh wood logs
+    """
+    from renosim.systems import heating_backup_consumption
+
+    house = _house(
+        heating_system=HeatingSystem(
+            HeatingGeneratorType.ELECTRIC_JOULE, EnergyCarrier.ELECTRICITY, 10.0
+        ),
+        heating_backup=HeatingSystem(
+            HeatingGeneratorType.WOOD_LOG_STOVE, EnergyCarrier.WOOD_LOGS, 10.0
+        ),
+    )
+    main = heating_consumption(house, 1000.0)
+    backup = heating_backup_consumption(house, 1000.0)
+    assert main.energy_carrier is EnergyCarrier.ELECTRICITY
+    assert main.final_energy_kwh == pytest.approx(509.95, abs=0.01)
+    assert backup is not None
+    assert backup.energy_carrier is EnergyCarrier.WOOD_LOGS
+    assert backup.final_energy_kwh == pytest.approx(300.51, abs=0.01)
+    # Without a back-up the main system covers everything and there is no back-up line.
+    alone = _house(
+        heating_system=HeatingSystem(
+            HeatingGeneratorType.ELECTRIC_JOULE, EnergyCarrier.ELECTRICITY, 10.0
+        )
+    )
+    assert heating_backup_consumption(alone, 1000.0) is None
+    assert heating_consumption(alone, 1000.0).final_energy_kwh == pytest.approx(679.94, abs=0.01)
+
+
+def test_wood_backup_must_be_a_stove() -> None:
+    with pytest.raises(ValueError, match="heating_backup"):
+        _house(
+            heating_backup=HeatingSystem(
+                HeatingGeneratorType.CONDENSING_BOILER, EnergyCarrier.NATURAL_GAS, 5.0
+            )
+        )
+
+
+def test_wood_boiler_efficiency_hand_computed() -> None:
+    """Wood boilers, 3CL §13.2.2.3 (p.89-90), Pn = 24 kW (log10 Pn = 1.38021),
+    seasonal Rg = 0.3*Rpn + 0.7*Rpint (same approximation as gas/oil, D-08).
+
+    Logs, installed after 2019 (3 y; 20 < Pn <= 70 row):
+      Rpn = 90 + 2*1.38021 = 92.760 ; Rpint = 85 + 2.760 = 87.760
+      Rg = (0.3*92.760 + 0.7*87.760)/100 = 0.89260
+    Logs, 2004-2012 (18 y): Rpn 57 + 6 log = 65.281 ; Rpint 66.281 -> Rg 0.65981
+    Logs, before 2004 (40 y): Rpn 47 + 6 log = 55.281 ; Rpint 56.281 -> Rg 0.55981
+    Pellets, 2013-2019 (10 y): Rpn 80 + 2.760 = 82.760 ; Rpint 77 + 3*1.38021 = 81.141
+      -> Rg 0.81627
+    Hydraulic chain like a boiler: Re 0.95, Rd 0.91, Rr 0.95 (recent):
+      overall(logs, 3 y) = 0.89260*0.95*0.91*0.95 = 0.73307
+    """
+
+    def boiler(carrier: EnergyCarrier, age: float | None) -> Building:
+        return _house(heating_system=HeatingSystem(HeatingGeneratorType.WOOD_BOILER, carrier, age))
+
+    logs, pellets = EnergyCarrier.WOOD_LOGS, EnergyCarrier.WOOD_PELLETS
+    for carrier, age, rg in (
+        (logs, 3.0, 0.89260),
+        (logs, 18.0, 0.65981),
+        (logs, 40.0, 0.55981),
+        (pellets, 10.0, 0.81627),
+    ):
+        assert heating_system_efficiency(boiler(carrier, age)).generation == pytest.approx(
+            rg, abs=1e-5
+        )
+    eff = heating_system_efficiency(boiler(logs, 3.0))
+    assert eff.overall == pytest.approx(0.73307, abs=1e-5)
+    # A wood boiler has a hydraulic network: circulator auxiliaries are counted.
+    assert heating_auxiliary_kwh(boiler(logs, 3.0), 10_000.0, 5_000.0) > 0.0

@@ -20,7 +20,13 @@ import type {
   SummerComfortLevel,
   VentilationType,
 } from "../types/schema";
-import type { HeatingAgeChoice, HeatingChoice } from "../state/model";
+import type {
+  HeatingAgeChoice,
+  HeatingBackupChoice,
+  HeatingChoice,
+  TriState,
+  WallMaterialChoice,
+} from "../state/model";
 
 export const PERIOD_LABELS: Record<ConstructionPeriod, string> = {
   before_1948: "Avant 1948",
@@ -117,6 +123,26 @@ export const COOLING_PERIOD_LABELS: Record<Exclude<CoolingPeriod, "unknown">, st
   before_2008: "Avant 2008",
 };
 
+export const WALL_MATERIAL_LABELS: Record<WallMaterialChoice, string> = {
+  unknown: "Je ne sais pas",
+  stone: "Pierre",
+  solid_brick: "Brique pleine",
+  solid_brick_double_air_gap: "Brique pleine double, avec lame d'air",
+  hollow_brick: "Brique creuse",
+  hollow_concrete_block: "Parpaing (bloc béton creux)",
+  solid_concrete_block: "Bloc béton plein",
+  poured_concrete: "Béton banché",
+  rammed_earth: "Pisé, terre",
+  timber_frame: "Pans de bois",
+  log_wall: "Rondins de bois",
+};
+
+export const TRI_STATE_LABELS: Record<TriState, string> = {
+  yes: "Oui",
+  no: "Non",
+  unknown: "Je ne sais pas",
+};
+
 export const INERTIA_LABELS: Record<InertiaClass, string> = {
   unknown: "Je ne sais pas",
   heavy: "Murs épais en pierre ou béton, sols lourds",
@@ -140,8 +166,16 @@ export const HEATING_LABELS: Record<HeatingChoice, string> = {
   heat_pump_air_water: "Pompe à chaleur air/eau",
   heat_pump_air_air: "Pompe à chaleur air/air",
   wood_pellet_stove: "Poêle à granulés",
+  wood_log_stove: "Poêle ou insert à bûches",
   wood_boiler: "Chaudière bois (bûches)",
+  wood_pellet_boiler: "Chaudière à granulés",
   district_heating: "Réseau de chaleur",
+};
+
+export const HEATING_BACKUP_LABELS: Record<HeatingBackupChoice, string> = {
+  none: "Non",
+  wood_log_stove: "Poêle ou insert à bûches",
+  wood_pellet_stove: "Poêle à granulés",
 };
 
 export const HEATING_AGE_LABELS: Record<HeatingAgeChoice, string> = {
@@ -268,9 +302,19 @@ export const HELP_TEXTS = {
     "Immeubles, collines ou arbres proches réduisent le soleil reçu. « Très masqué » = obstacles hauts qui bouchent l'horizon la majeure partie de la journée.",
   inertia:
     "Des murs et planchers lourds stockent la chaleur et valorisent mieux les apports du soleil : c'est l'inertie thermique. En cas de doute, laissez « Je ne sais pas » : le calcul applique une inertie moyenne.",
+  wallMaterial:
+    "Le matériau et l'épaisseur des murs (hors isolant et enduits intérieurs) fixent leur résistance thermique, comme dans le DPE : 50 cm de pierre isolent environ deux fois mieux que 20 cm de parpaing. En cas de doute, laissez « Je ne sais pas ».",
+  inertiaFloor:
+    "Sol en dalle béton (10 cm ou plus), poutrelles et hourdis béton ou terre cuite, ou matériau lourd ancien (pierre, brique, terre), sans isolant posé dessus. Dans le doute, le DPE le considère lourd.",
+  inertiaCeiling:
+    "Plafond du dernier niveau en béton plein ou en poutrelles et hourdis, sans faux plafond et sans isolation par l'intérieur (combles perdus sur dalle, par exemple). Dans le doute, le DPE le considère léger.",
+  inertiaWalls:
+    "Murs en pierre, brique pleine ou perforée, parpaing ou béton, non isolés ou isolés par l'extérieur. Un doublage intérieur isolant les rend « légers ». Dans le doute, le DPE les considère légers.",
   geometry:
     "Facultatif : si vous connaissez vos surfaces réelles (plans, diagnostic précédent), elles remplacent l'estimation automatique déduite de la surface habitable.",
   heatingAge: "Le rendement d'un générateur se dégrade avec l'âge ; l'année figure souvent sur la plaque de l'appareil.",
+  heatingBackup:
+    "Un poêle ou un insert utilisé en complément du chauffage principal (en mi-saison, le soir…). Comme dans le DPE, on considère qu'il fournit un quart de la chaleur.",
   dhw: "« Produit par le chauffage » : votre chaudière ou votre PAC fait aussi l'eau chaude.",
   ventilation: "Si vous entendez un léger souffle dans les bouches de la salle de bain, vous avez probablement une VMC simple flux.",
   solarProtections:

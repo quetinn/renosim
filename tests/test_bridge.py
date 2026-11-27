@@ -120,7 +120,7 @@ class TestGeometry:
 class TestUResolution:
     def test_uninsulated_wall_uses_traditional_value(self) -> None:
         b = building_from_json(base_building_json())
-        assert b.walls[0].u_value_w_per_m2k == pytest.approx(2.0)  # M-6
+        assert b.walls[0].u_value_w_per_m2k == pytest.approx(1.7)  # P2, recalibration v1.1
         assert b.roof.u_value_w_per_m2k == pytest.approx(2.5)
         assert b.floor.u_value_w_per_m2k == pytest.approx(2.0)
 
@@ -140,14 +140,14 @@ class TestUResolution:
         data = base_building_json()
         data["wall_insulation"] = {"state": "known_r", "r_value_m2k_per_w": 3.7}
         b = building_from_json(data)
-        assert b.walls[0].u_value_w_per_m2k == pytest.approx(1.0 / (1.0 / 2.0 + 3.7))
+        assert b.walls[0].u_value_w_per_m2k == pytest.approx(1.0 / (1.0 / 1.7 + 3.7))
 
     def test_known_insulation_material_and_thickness(self) -> None:
-        # glass wool 20 cm: R = 0.20 / 0.040 = 5.0 -> U = 1/(1/2.0 + 5.0)
+        # glass wool 20 cm: R = 0.20 / 0.040 = 5.0 -> U = 1/(1/1.7 + 5.0)
         data = base_building_json()
         data["wall_insulation"] = {"state": "known_r", "material": "glass_wool", "thickness_cm": 20}
         b = building_from_json(data)
-        assert b.walls[0].u_value_w_per_m2k == pytest.approx(1.0 / (1.0 / 2.0 + 5.0))
+        assert b.walls[0].u_value_w_per_m2k == pytest.approx(1.0 / (1.0 / 1.7 + 5.0))
 
     def test_known_insulation_unlisted_material_rejected(self) -> None:
         data = base_building_json()
@@ -713,3 +713,108 @@ class TestHeatPumpSizing:
         previews = out["measure_previews"]
         assert previews["heating_replacement"]["heat_pump_sizing"]["above_reference"] is True
         assert previews["roof_insulation"]["heat_pump_sizing"] is None
+
+
+class TestHeatingBackup:
+    """Wood stove/insert back-up from the form (3CL §9.3)."""
+
+    def test_backup_parsed_with_its_carrier(self) -> None:
+        data = base_building_json()
+        data["heating_backup"] = {"generator": "wood_log_stove"}
+        building = building_from_json(data)
+        assert building.heating_backup is not None
+        assert building.heating_backup.energy_carrier.value == "wood_logs"
+        assert building.heating_backup.generator_age_years is None
+
+    def test_backup_adds_wood_to_the_carriers(self) -> None:
+        data = base_building_json()
+        data["heating_backup"] = {"generator": "wood_pellet_stove", "age_years": 3}
+        out = run(payload(building=data))
+        carriers = out["baseline"]["conventional"]["final_energy_kwh_by_carrier"]
+        assert carriers["wood_pellets"] > 0
+        assert carriers["fuel_oil"] > 0
+
+    def test_non_stove_backup_rejected(self) -> None:
+        data = base_building_json()
+        data["heating_backup"] = {"generator": "condensing_boiler"}
+        with pytest.raises(ValueError, match="heating_backup"):
+            building_from_json(data)
+
+
+class TestInertiaElements:
+    """Inertia from three yes/no questions (3CL §7.4) instead of a declared class."""
+
+    def test_elements_override_the_declared_class(self) -> None:
+        data = base_building_json()
+        data["inertia"] = "light"
+        data["inertia_elements"] = {
+            "heavy_floor": True,
+            "heavy_ceiling": False,
+            "heavy_walls": True,
+        }
+        assert building_from_json(data).inertia.value == "heavy"
+
+    def test_unknown_elements_give_medium(self) -> None:
+        data = base_building_json()
+        data["inertia_elements"] = {"heavy_floor": None, "heavy_ceiling": None, "heavy_walls": None}
+        assert building_from_json(data).inertia.value == "medium"
+
+
+class TestWallMaterial:
+    """Declared wall material and thickness -> official Umur0 (3CL §3.2.1.2)."""
+
+    def test_uninsulated_stone_wall(self) -> None:
+        data = base_building_json()
+        data["wall_material"] = {"material": "stone", "thickness_cm": 60}
+        building = building_from_json(data)
+        assert building.walls[0].u_value_w_per_m2k == pytest.approx(1.80)
+
+    def test_known_r_composes_with_the_material(self) -> None:
+        # 1 / (1/2.05 + 2.5) = 1 / (0.48780 + 2.5) = 0.33469
+        data = base_building_json()
+        data["wall_material"] = {"material": "stone", "thickness_cm": 50}
+        data["wall_insulation"] = {"state": "known_r", "r_value_m2k_per_w": 2.5}
+        assert building_from_json(data).walls[0].u_value_w_per_m2k == pytest.approx(
+            0.33469, abs=1e-5
+        )
+
+    def test_unknown_insulation_takes_the_minimum(self) -> None:
+        # period_default for 1948-1974 reads Umur_tab 2.5; stone 60 cm gives 1.80.
+        data = base_building_json()
+        data["wall_material"] = {"material": "stone", "thickness_cm": 60}
+        data["wall_insulation"] = {"state": "period_default"}
+        assert building_from_json(data).walls[0].u_value_w_per_m2k <= 1.80 + 1e-9
+
+    def test_without_material_the_default_stays(self) -> None:
+        assert building_from_json(base_building_json()).walls[0].u_value_w_per_m2k == 1.7
+
+
+class TestLinearThermalBridges:
+    """Houses get the linear thermal bridges of 3CL §3.4; apartments keep the surcharge."""
+
+    def test_house_inputs(self) -> None:
+        building = building_from_json(base_building_json())
+        tb = building.thermal_bridge_inputs
+        assert tb is not None
+        # Uninsulated 1970 house: no insulation layout anywhere, heavy floor, light ceiling.
+        assert (tb.wall_insulation.value, tb.floor_insulation.value) == ("none", "none")
+        assert tb.heavy_floor and not tb.heavy_ceiling and tb.heavy_walls
+        assert tb.levels == 1
+
+    def test_timber_walls_and_heavy_ceiling_answers(self) -> None:
+        data = base_building_json()
+        data["wall_material"] = {"material": "timber_frame", "thickness_cm": 13}
+        data["inertia_elements"] = {
+            "heavy_floor": None,
+            "heavy_ceiling": True,
+            "heavy_walls": False,
+        }
+        tb = building_from_json(data).thermal_bridge_inputs
+        assert tb is not None
+        assert not tb.heavy_walls and tb.heavy_ceiling
+
+    def test_apartment_keeps_the_flat_surcharge(self) -> None:
+        data = base_building_json()
+        data["dwelling_type"] = "apartment"
+        data["apartment"] = {"position": "intermediate", "traversant": True}
+        assert building_from_json(data).thermal_bridge_inputs is None

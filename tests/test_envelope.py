@@ -155,3 +155,95 @@ class TestCeilingHeight:
     def test_nonpositive_height_rejected(self) -> None:
         with pytest.raises(ValueError, match="ceiling_height_m"):
             make_reference_building(**_bare_house_kwargs(), ceiling_height_m=0.0)
+
+
+def test_uninsulated_wall_u_from_material_hand_computed() -> None:
+    """Umur0 by material and thickness (3CL §3.2.1.2, p.14-15), Umur_nu = min(Umur0; 2.5).
+
+    The thickness takes the largest tabulated column not above it:
+      stone 50 cm -> 2.05 ; stone 52 cm -> 2.05 ; stone 15 cm -> 3.2 capped at 2.5
+      hollow brick 30 cm -> 28 cm column 1.68 ; hollow concrete block 20 cm -> 2.8 -> 2.5
+      rammed earth 60 cm -> 1.35 ; log wall 30 cm -> 0.8 ; solid brick 34 cm -> 2.0
+    """
+    from renosim.envelope import WALL_MATERIALS, uninsulated_wall_u
+
+    cases = (
+        ("stone", 50.0, 2.05),
+        ("stone", 52.0, 2.05),
+        ("stone", 15.0, 2.5),
+        ("hollow_brick", 30.0, 1.68),
+        ("hollow_concrete_block", 20.0, 2.5),
+        ("rammed_earth", 60.0, 1.35),
+        ("log_wall", 30.0, 0.8),
+        ("solid_brick", 34.0, 2.0),
+    )
+    for material, thickness, expected in cases:
+        assert uninsulated_wall_u(material, thickness) == pytest.approx(expected)
+    assert "stone" in WALL_MATERIALS
+    with pytest.raises(ValueError, match="wall material"):
+        uninsulated_wall_u("cardboard", 20.0)
+
+
+def test_linear_thermal_bridges_hand_computed() -> None:
+    """Linear thermal bridges (3CL §3.4, p.35-37), default joinery: in tunnel,
+    5 cm frame, no insulation return. Window perimeter convention: square
+    1.5 m2 windows -> 4/sqrt(1.5) = 3.26599 m per m2 of window.
+
+    Case 1 — single level, uninsulated walls and floor, light ceiling,
+    perimeter 40 m, windows 15 m2 (perimeter 48.990 m):
+      k_pb(NI, NI) 0.39 * 40 = 15.600 ; no intermediate floor ; light ceiling -> 0
+      k_men(NI, tunnel, Lp 5) 0.31 * 48.990 = 15.187  ->  PT = 30.787 W/K
+    Case 2 — two levels, ITI walls, ITE floor, heavy ITE ceiling, perimeter 30 m,
+    windows 10 m2 (32.660 m):
+      k_pb(ITI, ITE) 0.71 * 30 = 21.300 ; k_pi(ITI) 0.92 * 30 = 27.600
+      k_ph(ITI, ITE) 0.75 * 30 = 22.500 ; k_men(ITI w/o return) 0.31 * 32.660 = 10.125
+      -> PT = 81.525 W/K
+    Case 3 — timber-frame walls: no wall junction counts (§3.4.1-3.4.5) -> 0.
+    """
+    from renosim.envelope import linear_thermal_bridges_w_per_k
+    from renosim.models import InsulationLayout, ThermalBridgeInputs
+
+    case1 = ThermalBridgeInputs(
+        exposed_perimeter_m=40.0,
+        levels=1,
+        window_area_m2=15.0,
+        wall_insulation=InsulationLayout.NONE,
+        floor_insulation=InsulationLayout.NONE,
+        roof_insulation=InsulationLayout.ITE,
+    )
+    assert linear_thermal_bridges_w_per_k(case1) == pytest.approx(30.787, abs=0.001)
+    case2 = ThermalBridgeInputs(
+        exposed_perimeter_m=30.0,
+        levels=2,
+        window_area_m2=10.0,
+        wall_insulation=InsulationLayout.ITI,
+        floor_insulation=InsulationLayout.ITE,
+        roof_insulation=InsulationLayout.ITE,
+        heavy_ceiling=True,
+    )
+    assert linear_thermal_bridges_w_per_k(case2) == pytest.approx(81.525, abs=0.001)
+    case3 = ThermalBridgeInputs(
+        exposed_perimeter_m=40.0,
+        levels=2,
+        window_area_m2=15.0,
+        wall_insulation=InsulationLayout.ITR,
+        floor_insulation=InsulationLayout.NONE,
+        roof_insulation=InsulationLayout.NONE,
+        heavy_walls=False,
+    )
+    assert linear_thermal_bridges_w_per_k(case3) == 0.0
+
+
+def test_default_insulation_layout_3cl_3_4() -> None:
+    """Unknown insulation (§3.4): before 1975 uninsulated; from 1975 walls ITI,
+    ceilings ITE, floors ITE. Declared states win."""
+    from renosim.envelope import default_insulation_layout
+    from renosim.models import InsulationLayout
+
+    old, recent = ConstructionPeriod.Y1948_1974, ConstructionPeriod.Y1989_2000
+    assert default_insulation_layout("wall", None, old) is InsulationLayout.NONE
+    assert default_insulation_layout("wall", None, recent) is InsulationLayout.ITI
+    assert default_insulation_layout("roof", None, recent) is InsulationLayout.ITE
+    assert default_insulation_layout("floor", None, recent) is InsulationLayout.ITE
+    assert default_insulation_layout("wall", True, old) is InsulationLayout.ITI
+    assert default_insulation_layout("roof", False, recent) is InsulationLayout.NONE

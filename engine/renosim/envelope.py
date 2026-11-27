@@ -10,13 +10,15 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
-from typing import cast
+from typing import Any, cast
 
 from renosim.models import (
     Building,
     ClimateZone,
     ConstructionPeriod,
     DwellingType,
+    InsulationLayout,
+    ThermalBridgeInputs,
     VentilationType,
 )
 from renosim.tables_io import load_table
@@ -31,6 +33,79 @@ THERMAL_BRIDGE_SURCHARGE = float(
 DEFAULT_CEILING_HEIGHT_M = float(
     load_table("conventions")["geometry"]["default_ceiling_height_m"]["value"]
 )
+
+
+def _umur0_table() -> dict[str, Any]:
+    table: dict[str, Any] = load_table("u_values_default")["umur0_by_material"]
+    return table
+
+
+#: Wall materials with an official Umur0 row (3CL §3.2.1.2).
+WALL_MATERIALS: tuple[str, ...] = tuple(_umur0_table()["materials"])
+
+
+def uninsulated_wall_u(material: str, thickness_cm: float) -> float:
+    """Uninsulated wall U, Umur_nu = min(Umur0; 2.5) (3CL §3.2.1, W/(m2.K)).
+
+    Parameters
+    ----------
+    material
+        One of :data:`WALL_MATERIALS`.
+    thickness_cm
+        Wall thickness (cm); it takes the largest tabulated column not above
+        it, the first column standing for "less than or equal".
+    """
+    table = _umur0_table()
+    columns = table["materials"].get(material)
+    if columns is None:
+        raise ValueError(f"unknown wall material {material!r}")
+    if thickness_cm <= 0:
+        raise ValueError(f"thickness_cm must be positive, got {thickness_cm}")
+    u0 = float(columns[0][1])
+    for column_cm, u in columns:
+        if thickness_cm >= float(column_cm):
+            u0 = float(u)
+    return min(u0, float(table["max_u_nu"]))
+
+
+_EARLY_PERIODS = (ConstructionPeriod.BEFORE_1948, ConstructionPeriod.Y1948_1974)
+
+
+def default_insulation_layout(
+    element: str, insulated: bool | None, period: ConstructionPeriod
+) -> InsulationLayout:
+    """Insulation layout of a wall/roof/floor for the thermal bridges (3CL §3.4).
+
+    ``insulated`` False -> none; None (unknown) -> none before 1975, insulated
+    from 1975; insulated with an unknown layout -> walls ITI, roof and floor
+    ITE (official defaults, p.33-36).
+    """
+    if insulated is False or (insulated is None and period in _EARLY_PERIODS):
+        return InsulationLayout.NONE
+    return InsulationLayout.ITI if element == "wall" else InsulationLayout.ITE
+
+
+def linear_thermal_bridges_w_per_k(inputs: ThermalBridgeInputs) -> float:
+    """Linear thermal bridges PT = sum k * l (W/K, 3CL §3.4).
+
+    Ground-floor/wall, intermediate-floor/wall and top-floor/wall junctions
+    along the exposed perimeter, plus the wall/joinery junctions around the
+    windows. Refend/wall junctions are not counted (no partition geometry, D-03).
+    """
+    if not inputs.heavy_walls:
+        return 0.0  # timber walls: every wall junction is neglected (§3.4.1-3.4.5)
+    table = load_table("thermal_bridges")
+    wall = inputs.wall_insulation.value
+    perimeter = inputs.exposed_perimeter_m
+    total = 0.0
+    if inputs.heavy_floor:
+        total += float(table["ground_floor_wall"][wall][inputs.floor_insulation.value]) * perimeter
+    total += float(table["intermediate_floor_wall"][wall]) * perimeter * (inputs.levels - 1)
+    if inputs.heavy_ceiling:
+        total += float(table["top_floor_wall"][wall][inputs.roof_insulation.value]) * perimeter
+    window_perimeter = inputs.window_area_m2 * float(table["window_perimeter_per_m2"]["value"])
+    total += float(table["joinery_wall"][wall]) * window_perimeter
+    return total
 
 
 def ceiling_height_m(building: Building) -> float:
@@ -298,7 +373,11 @@ def envelope_heat_loss(building: Building) -> EnvelopeLosses:
         )
     else:
         surcharge = THERMAL_BRIDGE_SURCHARGE
-    bridges = surcharge * surface
+    if building.thermal_bridge_inputs is not None:
+        # Linear model of the method (§3.4, D-03 lifted for houses described enough).
+        bridges = linear_thermal_bridges_w_per_k(building.thermal_bridge_inputs)
+    else:
+        bridges = surcharge * surface
 
     qvarep, qvasouf, smea = conventional_airflows(building)
     sh = building.living_area_m2

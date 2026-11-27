@@ -28,6 +28,7 @@ import {
   type MeasureType,
   type OccupancyInput,
   type VintageChoice,
+  type WallMaterial,
   type ScenarioInput,
   type SimulationPayload,
   type SolarProtectionLevel,
@@ -45,7 +46,9 @@ export type HeatingChoice =
   | "heat_pump_air_water"
   | "heat_pump_air_air"
   | "wood_pellet_stove"
+  | "wood_log_stove"
   | "wood_boiler"
+  | "wood_pellet_boiler"
   | "district_heating";
 
 export const HEATING_SYSTEMS: Record<
@@ -59,11 +62,56 @@ export const HEATING_SYSTEMS: Record<
   heat_pump_air_water: { generator: "heat_pump_air_water", carrier: "electricity" },
   heat_pump_air_air: { generator: "heat_pump_air_air", carrier: "electricity" },
   wood_pellet_stove: { generator: "wood_pellet_stove", carrier: "wood_pellets" },
+  wood_log_stove: { generator: "wood_log_stove", carrier: "wood_logs" },
   wood_boiler: { generator: "wood_boiler", carrier: "wood_logs" },
+  wood_pellet_boiler: { generator: "wood_boiler", carrier: "wood_pellets" },
   district_heating: { generator: "district_heating_substation", carrier: "district_heating" },
 };
 
 export type HeatingAgeChoice = "recent" | "mid" | "old" | "unknown";
+
+/** Wall material as asked in the form; "unknown" keeps the M-6 default. */
+export type WallMaterialChoice = "unknown" | WallMaterial;
+
+/** Typical thickness proposed when a material is picked (input default, not physics). */
+export const WALL_MATERIAL_DEFAULT_THICKNESS_CM: Record<WallMaterial, number> = {
+  stone: 50,
+  solid_brick: 34,
+  solid_brick_double_air_gap: 30,
+  hollow_brick: 20,
+  hollow_concrete_block: 20,
+  solid_concrete_block: 20,
+  poured_concrete: 20,
+  rammed_earth: 50,
+  timber_frame: 13,
+  log_wall: 20,
+};
+
+/** Answer to one of the three inertia questions (3CL §7.4). */
+export type TriState = "yes" | "no" | "unknown";
+
+export interface InertiaElementsState {
+  floor: TriState;
+  ceiling: TriState;
+  walls: TriState;
+}
+
+export const UNKNOWN_INERTIA_ELEMENTS: InertiaElementsState = {
+  floor: "unknown",
+  ceiling: "unknown",
+  walls: "unknown",
+};
+
+/** Wood stove/insert used alongside the main heating (3CL §9.3). */
+export type HeatingBackupChoice = "none" | "wood_log_stove" | "wood_pellet_stove";
+
+/** Main heating choices that are themselves wood appliances (no wood back-up asked). */
+export const WOOD_MAIN_HEATING: readonly HeatingChoice[] = [
+  "wood_pellet_stove",
+  "wood_log_stove",
+  "wood_boiler",
+  "wood_pellet_boiler",
+];
 
 /** Representative ages (years) for the efficiency-bracket lookup. */
 export const HEATING_AGE_YEARS: Record<HeatingAgeChoice, number | null> = {
@@ -108,15 +156,20 @@ export interface FormState {
   adjacency: Adjacency;
   geometry: GeometryState;
   wallInsulation: InsulationChoice;
+  wallMaterial: WallMaterialChoice;
+  wallStructureThicknessCm: number;
   roofInsulation: InsulationChoice;
   floorInsulation: InsulationChoice;
   floorType: FloorType;
   glazing: Glazing;
   glazingOrientation: GlazingOrientation;
   solarShading: SolarShading;
+  /** Legacy single question, still read from older saved sessions. */
   inertia: InertiaClass;
+  inertiaElements: InertiaElementsState;
   heating: HeatingChoice;
   heatingAge: HeatingAgeChoice;
+  heatingBackup: HeatingBackupChoice;
   dhw: DHWGeneratorType;
   ventilation: VentilationType;
   /** Confort d'été (#16 brique 1) : volets/BSO, brasseurs d'air fixes, clim.
@@ -191,12 +244,16 @@ export const INITIAL_FORM: FormState = {
   glazingOrientation: "unknown",
   solarShading: "clear_or_unknown",
   inertia: "unknown",
+  wallMaterial: "unknown",
+  wallStructureThicknessCm: 50,
+  inertiaElements: UNKNOWN_INERTIA_ELEMENTS,
   // Volets quasi systématiques sur l'habitat français : défaut « oui »,
   // corrigeable en un clic (l'engin traite « unknown » comme « full », D-19).
   solarProtections: "full",
   fixedAirCirculators: false,
   airConditioning: false,
   airConditioningPeriod: "from_2015",
+  heatingBackup: "none",
   ...(defaultsForPeriod("1948_1974") as Pick<
     FormState,
     | "wallInsulation"
@@ -266,6 +323,10 @@ export function buildingInput(form: FormState): BuildingInput {
     adjacency: form.adjacency,
     ...(geometry ? { geometry } : {}),
     wall_insulation: insulationSpec(form.wallInsulation),
+    wall_material:
+      form.wallMaterial !== "unknown"
+        ? { material: form.wallMaterial, thickness_cm: form.wallStructureThicknessCm }
+        : null,
     roof_insulation: insulationSpec(form.roofInsulation),
     floor_insulation: insulationSpec(form.floorInsulation),
     floor_type: form.floorType,
@@ -273,11 +334,24 @@ export function buildingInput(form: FormState): BuildingInput {
     glazing_orientation: form.glazingOrientation,
     solar_shading: form.solarShading,
     inertia: form.inertia,
+    ...(Object.values(form.inertiaElements).some((v) => v !== "unknown")
+      ? {
+          inertia_elements: {
+            heavy_floor: triToBool(form.inertiaElements.floor),
+            heavy_ceiling: triToBool(form.inertiaElements.ceiling),
+            heavy_walls: triToBool(form.inertiaElements.walls),
+          },
+        }
+      : {}),
     heating: {
       generator: heating.generator,
       carrier: heating.carrier,
       age_years: HEATING_AGE_YEARS[form.heatingAge],
     },
+    heating_backup:
+      form.heatingBackup !== "none" && !WOOD_MAIN_HEATING.includes(form.heating)
+        ? { generator: form.heatingBackup }
+        : null,
     dhw: { generator: form.dhw },
     ventilation: { type: form.ventilation },
     summer: {
@@ -287,6 +361,10 @@ export function buildingInput(form: FormState): BuildingInput {
       air_conditioning_period: form.airConditioningPeriod,
     },
   };
+}
+
+function triToBool(value: TriState): boolean | null {
+  return value === "unknown" ? null : value === "yes";
 }
 
 export function occupancyInput(occupancy: OccupancyState, form: FormState): OccupancyInput {

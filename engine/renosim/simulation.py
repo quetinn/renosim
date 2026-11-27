@@ -28,8 +28,10 @@ from renosim.systems import (
     dhw_auxiliary_kwh,
     dhw_consumption,
     heating_auxiliary_kwh,
+    heating_backup_consumption,
     heating_consumption,
     lighting_kwh,
+    main_heating_share,
     ventilation_auxiliary_kwh,
 )
 
@@ -83,6 +85,10 @@ def simulate(
     needs = annual_needs(building, scenario)
 
     heating = heating_consumption(building, needs.heating_kwh)
+    # Wood stove/insert back-up (3CL §9.3): 25 % of the need, own carrier.
+    backup = heating_backup_consumption(building, needs.heating_kwh)
+    backup_kwh = backup.final_energy_kwh if backup is not None else 0.0
+    backup_carrier = backup.energy_carrier if backup is not None else heating.energy_carrier
     dhw = dhw_consumption(building, needs.dhw_kwh)
     cooling = cooling_consumption(building, needs.cooling_kwh)
     # Auxiliaries: ventilation (§5) + heating generation/circulator and
@@ -90,14 +96,16 @@ def simulate(
     aux_kwh = (
         ventilation_auxiliary_kwh(building)
         + heating_auxiliary_kwh(
-            building, needs.heating_kwh, annual_heating_hours(building, scenario)
+            building,
+            needs.heating_kwh * main_heating_share(building),
+            annual_heating_hours(building, scenario),
         )
         + dhw_auxiliary_kwh(building, needs.dhw_kwh)
     )
     light_kwh = lighting_kwh(building)
 
     by_use = {
-        "heating": heating.final_energy_kwh,
+        "heating": heating.final_energy_kwh + backup_kwh,
         "dhw": dhw.final_energy_kwh,
         "cooling": cooling.final_energy_kwh,
         "auxiliaries": aux_kwh,
@@ -106,6 +114,7 @@ def simulate(
     by_carrier: dict[EnergyCarrier, float] = {}
     for carrier, kwh in (
         (heating.energy_carrier, heating.final_energy_kwh),
+        (backup_carrier, backup_kwh),
         (dhw.energy_carrier, dhw.final_energy_kwh),
         (cooling.energy_carrier, cooling.final_energy_kwh),
         (EnergyCarrier.ELECTRICITY, aux_kwh),
@@ -116,6 +125,7 @@ def simulate(
     sh = building.living_area_m2
     ep_total = (
         primary_energy_kwh(heating.final_energy_kwh, heating.energy_carrier, regulation_vintage)
+        + primary_energy_kwh(backup_kwh, backup_carrier, regulation_vintage)
         + primary_energy_kwh(dhw.final_energy_kwh, dhw.energy_carrier, regulation_vintage)
         + primary_energy_kwh(cooling.final_energy_kwh, cooling.energy_carrier, regulation_vintage)
         + primary_energy_kwh(aux_kwh, EnergyCarrier.ELECTRICITY, regulation_vintage)
@@ -123,6 +133,7 @@ def simulate(
     )
     co2_total = (
         co2_emissions_kg(heating.final_energy_kwh, heating.energy_carrier, "heating")
+        + co2_emissions_kg(backup_kwh, backup_carrier, "heating")
         + co2_emissions_kg(dhw.final_energy_kwh, dhw.energy_carrier, "dhw")
         + co2_emissions_kg(cooling.final_energy_kwh, cooling.energy_carrier, "cooling")
         + co2_emissions_kg(aux_kwh, EnergyCarrier.ELECTRICITY, "auxiliaries")

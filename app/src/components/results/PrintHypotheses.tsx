@@ -10,8 +10,11 @@ import {
   GLAZING_LABELS,
   GLAZING_ORIENTATION_LABELS,
   HEATING_AGE_LABELS,
+  HEATING_BACKUP_LABELS,
   HEATING_LABELS,
   INERTIA_LABELS,
+  TRI_STATE_LABELS,
+  WALL_MATERIAL_LABELS,
   INSULATION_MATERIAL_LABELS,
   INSULATION_STATE_LABELS,
   PERIOD_LABELS,
@@ -21,6 +24,7 @@ import {
 } from "../../i18n/fr";
 import type { FormState } from "../../state/model";
 import type { InsulationChoice } from "../../state/model";
+import { WOOD_MAIN_HEATING } from "../../state/model";
 import { formatInt } from "../../utils/format";
 
 function insulationText(choice: InsulationChoice): string {
@@ -56,16 +60,35 @@ export function PrintHypotheses({ form }: { form: FormState }) {
       : ([["Mitoyenneté", ADJACENCY_LABELS[form.adjacency]]] as [string, string][])),
     ["Combles / toiture", insulationText(form.roofInsulation)],
     ["Murs extérieurs", insulationText(form.wallInsulation)],
+    ...(form.wallMaterial !== "unknown" && form.wallInsulation.state !== "renovated"
+      ? ([
+          [
+            "Matériau des murs",
+            `${WALL_MATERIAL_LABELS[form.wallMaterial]}, ${formatInt(form.wallStructureThicknessCm)} cm`,
+          ],
+        ] as [string, string][])
+      : []),
     ["Plancher bas", insulationText(form.floorInsulation)],
     ["Sous le plancher bas", FLOOR_TYPE_LABELS[form.floorType]],
     ["Vitrage", GLAZING_LABELS[form.glazing]],
     ["Orientation des fenêtres", GLAZING_ORIENTATION_LABELS[form.glazingOrientation]],
     ["Masques solaires", SOLAR_SHADING_LABELS[form.solarShading]],
-    ["Inertie", INERTIA_LABELS[form.inertia]],
+    [
+      "Inertie",
+      Object.values(form.inertiaElements).some((v) => v !== "unknown")
+        ? `parois lourdes : plancher bas ${TRI_STATE_LABELS[form.inertiaElements.floor].toLowerCase()}, plafond ${TRI_STATE_LABELS[form.inertiaElements.ceiling].toLowerCase()}, murs ${TRI_STATE_LABELS[form.inertiaElements.walls].toLowerCase()}`
+        : INERTIA_LABELS[form.inertia],
+    ],
     [
       "Chauffage",
       `${HEATING_LABELS[form.heating]} — ${HEATING_AGE_LABELS[form.heatingAge].toLowerCase()}`,
     ],
+    ...(form.heatingBackup !== "none" && !WOOD_MAIN_HEATING.includes(form.heating)
+      ? ([["Appoint (¼ de la chaleur)", HEATING_BACKUP_LABELS[form.heatingBackup]]] as [
+          string,
+          string,
+        ][])
+      : []),
     ["Eau chaude sanitaire", DHW_LABELS[form.dhw]],
     ["Ventilation", VENTILATION_LABELS[form.ventilation]],
     ["Protections solaires extérieures", SOLAR_PROTECTION_LABELS[form.solarProtections]],

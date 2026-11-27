@@ -62,6 +62,10 @@
     },
     "oil_or_lpg_stove": 0.72
   },
+  "wood_backup": {
+    "backup_share": 0.25,
+    "source": "Annexe 1 3CL-DPE 2021 consolidée, §9.3 « Installation de chauffage avec insert ou poêle bois en appoint » (p.62) : Cch1 = 0,75 * Bch * INT1 * Ich1 pour le système principal, Cch2 = 0,25 * Bch * INT2 * Ich2 pour l'insert ou le poêle. Lu le 2026-11-27."
+  },
   "boiler_efficiency_formulas": {
     "note": "Rpn/Rpint in % PCI as a function of log10(Pn[kW]). Seasonal Rg approximated in systems.py as a 0.3/0.7 weighted blend of full-load and intermediate-load efficiency (residential load profile is dominated by part load).",
     "default_nominal_power_kw": 24,
@@ -131,6 +135,114 @@
       "before_1980": 0.93,
       "1981_1990": 0.96,
       "after_1990": 1.0
+    }
+  },
+  "wood_boiler_formulas": {
+    "source": "Annexe 1 3CL-DPE 2021 consolidée, §13.2.2.3 « Chaudières bois », tableau des caractéristiques Rpn, Rpint et Qp0 par année de fabrication (p.89-90), lignes Pn <= 70 kW ; pour les générateurs installés après 2019, ligne 20 < Pn <= 70 kW (cohérente avec la puissance par défaut de 24 kW). Les chaudières à plaquettes suivent les lignes « bûche ou plaquette ». Lu le 2026-11-27.",
+    "note": "R = a + b*log10(Pn[kW]) in % PCI, [a, b]. Seasonal Rg approximated as for gas/oil boilers (0.3*Rpn + 0.7*Rpint at default_nominal_power_kw, D-08); standby losses Qp0 not modelled.",
+    "logs": {
+      "before_2004": {
+        "rpn": [
+          47.0,
+          6.0
+        ],
+        "rpint": [
+          48.0,
+          6.0
+        ]
+      },
+      "2004_2012": {
+        "rpn": [
+          57.0,
+          6.0
+        ],
+        "rpint": [
+          58.0,
+          6.0
+        ]
+      },
+      "2013_2017": {
+        "rpn": [
+          67.0,
+          6.0
+        ],
+        "rpint": [
+          68.0,
+          6.0
+        ]
+      },
+      "2018_2019": {
+        "rpn": [
+          80.0,
+          2.0
+        ],
+        "rpint": [
+          77.0,
+          3.0
+        ]
+      },
+      "after_2019": {
+        "rpn": [
+          90.0,
+          2.0
+        ],
+        "rpint": [
+          85.0,
+          2.0
+        ]
+      }
+    },
+    "pellets": {
+      "before_1995": {
+        "rpn": [
+          47.0,
+          6.0
+        ],
+        "rpint": [
+          48.0,
+          6.0
+        ]
+      },
+      "1995_2003": {
+        "rpn": [
+          57.0,
+          6.0
+        ],
+        "rpint": [
+          58.0,
+          6.0
+        ]
+      },
+      "2004_2012": {
+        "rpn": [
+          67.0,
+          6.0
+        ],
+        "rpint": [
+          68.0,
+          6.0
+        ]
+      },
+      "2013_2019": {
+        "rpn": [
+          80.0,
+          2.0
+        ],
+        "rpint": [
+          77.0,
+          3.0
+        ]
+      },
+      "after_2019": {
+        "rpn": [
+          92.0,
+          2.0
+        ],
+        "rpint": [
+          89.0,
+          2.0
+        ]
+      }
     }
   },
   "heat_pump_scop": {

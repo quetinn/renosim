@@ -9,6 +9,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from enum import StrEnum
 
+from renosim.tables_io import load_table
+
 
 class ClimateZone(StrEnum):
     """DPE climate zone, per the conventional 3CL zoning of metropolitan France."""
@@ -66,6 +68,8 @@ class HeatingGeneratorType(StrEnum):
     HEAT_PUMP_AIR_WATER = "heat_pump_air_water"
     HEAT_PUMP_AIR_AIR = "heat_pump_air_air"
     WOOD_PELLET_STOVE = "wood_pellet_stove"
+    #: Wood-log stove, insert, closed fireplace or cooker (3CL §13.1).
+    WOOD_LOG_STOVE = "wood_log_stove"
     WOOD_BOILER = "wood_boiler"
     DISTRICT_HEATING_SUBSTATION = "district_heating_substation"
 
@@ -171,6 +175,78 @@ class InertiaClass(StrEnum):
     MEDIUM = "medium"
     HEAVY = "heavy"
     UNKNOWN = "unknown"
+
+
+class InsulationLayout(StrEnum):
+    """Insulation layout of a wall or floor for the thermal bridges (3CL §3.4)."""
+
+    NONE = "none"
+    ITI = "iti"  # interior insulation (floor: under the screed; ceiling: under the slab)
+    ITE = "ite"  # exterior insulation (floor: under the slab; ceiling: on top of it)
+    ITR = "itr"  # distributed insulation (timber frame, insulating masonry)
+
+
+@dataclass(frozen=True, slots=True)
+class ThermalBridgeInputs:
+    """Geometry and insulation layouts for the linear thermal bridges (3CL §3.4).
+
+    Parameters
+    ----------
+    exposed_perimeter_m
+        Exposed facade perimeter (m): length of the ground-floor/wall and
+        top-floor/wall junctions; times (levels - 1) for intermediate floors.
+    levels
+        Number of storeys.
+    window_area_m2
+        Total window area (m2), converted to a joinery perimeter with the
+        conventional square-window ratio.
+    wall_insulation, floor_insulation, roof_insulation
+        Layouts of the walls, the ground floor and the top floor.
+    heavy_walls, heavy_floor, heavy_ceiling
+        Heavy (masonry/concrete) elements; junctions with light elements are
+        neglected by the method. Defaults: masonry walls, heavy ground floor
+        (§7.2 default), light top floor (§7.1 default).
+    """
+
+    exposed_perimeter_m: float
+    levels: int
+    window_area_m2: float
+    wall_insulation: InsulationLayout
+    floor_insulation: InsulationLayout
+    roof_insulation: InsulationLayout
+    heavy_walls: bool = True
+    heavy_floor: bool = True
+    heavy_ceiling: bool = False
+
+    def __post_init__(self) -> None:
+        if self.exposed_perimeter_m < 0 or self.window_area_m2 < 0:
+            raise ValueError("thermal bridge lengths and areas must be non-negative")
+        if self.levels < 1:
+            raise ValueError(f"levels must be >= 1, got {self.levels}")
+
+
+def inertia_class_from_heavy_elements(
+    heavy_floor: bool | None, heavy_ceiling: bool | None, heavy_walls: bool | None
+) -> InertiaClass:
+    """Inertia class from the three heavy-element questions (3CL §7.4).
+
+    Each argument says whether the ground floor, the top floor (ceiling) and
+    the vertical walls are "heavy" in the sense of §7.1-7.3; ``None`` applies
+    the official default for an unknown element. The number of heavy elements
+    gives the class (tables/occupancy_conventional.json).
+    """
+
+    rules = load_table("occupancy_conventional")["inertia_from_heavy_elements"]
+    defaults = rules["unknown_defaults"]
+    answers = {
+        "heavy_floor": heavy_floor,
+        "heavy_ceiling": heavy_ceiling,
+        "heavy_walls": heavy_walls,
+    }
+    count = sum(
+        1 for key, value in answers.items() if (bool(defaults[key]) if value is None else value)
+    )
+    return InertiaClass(str(rules["class_by_heavy_count"][str(count)]))
 
 
 @dataclass(frozen=True, slots=True)
@@ -373,6 +449,13 @@ class Building:
         Average ceiling height Hsp in metres, used by the intermittence factor
         (3CL §8, G = GV/(Hsp*Sh)); it cancels out of the §4 infiltration
         formula. ``None`` (default) applies the conventional height.
+    thermal_bridge_inputs
+        Geometry and insulation layouts for the linear thermal bridges (3CL
+        §3.4). ``None`` (default) keeps the flat calibrated surcharge (D-03).
+    heating_backup
+        Wood-log stove, insert or pellet stove used as a back-up of the main
+        heating (3CL §9.3): it covers 25 % of the heating need, the main system
+        75 %. ``None`` (default): the main system covers everything.
     """
 
     living_area_m2: float
@@ -399,6 +482,8 @@ class Building:
     roof_insulated: bool | None = None
     through_dwelling: bool | None = None
     ceiling_height_m: float | None = None
+    heating_backup: HeatingSystem | None = None
+    thermal_bridge_inputs: ThermalBridgeInputs | None = None
 
     def __post_init__(self) -> None:
         if self.living_area_m2 <= 0:
@@ -409,6 +494,14 @@ class Building:
             raise ValueError("a Building must have at least one window element")
         if self.ceiling_height_m is not None and self.ceiling_height_m <= 0:
             raise ValueError(f"ceiling_height_m must be positive, got {self.ceiling_height_m}")
+        if self.heating_backup is not None and self.heating_backup.generator_type not in (
+            HeatingGeneratorType.WOOD_LOG_STOVE,
+            HeatingGeneratorType.WOOD_PELLET_STOVE,
+        ):
+            raise ValueError(
+                "heating_backup must be a wood-log or pellet stove/insert (3CL §9.3), got "
+                f"{self.heating_backup.generator_type.value}"
+            )
         if self.number_of_occupants is not None and self.number_of_occupants <= 0:
             raise ValueError(
                 f"number_of_occupants must be positive, got {self.number_of_occupants}"

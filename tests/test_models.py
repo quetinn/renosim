@@ -111,3 +111,24 @@ def test_building_rejects_non_positive_living_area() -> None:
 def test_building_rejects_non_positive_occupant_count() -> None:
     with pytest.raises(ValueError, match="number_of_occupants"):
         make_reference_building(number_of_occupants=0)
+
+
+def test_inertia_class_from_heavy_elements_3cl_7_4() -> None:
+    """3CL §7.4 (p.54): count of heavy elements among floor, ceiling, wall.
+
+    3 -> very heavy (engine HEAVY), 2 -> heavy, 1 -> medium, 0 -> light.
+    Unknown elements take the §7.1-7.3 defaults: ceiling light, floor heavy,
+    walls light -> all unknown = 1 heavy element = medium (the D-14 default).
+    """
+    from renosim.models import InertiaClass
+    from renosim.models import inertia_class_from_heavy_elements as f
+
+    assert f(True, True, True) is InertiaClass.HEAVY
+    assert f(False, True, True) is InertiaClass.HEAVY
+    assert f(True, False, True) is InertiaClass.HEAVY
+    assert f(False, False, True) is InertiaClass.MEDIUM
+    assert f(False, True, False) is InertiaClass.MEDIUM
+    assert f(False, False, False) is InertiaClass.LIGHT
+    assert f(None, None, None) is InertiaClass.MEDIUM  # floor heavy by default
+    assert f(None, None, True) is InertiaClass.HEAVY
+    assert f(False, None, None) is InertiaClass.LIGHT

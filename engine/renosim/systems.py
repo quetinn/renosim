@@ -10,7 +10,7 @@ emitter assumptions per generator type).
 from __future__ import annotations
 
 import math
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Any
 
 from renosim.envelope import ceiling_height_m, conventional_airflows, envelope_heat_loss
@@ -134,6 +134,25 @@ def _boiler_seasonal_rg(building: Building) -> float:
     return rg
 
 
+def _wood_boiler_seasonal_rg(building: Building) -> float:
+    """Seasonal generation efficiency of wood boilers (3CL §13.2.2.3, D-08 blend).
+
+    Pellet rows for a pellet carrier, log/chip rows otherwise (coal boilers are
+    treated as log boilers by the method).
+    """
+    eff = load_table("system_efficiencies")
+    log_pn = math.log10(float(eff["boiler_efficiency_formulas"]["default_nominal_power_kw"]))
+    pellets = building.heating_system.energy_carrier is EnergyCarrier.WOOD_PELLETS
+    family = "pellets" if pellets else "logs"
+    bracket = str(
+        _bracket_by_age(f"wood_boiler_{family}", building.heating_system.generator_age_years)
+    )
+    coefs = eff["wood_boiler_formulas"][family][bracket]
+    rpn = float(coefs["rpn"][0]) + float(coefs["rpn"][1]) * log_pn
+    rpint = float(coefs["rpint"][0]) + float(coefs["rpint"][1]) * log_pn
+    return (FULL_LOAD_WEIGHT * rpn + (1.0 - FULL_LOAD_WEIGHT) * rpint) / 100.0
+
+
 def heating_system_efficiency(building: Building) -> HeatingEfficiency:
     """Resolve the efficiency chain of the heating installation.
 
@@ -169,12 +188,13 @@ def heating_system_efficiency(building: Building) -> HeatingEfficiency:
             intermittence_i0=_i0(i0_t, "divided_radiator_convector", building),
         )
 
-    if gtype in (
-        HeatingGeneratorType.WOOD_PELLET_STOVE,
-        HeatingGeneratorType.WOOD_BOILER,
-    ):
-        stoves = eff["stoves_rg"]["wood_pellet_stove"]
-        rg = float(stoves[str(_bracket_by_age("pellet_stove_rg", age))])
+    if gtype in (HeatingGeneratorType.WOOD_PELLET_STOVE, HeatingGeneratorType.WOOD_LOG_STOVE):
+        if gtype is HeatingGeneratorType.WOOD_LOG_STOVE:
+            stoves = eff["stoves_rg"]["wood_log_stove"]
+            rg = float(stoves[str(_bracket_by_age("wood_log_stove_rg", age))])
+        else:
+            stoves = eff["stoves_rg"]["wood_pellet_stove"]
+            rg = float(stoves[str(_bracket_by_age("pellet_stove_rg", age))])
         return HeatingEfficiency(
             generation=rg,
             emission=float(re_t["other_equipment"]),
@@ -218,14 +238,18 @@ def heating_system_efficiency(building: Building) -> HeatingEfficiency:
             intermittence_i0=_i0(i0_t, "central_radiator", building),
         )
 
-    # Gas / oil boilers
+    # Gas / oil / wood boilers: same hydraulic chain, own generation efficiency.
     rr = (
         float(rr_t["water_radiator_without_thermostatic_valves"])
         if old_system
         else float(rr_t["water_radiator_with_thermostatic_valves"])
     )
     return HeatingEfficiency(
-        generation=_boiler_seasonal_rg(building),
+        generation=(
+            _wood_boiler_seasonal_rg(building)
+            if gtype is HeatingGeneratorType.WOOD_BOILER
+            else _boiler_seasonal_rg(building)
+        ),
         emission=float(re_t["other_equipment"]),
         distribution=float(rd_t["individual_water_low_temp"]["uninsulated"]),
         regulation=rr,
@@ -240,13 +264,48 @@ def intermittence_factor(building: Building, i0: float) -> float:
     return i0 / (1.0 + 0.1 * (g - 1.0))
 
 
+def main_heating_share(building: Building) -> float:
+    """Share of the heating need covered by the main system (3CL §9.3).
+
+    1 without back-up; 1 - 0.25 with a wood stove or insert used as back-up.
+    """
+    if building.heating_backup is None:
+        return 1.0
+    backup = float(load_table("system_efficiencies")["wood_backup"]["backup_share"])
+    return 1.0 - backup
+
+
 def heating_consumption(building: Building, heating_needs_kwh: float) -> UseConsumption:
-    """Final heating energy: Cch = Bch * INT / (Rg*Re*Rd*Rr)."""
+    """Final heating energy of the main system: Cch1 = share * Bch * INT1 / (Rg*Re*Rd*Rr).
+
+    The share is 1 without back-up, 0.75 with a wood back-up (§9.3).
+    """
     eff = heating_system_efficiency(building)
     intermittence = intermittence_factor(building, eff.intermittence_i0)
-    final = heating_needs_kwh * intermittence / eff.overall
+    final = main_heating_share(building) * heating_needs_kwh * intermittence / eff.overall
     return UseConsumption(
         final_energy_kwh=final, energy_carrier=building.heating_system.energy_carrier
+    )
+
+
+def heating_backup_consumption(
+    building: Building, heating_needs_kwh: float
+) -> UseConsumption | None:
+    """Final energy of the wood back-up: Cch2 = 0.25 * Bch * INT2 * Ich2 (§9.3).
+
+    INT2 and Ich2 are those of the stove or insert itself (its own I0 and
+    efficiency chain). ``None`` when the building has no back-up.
+    """
+    backup = building.heating_backup
+    if backup is None:
+        return None
+    as_main = replace(building, heating_system=backup, heating_backup=None)
+    eff = heating_system_efficiency(as_main)
+    intermittence = intermittence_factor(as_main, eff.intermittence_i0)
+    share = 1.0 - main_heating_share(building)
+    return UseConsumption(
+        final_energy_kwh=share * heating_needs_kwh * intermittence / eff.overall,
+        energy_carrier=backup.energy_carrier,
     )
 
 

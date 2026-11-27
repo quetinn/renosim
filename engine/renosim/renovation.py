@@ -21,8 +21,10 @@ from renosim.models import (
     EnergyCarrier,
     HeatingGeneratorType,
     HeatingSystem,
+    InsulationLayout,
     OpaqueEnvelopeElement,
     SolarProtectionLevel,
+    ThermalBridgeInputs,
     VentilationSystem,
     VentilationType,
     Window,
@@ -98,6 +100,21 @@ def _insulate(element: OpaqueEnvelopeElement, added_r: float) -> OpaqueEnvelopeE
     return replace(element, u_value_w_per_m2k=new_u)
 
 
+def _with_layout(
+    inputs: ThermalBridgeInputs | None,
+    wall: InsulationLayout | None = None,
+    roof: InsulationLayout | None = None,
+) -> ThermalBridgeInputs | None:
+    """Thermal-bridge inputs after an insulation measure: only uninsulated elements change."""
+    if inputs is None:
+        return None
+    if wall is not None and inputs.wall_insulation is InsulationLayout.NONE:
+        inputs = replace(inputs, wall_insulation=wall)
+    if roof is not None and inputs.roof_insulation is InsulationLayout.NONE:
+        inputs = replace(inputs, roof_insulation=roof)
+    return inputs
+
+
 @dataclass(frozen=True, slots=True)
 class WallInsulation:
     """Wall insulation (ITI/ITE undistinguished in V1, deviation D-04).
@@ -114,7 +131,10 @@ class WallInsulation:
 
     def apply(self, building: Building) -> Building:
         walls = tuple(_insulate(w, self.added_r_m2k_per_w) for w in building.walls)
-        return replace(building, walls=walls)
+        # Thermal bridges (3CL §3.4): an uninsulated wall becomes ITI (V1 geste,
+        # the cheaper and more common technique; ITE choice planned, D-04).
+        bridges = _with_layout(building.thermal_bridge_inputs, wall=InsulationLayout.ITI)
+        return replace(building, walls=walls, thermal_bridge_inputs=bridges)
 
 
 @dataclass(frozen=True, slots=True)
@@ -134,10 +154,13 @@ class RoofInsulation:
     def apply(self, building: Building) -> Building:
         # An insulated roof also flips the summer-comfort roof criterion
         # (annexe 9): dual winter/summer effect of the measure (#16).
+        # Attic insulation lies on the top floor: ITE layout for the bridges (§3.4.3).
+        bridges = _with_layout(building.thermal_bridge_inputs, roof=InsulationLayout.ITE)
         return replace(
             building,
             roof=_insulate(building.roof, self.added_r_m2k_per_w),
             roof_insulated=True,
+            thermal_bridge_inputs=bridges,
         )
 
 

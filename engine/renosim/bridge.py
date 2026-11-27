@@ -37,7 +37,10 @@ Input schema (``schema_version`` = :data:`renosim.SCHEMA_VERSION`)::
         "glazing": "single_glazing" | ... | "triple_glazing",
         "glazing_orientation": "unknown" | "south" | "east_west" | "north",  # optional
         "solar_shading": "clear_or_unknown" | "partial" | "heavy",          # optional
+        "wall_material": {"material": "stone" | ..., "thickness_cm": 50},  # optional
         "inertia": "unknown" | "light" | "medium" | "heavy",                # optional
+        "inertia_elements": {"heavy_floor": bool | null, "heavy_ceiling": ...,
+                             "heavy_walls": ...},   # optional, overrides "inertia"
         "geometry": {                                        # optional overrides (M-1)
             "ceiling_height_m": 2.5, "wall_area_m2": 83.0, "window_area_m2": 17.0,
             "roof_area_m2": 100.0, "floor_area_m2": 100.0},
@@ -48,6 +51,7 @@ Input schema (``schema_version`` = :data:`renosim.SCHEMA_VERSION`)::
             "air_conditioning_period": "before_2008" | "2008_2014"
                                        | "from_2015" | "unknown"},
         "heating": {"generator": "...", "carrier": "...", "age_years": 30},
+        "heating_backup": null | {"generator": "wood_log_stove" | "wood_pellet_stove"},
         "dhw": {"generator": "...", "carrier": "..."},       # carrier optional
         "ventilation": {"type": "...", "installed_after_2012": false},
         "occupants": 4                                       # optional
@@ -83,7 +87,12 @@ from renosim.economics import (
     heat_pump_sizing,
     measure_cost_range,
 )
-from renosim.envelope import DEFAULT_CEILING_HEIGHT_M, default_u_values
+from renosim.envelope import (
+    DEFAULT_CEILING_HEIGHT_M,
+    default_insulation_layout,
+    default_u_values,
+    uninsulated_wall_u,
+)
 from renosim.models import (
     AltitudeClass,
     Building,
@@ -98,12 +107,15 @@ from renosim.models import (
     HeatingGeneratorType,
     HeatingSystem,
     InertiaClass,
+    InsulationLayout,
     OpaqueEnvelopeElement,
     SolarProtectionLevel,
     SolarShading,
+    ThermalBridgeInputs,
     VentilationSystem,
     VentilationType,
     Window,
+    inertia_class_from_heavy_elements,
 )
 from renosim.occupancy import CONVENTIONAL, OccupancyScenario
 from renosim.outputs import (
@@ -141,7 +153,7 @@ _ADJACENCY_EXPOSED_FRACTION = {
 }
 
 #: M-1: window area = Sh / 6 (historical DPE convention for unknown glazing area).
-WINDOW_AREA_FRACTION = 1.0 / 6.0
+WINDOW_AREA_FRACTION = float(load_table("conventions")["geometry"]["window_area_fraction"]["value"])
 
 #: Floor for the reconstructed exposed wall area (mirrors validation M-1).
 MIN_WALL_AREA_M2 = 10.0
@@ -194,6 +206,32 @@ _POST_2001_PERIODS = frozenset(
         ConstructionPeriod.AFTER_2013,
     }
 )
+
+
+#: Timber walls: wall junctions are neglected in the thermal bridges (§3.4).
+_LIGHT_WALL_MATERIALS = ("timber_frame", "log_wall")
+
+
+def _declared_wall_u_nu(data: Mapping[str, Any]) -> float | None:
+    """Umur_nu of a declared wall material and thickness (3CL §3.2.1), else None."""
+    wall = cast(Mapping[str, Any] | None, data.get("wall_material"))
+    if wall is None or wall.get("material") in (None, "unknown"):
+        return None
+    return uninsulated_wall_u(str(wall["material"]), float(wall["thickness_cm"]))
+
+
+def _optional_bool(value: object) -> bool | None:
+    """JSON true/false/null -> bool | None (anything else is rejected)."""
+    if value is None or isinstance(value, bool):
+        return value
+    raise ValueError(f"expected true, false or null, got {value!r}")
+
+
+#: Carrier of each supported wood back-up generator (3CL §9.3).
+_BACKUP_CARRIER = {
+    HeatingGeneratorType.WOOD_LOG_STOVE: EnergyCarrier.WOOD_LOGS,
+    HeatingGeneratorType.WOOD_PELLET_STOVE: EnergyCarrier.WOOD_PELLETS,
+}
 
 
 def _interpolate_ue(upb_w_per_m2k: float, table: Mapping[str, Any]) -> float:
@@ -255,13 +293,16 @@ def _resolve_opaque_u(
     period: ConstructionPeriod,
     zone: ClimateZone,
     electric_joule: bool,
+    uninsulated_wall_u_override: float | None = None,
 ) -> float:
     """U-value from the form insulation state, official table values only."""
     state = str(spec.get("state", "period_default"))
     if state not in _INSULATION_STATES:
         raise ValueError(f"unknown insulation state {state!r} for {element}")
+    # Declared wall material: official Umur_nu (3CL §3.2.1) instead of the M-6 default.
+    base_override = uninsulated_wall_u_override if element == "wall" else None
     if state == "uninsulated":
-        return _uninsulated_u(element)
+        return base_override if base_override is not None else _uninsulated_u(element)
     if state == "known_r":
         if spec.get("material") is not None:
             added_r = added_r_from_insulation(str(spec["material"]), float(spec["thickness_cm"]))
@@ -269,11 +310,13 @@ def _resolve_opaque_u(
             added_r = float(spec["r_value_m2k_per_w"])
             if added_r <= 0:
                 raise ValueError(f"r_value_m2k_per_w must be positive, got {added_r}")
-        base_u = _uninsulated_u(element)
+        base_u = base_override if base_override is not None else _uninsulated_u(element)
         return 1.0 / (1.0 / base_u + added_r)
     lookup_period = ConstructionPeriod.AFTER_2013 if state == "renovated" else period
     defaults = default_u_values(lookup_period, zone, insulated=True, electric_joule=electric_joule)
-    return {"wall": defaults.wall, "roof": defaults.roof, "floor": defaults.floor}[element]
+    tabulated = {"wall": defaults.wall, "roof": defaults.roof, "floor": defaults.floor}[element]
+    # Insulation of unknown kind on a known wall: Umur = min(Umur_nu; Umur_tab) (§3.2.1.1).
+    return min(tabulated, base_override) if base_override is not None else tabulated
 
 
 def building_from_json(data: Mapping[str, Any]) -> Building:
@@ -330,6 +373,22 @@ def building_from_json(data: Mapping[str, Any]) -> Building:
     )
     joule = generator is HeatingGeneratorType.ELECTRIC_JOULE
 
+    # Wood stove/insert used as back-up (3CL §9.3, 25 % of the need); the
+    # carrier follows the stove type.
+    backup_data = cast(Mapping[str, Any] | None, data.get("heating_backup"))
+    heating_backup: HeatingSystem | None = None
+    if backup_data is not None:
+        backup_generator = HeatingGeneratorType(str(backup_data["generator"]))
+        backup_carrier = _BACKUP_CARRIER.get(backup_generator)
+        if backup_carrier is None:
+            raise ValueError(f"unsupported heating_backup generator {backup_generator.value!r}")
+        backup_age = backup_data.get("age_years")
+        heating_backup = HeatingSystem(
+            generator_type=backup_generator,
+            energy_carrier=backup_carrier,
+            generator_age_years=float(backup_age) if backup_age is not None else None,
+        )
+
     dhw_data = cast(Mapping[str, Any], data["dhw"])
     dhw_generator = DHWGeneratorType(str(dhw_data["generator"]))
     if dhw_data.get("carrier") is not None:
@@ -385,7 +444,12 @@ def building_from_json(data: Mapping[str, Any]) -> Building:
     floor_area = floor_override if floor_override is not None else footprint
 
     wall_u = _resolve_opaque_u(
-        cast(Mapping[str, Any], data["wall_insulation"]), "wall", period, zone, joule
+        cast(Mapping[str, Any], data["wall_insulation"]),
+        "wall",
+        period,
+        zone,
+        joule,
+        _declared_wall_u_nu(data),
     )
     roof_u = _resolve_opaque_u(
         cast(Mapping[str, Any], data["roof_insulation"]), "roof", period, zone, joule
@@ -404,6 +468,41 @@ def building_from_json(data: Mapping[str, Any]) -> Building:
     orientation = GlazingOrientation(str(data.get("glazing_orientation", "unknown")))
     shading = SolarShading(str(data.get("solar_shading", "clear_or_unknown")))
     inertia = InertiaClass(str(data.get("inertia", "unknown")))
+    # Three yes/no questions (3CL §7.4) take precedence over a declared class.
+    elements = cast(Mapping[str, Any] | None, data.get("inertia_elements"))
+    if elements is not None:
+        inertia = inertia_class_from_heavy_elements(
+            _optional_bool(elements.get("heavy_floor")),
+            _optional_bool(elements.get("heavy_ceiling")),
+            _optional_bool(elements.get("heavy_walls")),
+        )
+
+    # Linear thermal bridges for houses (3CL §3.4). An element counts as
+    # insulated unless declared uninsulated (same reading as its U-value);
+    # layouts by the official defaults; heavy elements from the inertia answers
+    # (defaults: heavy floor, light top floor) and the wall material.
+    thermal_bridges: ThermalBridgeInputs | None = None
+    if dwelling is DwellingType.HOUSE:
+
+        def _layout(key: str, element: str) -> InsulationLayout:
+            state = str(cast(Mapping[str, Any], data[key]).get("state", "period_default"))
+            return default_insulation_layout(element, state != "uninsulated", period)
+
+        answers = elements or {}
+        wall_material = cast(Mapping[str, Any], data.get("wall_material") or {})
+        heavy_floor = _optional_bool(answers.get("heavy_floor"))
+        heavy_ceiling = _optional_bool(answers.get("heavy_ceiling"))
+        thermal_bridges = ThermalBridgeInputs(
+            exposed_perimeter_m=perimeter,
+            levels=levels,
+            window_area_m2=window_area,
+            wall_insulation=_layout("wall_insulation", "wall"),
+            floor_insulation=_layout("floor_insulation", "floor"),
+            roof_insulation=_layout("roof_insulation", "roof"),
+            heavy_walls=wall_material.get("material") not in _LIGHT_WALL_MATERIALS,
+            heavy_floor=True if heavy_floor is None else heavy_floor,
+            heavy_ceiling=False if heavy_ceiling is None else heavy_ceiling,
+        )
 
     # Summer-comfort inputs (#16 brique 1). The roof-insulation state declared
     # for the winter U-value doubles as the annexe 9 roof criterion:
@@ -473,6 +572,8 @@ def building_from_json(data: Mapping[str, Any]) -> Building:
             ),
         ),
         heating_system=heating,
+        heating_backup=heating_backup,
+        thermal_bridge_inputs=thermal_bridges,
         dhw_system=DHWSystem(generator_type=dhw_generator, energy_carrier=dhw_carrier),
         ventilation_system=ventilation,
         number_of_occupants=int(occupants_raw) if occupants_raw is not None else None,

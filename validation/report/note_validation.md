@@ -1,8 +1,8 @@
-# Note technique de validation — moteur RénoSim vs base DPE ADEME (v3)
+# Note technique de validation — moteur RénoSim vs base DPE ADEME (v4)
 
-**Date :** 26 novembre 2026 (version finale de la v1.0 ; historique au §9) · **Moteur :**
-`renosim` 0.6.0 (méthode 3CL-DPE 2021 simplifiée) ·
-**Auteur :** Noé Quetin · **Version précédente :** v2.2 du 25 novembre 2026 (§9)
+**Date :** 27 novembre 2026 (v1.1, recalibration ; historique au §9) · **Moteur :**
+`renosim` 0.8.0 (méthode 3CL-DPE 2021 simplifiée) ·
+**Auteur :** Noé Quetin · **Version précédente :** v3 du 26 novembre 2026 (v1.0)
 
 > La v2 ajoute ce qui manquait à la v1 : un **échantillon de test indépendant** (jamais vu
 > pendant la calibration), des **intervalles de confiance** et une **repondération** selon le parc
@@ -10,7 +10,46 @@
 > d'été et refroidissement. La v3 ajoute les figures et **annonce le protocole de la prochaine
 > calibration avant de la faire** (§7).
 
-## 0. Résumé
+## 0. Résumé (v4, version 1.1)
+
+La v1.1 applique le protocole annoncé au §7 de la v3 : la référence est la **version de méthode
+en vigueur** (DPE v2.6), la calibration se fait sur un nouvel échantillon aléatoire limité à cette
+version, et la mesure finale a lieu **une seule fois** sur des échantillons de test jamais
+utilisés. Plan et résultats détaillés : `docs/recalibration_v1.1.md`.
+
+**Mesure finale sur le test v2** (8 046 maisons, DPE v2.6, tirées au hasard le 27/11/2026,
+disjointes de tout autre échantillon), comparée au moteur v1.0 sur les mêmes logements :
+
+| | v1.0 | **v1.1** | Critère |
+|---|---:|---:|---:|
+| Accord à ±1 classe, brut | 93,2 % [92,6 ; 93,7] | **95,0 %** [94,5 ; 95,5] | 90 % ✔ |
+| Accord à ±1 classe, repondéré selon le parc | 86,4 % [84,5 ; 88,3] | **89,4 %** [87,5 ; 91,2] | 90 % (non atteint de peu) |
+| Accord exact, brut | 55,5 % | 54,7 % [53,6 ; 55,8] | 60 % ✘ |
+| Accord exact, repondéré | 48,7 % | 46,5 % | — |
+| Biais Cep brut (kWhep/m²/an) | +3,2 | +7,4 [6,1 ; 8,5] | — |
+| Biais Cep repondéré | +32,0 | +23,5 | — |
+| MAE brute (kWhep/m²/an) | 41,3 | 38,2 | — |
+
+Sous-ensemble v2.6 du test v1 (1 885 maisons, déjà tiré le 25/11/2026) : ±1 classe 94,4 %
+[93,3 ; 95,4] brut et 85,8 % [81,2 ; 90,1] repondéré, exact 52,4 %, biais +7,2 (v1.0 sur les mêmes
+DPE : 93,6 %, 86,3 %, 55,2 %, +2,3).
+
+**Ce qui progresse.** Le bâti ancien (avant 1948 : ±1 classe 76,2 → 83,5 % ; 1948-1974 :
+86,1 → 92,9 %), le chauffage au bois (bûches 90,2 → 94,6 % ; granulés 93,5 → 96,4 %), la MAE
+et le biais repondéré, c'est-à-dire les segments qui pèsent le plus dans le parc.
+**Ce qui ne progresse pas.** L'accord exact (≈ 55 %, sous le critère de 60 %), le biais brut
+(+7,4 contre +3,2) et l'électricité (92,0 %).
+
+**Ce qui a changé** (détail au §10) : moteur — appoint bois et chaudières bois officiels, ponts
+thermiques linéaires du §3.4, inertie et matériau des murs déterminés comme dans la méthode,
+coefficient solaire recalé (0,5 → 0,62) ; validation — U des parois par étiquette de qualité
+calé sur les déperditions par poste publiées (M-14), mapping bois + PAC (M-12).
+
+**Écart au plan.** La contrainte de biais de calibration (±5 kWhep/m²) n'était atteignable par
+aucun réglage dans les plages sourcées ; l'auteur a retenu le coefficient solaire à sa borne
+haute (biais de calibration +5,9), avant la mesure finale. Écart consigné au §7 du plan.
+
+## 0 bis. Résumé de la v1.0 (v3, historique)
 
 Campagne **v6** (moteur actuel, éclairage officiel §16.1) :
 
@@ -330,6 +369,46 @@ quarto render validation/report        # -> validation/report/_site/note_validat
 Note : la base ADEME évolue (nouveaux DPE, mises à jour). Un nouveau tirage ne redonnera pas
 exactement les mêmes lignes ; les fichiers de résultats committés font foi pour cette note.
 
+## 10. Recalibration v1.1 (27/11/2026)
+
+**Échantillons.** Calibration v3 : 11 192 maisons, tirage aléatoire, 100 % DPE v2.6, disjoint de
+tous les échantillons existants (`download_dpe.py --random --method-version 2.6`). Test v2 :
+8 096 maisons tirées de la même façon après la calibration, en excluant aussi la calibration v3
+(effectif plus faible : certaines strates rares étaient épuisées).
+
+**Diagnostic avant réglage.** Deux outils comparent le moteur et le DPE étape par étape :
+`diagnose_components.py` (déperditions, besoins, consommation) et `diagnose_envelope.py`
+(déperditions **par poste** et apports, publiés par l'ADEME). Avant 1975, l'écart naissait dans
+l'enveloppe, et plus précisément dans la traduction des étiquettes de qualité d'isolation en U :
+une toiture d'avant 1975 « insuffisante » était traitée comme non isolée (165 W/K contre 78 W/K
+publiés), un plancher bas « insuffisant » sous-estimé de 40 %.
+
+**Étape A — entrées (M-14).** Un facteur par paroi, étiquette et époque recale le U du mapping sur
+les déperditions par poste publiées (calibration v3, jamais la consommation). ±1 classe de
+calibration : 93,2 → 94,8 % brut, 86,1 → 89,9 % repondéré.
+
+**Étape B — conventions du moteur.** Grille de 100 essais dans des plages sourcées : surface de
+baies 0,133-0,211 (surface implicite des DPE ; repère RE2020 art. 23-II), coefficient solaire
+0,45-0,62 (coefficients C1 §18.5), pondération des chaudières 0,10-0,30 (profil §13.2.1.1).
+Seul le coefficient solaire agit ; retenu à 0,62 (écart au plan, §0). Calibration v3 finale :
+±1 classe 95,2 % brut, 90,5 % repondéré, biais +5,9.
+
+**Effets annexes.** Le coefficient solaire agit aussi sur le refroidissement (D-20) ; les
+campagnes confort d'été et refroidissement de juillet ne sont pas rejouées dans cette version.
+Le U par défaut d'un mur ancien non isolé de matériau inconnu passe de 2,0 à 1,7 dans
+l'application (U implicite des murs « insuffisants » d'avant 1975 après l'étape A).
+
+**Limites et suites.** L'accord exact plafonne vers 55 % : la note v1 l'attribuait à un manque
+d'information, et c'est désormais l'explication principale, l'enveloppe et les besoins étant
+alignés sur le DPE en moyenne. Électricité : ECS électrique (×1,10) et auxiliaires (×0,86) à
+confronter aux formules officielles. Les seuils officiels des étiquettes de qualité (annexe 8.2
+de l'arrêté DPE) restent à relire pour confronter le calage M-14.
+
+Fichiers : `results_v7_calib_v3_baseline.json`, `results_v7_calib_v3_stepA.json`,
+`quality_label_factors_v3.json`, `recalibration_v1.1_grid.json`, `results_v8_calib_v3_final.json`,
+`results_v8_final_test_v2.json`, `results_v8_final_test_v1_v26.json`,
+`results_v8_v10engine_test_v2.json`, diagnostics `diagnosis_*_calib_v3*.json`.
+
 ## 9. Historique
 
 - **v1 (04/07/2026)** : itérations 1 à 6, ±1 classe 90,8 % sur l'échantillon de calibration ;
@@ -344,3 +423,5 @@ exactement les mêmes lignes ; les fichiers de résultats committés font foi po
 - **v3 (26/11/2026, version finale v1.0)** : figures (`validation/make_figures.py`), rendu Quarto
   publié avec l'application, protocole de la calibration v1.1 annoncé à l'avance (§7). Aucun
   changement de moteur ni de chiffre.
+- **v4 (27/11/2026, v1.1)** : recalibration selon le protocole (§10) ; test v2 indépendant :
+  ±1 classe 95,0 % brut, 89,4 % repondéré, exact 54,7 %, biais +7,4.

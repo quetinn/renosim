@@ -30,7 +30,28 @@ Format : un écart = une entrée. Statut : `décidé` (au niveau du brief, pas e
   créait un biais structurel de la validation pour les ~21 % de maisons climatisées. Levé par
   la proposition #16 (`docs/proposal_confort_ete.md`), campagne v4 du 11/07/2026.
 
-## D-03 — Ponts thermiques forfaitaires
+## D-03 — Ponts thermiques forfaitaires — LEVÉ POUR LES MAISONS (27/11/2026, branche v1.1)
+
+- **Mise à jour du 27/11/2026 :** les maisons utilisent le modèle linéaire du §3.4
+  (`envelope.linear_thermal_bridges_w_per_k`, table `thermal_bridges.json`, entrées
+  `Building.thermal_bridge_inputs` construites par le bridge et par le mapping M-13) :
+  plancher bas/mur, plancher intermédiaire/mur, plancher haut/mur (plancher haut lourd
+  seulement) et menuiserie/mur, k officiels selon l'isolation (non isolé, ITI, ITE, ITR) et
+  défauts du §3.4 (avant 1975 non isolé ; à partir de 1975 murs ITI, plafonds et planchers ITE).
+  Simplifications : linéaires déduits de la géométrie reconstituée (périmètre exposé,
+  périmètre × (niveaux − 1), tour des fenêtres par la convention de fenêtres carrées de
+  1,5 m²) ; menuiseries en tunnel, dormant de 5 cm, sans retour d'isolant ; refends non comptés
+  (pas de géométrie intérieure) ; plancher haut léger par défaut (§7.1). Le geste « isolation des
+  murs » rend un mur non isolé ITI (le choix ITE viendra avec D-04), le geste « combles » ITE.
+  Les appartements gardent la majoration forfaitaire calibrée.
+- **Mesure sur la calibration :** les déperditions du moteur rapportées à
+  `deperditions_enveloppe` passent de 0,85-0,93 à **0,98-1,01** pour les maisons de 1975 à 2021
+  (le forfait sous-estimait l'enveloppe). Mais les consommations se dégradent (±1 classe
+  91,2 → 88,5 %, biais +8,8 → +22,8), car des paramètres calés en juillet (D-16 : orientation et
+  masques solaires, entre autres) compensaient ce déficit : à reprendre lors de la recalibration
+  unique. Avant 1975, les déperditions étaient déjà surestimées de 13 à 28 % avec le forfait :
+  le problème du bâti ancien vient des surfaces et des U, pas des ponts thermiques.
+- **Historique :** jusqu'au 27/11/2026, toutes les maisons utilisaient le forfait ci-dessous.
 
 - **Statut :** calibré (`envelope.py`, valeur dans `tables/conventions.json` depuis le
   25/11/2026)
@@ -79,6 +100,10 @@ Format : un écart = une entrée. Statut : `décidé` (au niveau du brief, pas e
   exactement le coefficient 0,5 calibré en Phase 3.
 - **Impact :** ±quelques % sur les besoins ; l'absolu reste calibré, seule la sensibilité à
   l'orientation/aux masques est ajoutée.
+- **Recalibration v1.1 (27/11/2026) :** coefficient 0,5 → **0,62**, borne haute de la plage
+  sourcée (moyenne des C1 verticaux des quatre orientations en saison de chauffe, sans masque,
+  §18.5) : seul paramètre de la grille à agir sur le biais, les besoins des maisons récentes
+  restant surestimés (`docs/recalibration_v1.1.md`, écart au plan consigné au §7).
 - **Correctif (11/07/2026) :** la table encodait par erreur la colonne *inclinée*
   (75° > x ≥ 25°) du §18.5 au lieu de la colonne *verticale* (≥ 75°, la bonne pour des
   fenêtres) — ex. sud H1a 1,857 au lieu de 1,00. Corrigé (`notes_correction` de la table) :
@@ -203,6 +228,16 @@ Format : un écart = une entrée. Statut : `décidé` (au niveau du brief, pas e
   à partir de la composition des parois (ici déclarative) et les données climatiques §18.3
   « parois anciennes », non encodées.
 - **Impact :** modéré ; à réexaminer si la validation montre un biais sur le bâti ancien.
+- **Mise à jour du 27/11/2026 (branche v1.1) — classe déterminée comme dans la méthode :**
+  le parcours pose désormais les trois questions du §7 (plancher bas lourd, plafond lourd,
+  murs lourds, avec les définitions des §7.1-7.3 en aide) et le moteur en déduit la classe par
+  le tableau §7.4 (`models.inertia_class_from_heavy_elements`, table
+  `occupancy_conventional.json`) : 3 parois lourdes → très lourde, 2 → lourde, 1 → moyenne,
+  0 → légère ; inconnu = défauts officiels (plafond léger, plancher bas lourd, murs légers),
+  soit « moyenne » quand rien n'est renseigné, comme avant. Simplifications : l'exception
+  « plancher sur terre-plein » du défaut n'est pas modélisée ; lourde et très lourde sont
+  confondues (même exposant et même colonne I0). La validation lit toujours la classe ADEME
+  (M-8) : aucun effet sur ses métriques.
 
 ## D-15 — Débits de ventilation indexés sur l'époque de construction
 
@@ -370,10 +405,31 @@ Format : un écart = une entrée. Statut : `décidé` (au niveau du brief, pas e
   Piste v1.1 : brancher la résistance additionnelle des volets (règles Th-U fascicule 3) sur
   la réponse existante, avec une itération de calibration.
 
-## D-22 — Chaudière bois évaluée comme un poêle à granulés
+## D-22 — Chaudière bois évaluée comme un poêle à granulés — LEVÉ (27/11/2026, branche v1.1)
 
 - **Statut :** codé (`systems.py`, `heating_system_efficiency`) — écart déjà décrit par le
   choix de mapping M-5 (`validation/mapping.py`), formalisé ici le 25/11/2026 (audit §4.3).
+- **Levé le 27/11/2026 (branche v1.1) pour les poêles et inserts à bûches :** nouveau générateur
+  `WOOD_LOG_STOVE` avec les rendements officiels du §13.1 (0,50 avant 1990 ; 0,60 en
+  1990-2004 ; 0,70 en 2005-2017 avec label ; 0,75 à partir de 2018 avec label), proposé dans
+  l'app (« Poêle ou insert à bûches ») et utilisé par le mapping quand le libellé du générateur
+  l'indique (M-5 révisé). Simplification : le label Flamme Verte n'est pas demandé ; la tranche
+  « à partir de 2005 sans label » (0,65) est assimilée à la tranche avec label (0,70).
+  Mesure sur la calibration (429 poêles étiquetés) : la chaîne de rendement rejoint celle du
+  DPE (consommation/besoin 1,54 contre 1,46) et fait apparaître un besoin surestimé de 14 % sur
+  ces maisons anciennes (biais Cep −16 → +17), à traiter avec les murs anciens et les ponts
+  thermiques. Calibration globale : biais +11,3 → +12,5, ±1 classe inchangé (90,3 %).
+- **Levé le 27/11/2026 pour les chaudières bois :** rendements officiels du §13.2.2.3
+  (p.89-90) par combustible (bûches/plaquettes, granulés) et année d'installation, Rg saisonnier
+  avec la même pondération 0,3/0,7 que les chaudières gaz et fioul (D-08), chaîne hydraulique
+  complète (Rd, Rr, circulateur). App : « Chaudière bois (bûches) » et « Chaudière à granulés ».
+  Calibration (263 chaudières étiquetées) : la chaîne rejoint celle du DPE (consommation/besoin
+  1,38 contre 1,48 pour les bûches) ; le biais restant (+49 pour les bûches) vient du besoin
+  (+30 %, maisons très anciennes).
+- **Appoint bois (§9.3) :** voir D-24.
+- **Reste (choix de mapping M-5, pas un écart du moteur) :** les lignes ADEME bois sans libellé
+  de générateur (≈ 40 %) gardent l'approximation « rendements de poêle à granulés » : dans le
+  DPE, elles ne se comportent ni comme des poêles ni comme des chaudières étiquetés.
 - **3CL officielle :** rendements de génération propres aux chaudières bois (bûches,
   granulés, plaquettes) selon leur classe et leur ancienneté (§13), avec distribution
   hydraulique (Rd), régulation des radiateurs (Rr) et auxiliaires.
@@ -401,6 +457,38 @@ Format : un écart = une entrée. Statut : `décidé` (au niveau du brief, pas e
 - **Impact :** aucun sur les consommations ni sur la validation (campagne v6 rejouée à
   l'identique). Reste à faire en v1.1, avec la recalibration : part de l'appoint quand
   `Pnc` dépasse la puissance installée, coût selon la puissance si une source le permet.
+
+## D-24 — Appoint bois : part forfaitaire de 25 % (27/11/2026, branche v1.1)
+
+- **Statut :** codé conformément au §9.3 (`Building.heating_backup`,
+  `systems.heating_backup_consumption`, `main_heating_share`).
+- **3CL officielle :** avec un insert ou un poêle bois en appoint, `Cch1 = 0,75·Bch·INT1·Ich1`
+  (système principal) et `Cch2 = 0,25·Bch·INT2·Ich2` (appoint) (p.62).
+- **RénoSim :** idem, appoint limité aux poêles et inserts (bûches ou granulés). Simplifications :
+  les cas §9.4-9.7 (poêle principal avec chauffage électrique de salle de bains, chaudière en
+  relève de PAC, etc.) ne sont pas modélisés ; l'ECS reste sur le générateur principal ; les
+  auxiliaires de génération sont comptés sur la part du principal.
+- **Validation :** choix de mapping M-12 : une ligne ADEME « énergie principale bois » avec une
+  **PAC** comme générateur principal devient PAC + appoint bois (1 121 lignes de la calibration).
+  Effet mesuré sur la calibration : biais de ce groupe +39/+49 → +2/+7 kWhep/m² ; globalement
+  ±1 classe 90,3 → 91,1 %. Les libellés d'émetteurs à effet Joule ne sont pas traités ainsi
+  (cas §9.4-9.5 probable, résultats mitigés).
+
+## D-25 — Murs non isolés : Umur0 par matériau, colonne d'épaisseur inférieure (27/11/2026, branche v1.1)
+
+- **Statut :** codé (`envelope.uninsulated_wall_u`, table `umur0_by_material` de
+  `u_values_default.json`, champ `wall_material` du bridge, question « Matériau des murs »).
+- **3CL officielle :** Umur0 tabulé par matériau et épaisseur (§3.2.1.2, p.14-15), plafonné à
+  2,5 (Umur_nu) ; isolation inconnue : Umur = min(Umur_nu ; Umur_tab) ; isolant connu : composition
+  des résistances.
+- **RénoSim :** idem pour dix matériaux (pierre, briques pleines simples ou doubles, briques
+  creuses, parpaing, bloc béton plein, béton banché, pisé/terre, pans de bois, rondins).
+  Simplifications : une épaisseur intermédiaire prend la colonne immédiatement inférieure
+  (pas de règle d'interpolation sur cette page) ; la pierre utilise la ligne « un seul matériau /
+  inconnu » ; non repris : remplissage tout venant, béton de mâchefer, béton cellulaire, brique
+  alvéolaire, mur sandwich, ossature bois isolée (cas où l'isolation est connue).
+- **Sans réponse :** U = 2,0 (choix M-6, inchangé). La base ADEME ne donne pas le matériau : la
+  validation n'est pas concernée ; seul le parcours utilisateur gagne en précision (audit §4.6).
 
 ---
 

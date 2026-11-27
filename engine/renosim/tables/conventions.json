@@ -8,6 +8,10 @@
     "default_ceiling_height_m": {
       "value": 2.5,
       "source": "Hauteur sous plafond conventionnelle quand elle n'est pas déclarée (convention V1, D-17 ; valeur usuelle des DPE sans relevé)."
+    },
+    "window_area_fraction": {
+      "value": 0.16666666666666666,
+      "source": "Surface de baies reconstituée = Sh / 6 quand elle n'est pas déclarée (convention de reconstruction de la géométrie, choix M-1 de la validation et D-17 de l'app ; ordre de grandeur usuel des maisons, non tiré d'un texte). Candidat de la recalibration v1.1 (docs/recalibration_v1.1.md)."
     }
   },
   "calibrated": {
@@ -16,8 +20,8 @@
       "source": "Majoration forfaitaire des déperditions surfaciques pour les ponts thermiques des maisons (D-03), conservée par la calibration Phase 3 (validation/report/note_validation.md)."
     },
     "solar_orientation_shading_coefficient": {
-      "value": 0.5,
-      "source": "Coefficient orientation x masques appliqué à Σ A·Sw pour la surface sud équivalente (D-06), niveau absolu calibré Phase 3."
+      "value": 0.62,
+      "source": "Coefficient orientation x masques appliqué à Σ A·Sw pour la surface sud équivalente (D-06). 0,5 calibré en Phase 3 ; 0,62 depuis la recalibration v1.1 du 27/11/2026 (docs/recalibration_v1.1.md, P4) : borne haute sourcée de la plage = moyenne des coefficients C1 verticaux des quatre orientations en saison de chauffe sans masque (§18.5, 0,56 à 0,62 selon la zone), seul paramètre de la grille à agir sur le biais (calibration v3 : biais brut +10,6 → +5,8, ±1 classe repondéré 89,9 → 90,5 %)."
     }
   },
   "boiler_seasonal_blend": {
@@ -54,6 +58,38 @@
         { "min_age_years": 15, "bracket": "before_2012_or_no_label" },
         { "min_age_years": 7, "bracket": "2012_2019_label" },
         { "min_age_years": 0, "bracket": "after_2020_label" }
+      ]
+    },
+    "wood_log_stove_rg": {
+      "note": "Wood-log stoves, inserts, closed fireplaces and cookers, 3CL §13.1 (p.78): installed before 1990 / 1990-2004 / from 2005 (label or not) / from 2018 with label. Ages >= 9 y and < 22 y are taken as labelled 2005-2017 appliances (the form does not ask for the Flamme Verte label); unknown age -> the same middle bracket. Added 2026-11-27 (v1.1, deviation D-22).",
+      "unknown": "2005_2017_label",
+      "rules": [
+        { "min_age_years": 37, "bracket": "before_1990" },
+        { "min_age_years": 22, "bracket": "1990_2004" },
+        { "min_age_years": 9, "bracket": "2005_2017_label" },
+        { "min_age_years": 0, "bracket": "after_2018_label" }
+      ]
+    },
+    "wood_boiler_logs": {
+      "note": "Wood-log (and chip) boilers, 3CL §13.2.2.3 (p.89-90), by installation year with reference year 2026. Unknown age -> 2013-2017. Added 2026-11-27 (v1.1, D-22).",
+      "unknown": "2013_2017",
+      "rules": [
+        { "min_age_years": 23, "bracket": "before_2004" },
+        { "min_age_years": 14, "bracket": "2004_2012" },
+        { "min_age_years": 9, "bracket": "2013_2017" },
+        { "min_age_years": 7, "bracket": "2018_2019" },
+        { "min_age_years": 0, "bracket": "after_2019" }
+      ]
+    },
+    "wood_boiler_pellets": {
+      "note": "Wood-pellet boilers, 3CL §13.2.2.3 (p.89-90), by installation year with reference year 2026. Unknown age -> 2013-2019. Added 2026-11-27 (v1.1, D-22).",
+      "unknown": "2013_2019",
+      "rules": [
+        { "min_age_years": 32, "bracket": "before_1995" },
+        { "min_age_years": 23, "bracket": "1995_2003" },
+        { "min_age_years": 14, "bracket": "2004_2012" },
+        { "min_age_years": 7, "bracket": "2013_2019" },
+        { "min_age_years": 0, "bracket": "after_2019" }
       ]
     },
     "standard_boiler_derating": {

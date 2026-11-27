@@ -42,7 +42,7 @@ from renosim.summer_comfort import (
     assess_summer_comfort,
 )
 
-__version__ = "0.7.0"
+__version__ = "0.8.0"
 
 #: Version of the JSON input/output schema exchanged with the front end.
 #: Bumped on any breaking change to the interface (CLAUDE.md §3.2).
