@@ -739,3 +739,22 @@ class TestHeatingBackup:
         data["heating_backup"] = {"generator": "condensing_boiler"}
         with pytest.raises(ValueError, match="heating_backup"):
             building_from_json(data)
+
+
+class TestInertiaElements:
+    """Inertia from three yes/no questions (3CL §7.4) instead of a declared class."""
+
+    def test_elements_override_the_declared_class(self) -> None:
+        data = base_building_json()
+        data["inertia"] = "light"
+        data["inertia_elements"] = {
+            "heavy_floor": True,
+            "heavy_ceiling": False,
+            "heavy_walls": True,
+        }
+        assert building_from_json(data).inertia.value == "heavy"
+
+    def test_unknown_elements_give_medium(self) -> None:
+        data = base_building_json()
+        data["inertia_elements"] = {"heavy_floor": None, "heavy_ceiling": None, "heavy_walls": None}
+        assert building_from_json(data).inertia.value == "medium"

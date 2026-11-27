@@ -38,6 +38,8 @@ Input schema (``schema_version`` = :data:`renosim.SCHEMA_VERSION`)::
         "glazing_orientation": "unknown" | "south" | "east_west" | "north",  # optional
         "solar_shading": "clear_or_unknown" | "partial" | "heavy",          # optional
         "inertia": "unknown" | "light" | "medium" | "heavy",                # optional
+        "inertia_elements": {"heavy_floor": bool | null, "heavy_ceiling": ...,
+                             "heavy_walls": ...},   # optional, overrides "inertia"
         "geometry": {                                        # optional overrides (M-1)
             "ceiling_height_m": 2.5, "wall_area_m2": 83.0, "window_area_m2": 17.0,
             "roof_area_m2": 100.0, "floor_area_m2": 100.0},
@@ -105,6 +107,7 @@ from renosim.models import (
     VentilationSystem,
     VentilationType,
     Window,
+    inertia_class_from_heavy_elements,
 )
 from renosim.occupancy import CONVENTIONAL, OccupancyScenario
 from renosim.outputs import (
@@ -195,6 +198,13 @@ _POST_2001_PERIODS = frozenset(
         ConstructionPeriod.AFTER_2013,
     }
 )
+
+
+def _optional_bool(value: object) -> bool | None:
+    """JSON true/false/null -> bool | None (anything else is rejected)."""
+    if value is None or isinstance(value, bool):
+        return value
+    raise ValueError(f"expected true, false or null, got {value!r}")
 
 
 #: Carrier of each supported wood back-up generator (3CL §9.3).
@@ -428,6 +438,14 @@ def building_from_json(data: Mapping[str, Any]) -> Building:
     orientation = GlazingOrientation(str(data.get("glazing_orientation", "unknown")))
     shading = SolarShading(str(data.get("solar_shading", "clear_or_unknown")))
     inertia = InertiaClass(str(data.get("inertia", "unknown")))
+    # Three yes/no questions (3CL §7.4) take precedence over a declared class.
+    elements = cast(Mapping[str, Any] | None, data.get("inertia_elements"))
+    if elements is not None:
+        inertia = inertia_class_from_heavy_elements(
+            _optional_bool(elements.get("heavy_floor")),
+            _optional_bool(elements.get("heavy_ceiling")),
+            _optional_bool(elements.get("heavy_walls")),
+        )
 
     # Summer-comfort inputs (#16 brique 1). The roof-insulation state declared
     # for the winter U-value doubles as the annexe 9 roof criterion:

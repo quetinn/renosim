@@ -151,6 +151,12 @@ export interface BuildingInput {
   inertia?: InertiaClass;
   geometry?: GeometryOverrides;
   heating: { generator: HeatingGeneratorType; carrier: EnergyCarrier; age_years: number | null };
+  /** Heavy floor / ceiling / walls (3CL §7.4); overrides `inertia` when present. */
+  inertia_elements?: {
+    heavy_floor: boolean | null;
+    heavy_ceiling: boolean | null;
+    heavy_walls: boolean | null;
+  };
   /** Wood stove/insert used as back-up: 25 % of the heating need (3CL §9.3). */
   heating_backup?: { generator: "wood_log_stove" | "wood_pellet_stove"; age_years?: number | null } | null;
   dhw: { generator: DHWGeneratorType; carrier?: EnergyCarrier | null };

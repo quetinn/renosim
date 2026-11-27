@@ -18,6 +18,7 @@ import type {
 import {
   DEFAULT_MEASURE_PARAMS,
   EMPTY_GEOMETRY,
+  UNKNOWN_INERTIA_ELEMENTS,
   INITIAL_FORM,
   INITIAL_OCCUPANCY,
   defaultsForPeriod,
@@ -49,6 +50,7 @@ function sanitizePersisted(data: Partial<PersistedState> | null): PersistedState
       ...INITIAL_FORM,
       ...data.form,
       geometry: { ...EMPTY_GEOMETRY, ...(data.form.geometry ?? {}) },
+      inertiaElements: { ...UNKNOWN_INERTIA_ELEMENTS, ...(data.form.inertiaElements ?? {}) },
     },
     occupancy: { ...INITIAL_OCCUPANCY, ...(data.occupancy ?? {}) },
     params: { ...DEFAULT_MEASURE_PARAMS, ...(data.params ?? {}) },

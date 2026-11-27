@@ -17,7 +17,7 @@ import {
   HEATING_BACKUP_LABELS,
   HEATING_LABELS,
   HELP_TEXTS,
-  INERTIA_LABELS,
+  TRI_STATE_LABELS,
   INSULATION_MATERIAL_LABELS,
   INSULATION_STATE_LABELS,
   PERIOD_LABELS,
@@ -30,6 +30,7 @@ import type { GeometryState, InsulationChoice } from "../../state/model";
 import { WOOD_MAIN_HEATING } from "../../state/model";
 import type { InsulationMaterial } from "../../types/schema";
 import { Button } from "../ui/Button";
+import { InfoTip } from "../ui/InfoTip";
 import { Field, NumberInput, RadioCards, Segmented, type Option } from "../form/fields";
 
 const STEPS = ["Localisation", "Général", "Enveloppe", "Systèmes"] as const;
@@ -445,15 +446,30 @@ export function Wizard() {
                     onChange={(floorType) => updateForm({ floorType })}
                   />
                 </Field>
-                <Field label="Type de construction (inertie)" help={HELP_TEXTS.inertia}>
-                  <RadioCards
-                    name="Type de construction (inertie)"
-                    columns={2}
-                    options={typedOptions(INERTIA_LABELS)}
-                    value={form.inertia}
-                    onChange={(inertia) => updateForm({ inertia })}
-                  />
-                </Field>
+                <div className="space-y-4">
+                  <p className="flex items-center gap-1.5 text-sm font-semibold text-ink">
+                    Inertie : quelles parois sont lourdes ?
+                    <InfoTip text={HELP_TEXTS.inertia} />
+                  </p>
+                  {(
+                    [
+                      ["floor", "Plancher bas lourd ?", HELP_TEXTS.inertiaFloor],
+                      ["ceiling", "Plafond lourd ?", HELP_TEXTS.inertiaCeiling],
+                      ["walls", "Murs lourds ?", HELP_TEXTS.inertiaWalls],
+                    ] as const
+                  ).map(([key, label, help]) => (
+                    <Field key={key} label={label} help={help}>
+                      <Segmented
+                        name={label}
+                        options={typedOptions(TRI_STATE_LABELS)}
+                        value={form.inertiaElements[key]}
+                        onChange={(value) =>
+                          updateForm({ inertiaElements: { ...form.inertiaElements, [key]: value } })
+                        }
+                      />
+                    </Field>
+                  ))}
+                </div>
                 <Field label="Vitrage" help={HELP_TEXTS.glazing}>
                   <RadioCards
                     name="Vitrage"

@@ -9,6 +9,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from enum import StrEnum
 
+from renosim.tables_io import load_table
+
 
 class ClimateZone(StrEnum):
     """DPE climate zone, per the conventional 3CL zoning of metropolitan France."""
@@ -173,6 +175,30 @@ class InertiaClass(StrEnum):
     MEDIUM = "medium"
     HEAVY = "heavy"
     UNKNOWN = "unknown"
+
+
+def inertia_class_from_heavy_elements(
+    heavy_floor: bool | None, heavy_ceiling: bool | None, heavy_walls: bool | None
+) -> InertiaClass:
+    """Inertia class from the three heavy-element questions (3CL §7.4).
+
+    Each argument says whether the ground floor, the top floor (ceiling) and
+    the vertical walls are "heavy" in the sense of §7.1-7.3; ``None`` applies
+    the official default for an unknown element. The number of heavy elements
+    gives the class (tables/occupancy_conventional.json).
+    """
+
+    rules = load_table("occupancy_conventional")["inertia_from_heavy_elements"]
+    defaults = rules["unknown_defaults"]
+    answers = {
+        "heavy_floor": heavy_floor,
+        "heavy_ceiling": heavy_ceiling,
+        "heavy_walls": heavy_walls,
+    }
+    count = sum(
+        1 for key, value in answers.items() if (bool(defaults[key]) if value is None else value)
+    )
+    return InertiaClass(str(rules["class_by_heavy_count"][str(count)]))
 
 
 @dataclass(frozen=True, slots=True)

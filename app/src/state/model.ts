@@ -69,6 +69,21 @@ export const HEATING_SYSTEMS: Record<
 
 export type HeatingAgeChoice = "recent" | "mid" | "old" | "unknown";
 
+/** Answer to one of the three inertia questions (3CL §7.4). */
+export type TriState = "yes" | "no" | "unknown";
+
+export interface InertiaElementsState {
+  floor: TriState;
+  ceiling: TriState;
+  walls: TriState;
+}
+
+export const UNKNOWN_INERTIA_ELEMENTS: InertiaElementsState = {
+  floor: "unknown",
+  ceiling: "unknown",
+  walls: "unknown",
+};
+
 /** Wood stove/insert used alongside the main heating (3CL §9.3). */
 export type HeatingBackupChoice = "none" | "wood_log_stove" | "wood_pellet_stove";
 
@@ -129,7 +144,9 @@ export interface FormState {
   glazing: Glazing;
   glazingOrientation: GlazingOrientation;
   solarShading: SolarShading;
+  /** Legacy single question, still read from older saved sessions. */
   inertia: InertiaClass;
+  inertiaElements: InertiaElementsState;
   heating: HeatingChoice;
   heatingAge: HeatingAgeChoice;
   heatingBackup: HeatingBackupChoice;
@@ -207,6 +224,7 @@ export const INITIAL_FORM: FormState = {
   glazingOrientation: "unknown",
   solarShading: "clear_or_unknown",
   inertia: "unknown",
+  inertiaElements: UNKNOWN_INERTIA_ELEMENTS,
   // Volets quasi systématiques sur l'habitat français : défaut « oui »,
   // corrigeable en un clic (l'engin traite « unknown » comme « full », D-19).
   solarProtections: "full",
@@ -290,6 +308,15 @@ export function buildingInput(form: FormState): BuildingInput {
     glazing_orientation: form.glazingOrientation,
     solar_shading: form.solarShading,
     inertia: form.inertia,
+    ...(Object.values(form.inertiaElements).some((v) => v !== "unknown")
+      ? {
+          inertia_elements: {
+            heavy_floor: triToBool(form.inertiaElements.floor),
+            heavy_ceiling: triToBool(form.inertiaElements.ceiling),
+            heavy_walls: triToBool(form.inertiaElements.walls),
+          },
+        }
+      : {}),
     heating: {
       generator: heating.generator,
       carrier: heating.carrier,
@@ -308,6 +335,10 @@ export function buildingInput(form: FormState): BuildingInput {
       air_conditioning_period: form.airConditioningPeriod,
     },
   };
+}
+
+function triToBool(value: TriState): boolean | null {
+  return value === "unknown" ? null : value === "yes";
 }
 
 export function occupancyInput(occupancy: OccupancyState, form: FormState): OccupancyInput {

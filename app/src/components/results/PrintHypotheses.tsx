@@ -13,6 +13,7 @@ import {
   HEATING_BACKUP_LABELS,
   HEATING_LABELS,
   INERTIA_LABELS,
+  TRI_STATE_LABELS,
   INSULATION_MATERIAL_LABELS,
   INSULATION_STATE_LABELS,
   PERIOD_LABELS,
@@ -63,7 +64,12 @@ export function PrintHypotheses({ form }: { form: FormState }) {
     ["Vitrage", GLAZING_LABELS[form.glazing]],
     ["Orientation des fenêtres", GLAZING_ORIENTATION_LABELS[form.glazingOrientation]],
     ["Masques solaires", SOLAR_SHADING_LABELS[form.solarShading]],
-    ["Inertie", INERTIA_LABELS[form.inertia]],
+    [
+      "Inertie",
+      Object.values(form.inertiaElements).some((v) => v !== "unknown")
+        ? `parois lourdes : plancher bas ${TRI_STATE_LABELS[form.inertiaElements.floor].toLowerCase()}, plafond ${TRI_STATE_LABELS[form.inertiaElements.ceiling].toLowerCase()}, murs ${TRI_STATE_LABELS[form.inertiaElements.walls].toLowerCase()}`
+        : INERTIA_LABELS[form.inertia],
+    ],
     [
       "Chauffage",
       `${HEATING_LABELS[form.heating]} — ${HEATING_AGE_LABELS[form.heatingAge].toLowerCase()}`,

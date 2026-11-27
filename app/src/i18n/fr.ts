@@ -20,7 +20,12 @@ import type {
   SummerComfortLevel,
   VentilationType,
 } from "../types/schema";
-import type { HeatingAgeChoice, HeatingBackupChoice, HeatingChoice } from "../state/model";
+import type {
+  HeatingAgeChoice,
+  HeatingBackupChoice,
+  HeatingChoice,
+  TriState,
+} from "../state/model";
 
 export const PERIOD_LABELS: Record<ConstructionPeriod, string> = {
   before_1948: "Avant 1948",
@@ -115,6 +120,12 @@ export const COOLING_PERIOD_LABELS: Record<Exclude<CoolingPeriod, "unknown">, st
   from_2015: "2015 ou après",
   "2008_2014": "Entre 2008 et 2014",
   before_2008: "Avant 2008",
+};
+
+export const TRI_STATE_LABELS: Record<TriState, string> = {
+  yes: "Oui",
+  no: "Non",
+  unknown: "Je ne sais pas",
 };
 
 export const INERTIA_LABELS: Record<InertiaClass, string> = {
@@ -276,6 +287,12 @@ export const HELP_TEXTS = {
     "Immeubles, collines ou arbres proches réduisent le soleil reçu. « Très masqué » = obstacles hauts qui bouchent l'horizon la majeure partie de la journée.",
   inertia:
     "Des murs et planchers lourds stockent la chaleur et valorisent mieux les apports du soleil : c'est l'inertie thermique. En cas de doute, laissez « Je ne sais pas » : le calcul applique une inertie moyenne.",
+  inertiaFloor:
+    "Sol en dalle béton (10 cm ou plus), poutrelles et hourdis béton ou terre cuite, ou matériau lourd ancien (pierre, brique, terre), sans isolant posé dessus. Dans le doute, le DPE le considère lourd.",
+  inertiaCeiling:
+    "Plafond du dernier niveau en béton plein ou en poutrelles et hourdis, sans faux plafond et sans isolation par l'intérieur (combles perdus sur dalle, par exemple). Dans le doute, le DPE le considère léger.",
+  inertiaWalls:
+    "Murs en pierre, brique pleine ou perforée, parpaing ou béton, non isolés ou isolés par l'extérieur. Un doublage intérieur isolant les rend « légers ». Dans le doute, le DPE les considère légers.",
   geometry:
     "Facultatif : si vous connaissez vos surfaces réelles (plans, diagnostic précédent), elles remplacent l'estimation automatique déduite de la surface habitable.",
   heatingAge: "Le rendement d'un générateur se dégrade avec l'âge ; l'année figure souvent sur la plaque de l'appareil.",

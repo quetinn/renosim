@@ -5,35 +5,84 @@
     "date_accessed": "2026-07-04",
     "notes": "The 'personalized' mode of RénoSim reuses this structure with user overrides (setpoint, occupants, DHW volume); the 3CL 'dépensier' values are kept as documented bounds. 1,163 Wh/(l.K) is the volumetric heat capacity of water."
   },
-  "heating_setpoint_c": { "conventional": 19, "spendthrift": 21 },
+  "heating_setpoint_c": {
+    "conventional": 19,
+    "spendthrift": 21
+  },
   "nadeq_house": {
     "nmax": [
-      { "when_shmoy_below_m2": 30, "formula": "1" },
-      { "when_shmoy_below_m2": 70, "formula": "1.75 - 0.01875*(70 - Shmoy)" },
-      { "otherwise": true, "formula": "0.025 * Shmoy" }
+      {
+        "when_shmoy_below_m2": 30,
+        "formula": "1"
+      },
+      {
+        "when_shmoy_below_m2": 70,
+        "formula": "1.75 - 0.01875*(70 - Shmoy)"
+      },
+      {
+        "otherwise": true,
+        "formula": "0.025 * Shmoy"
+      }
     ],
     "nadeq": [
-      { "when_nmax_below": 1.75, "formula": "Nmax" },
-      { "otherwise": true, "formula": "1.75 + 0.3*(Nmax - 1.75)" }
+      {
+        "when_nmax_below": 1.75,
+        "formula": "Nmax"
+      },
+      {
+        "otherwise": true,
+        "formula": "1.75 + 0.3*(Nmax - 1.75)"
+      }
     ]
   },
   "nadeq_apartment": {
     "note": "Logements collectifs §11.1 (p.71) : seuils 10/50 m² et pente 0,035 au-delà de 50 m² ; Nblgt = 1 pour le traitement d'un appartement, Shmoy = Sh.",
     "nmax": [
-      { "when_shmoy_below_m2": 10, "formula": "1" },
-      { "when_shmoy_below_m2": 50, "formula": "1.75 - 0.01875*(50 - Shmoy)" },
-      { "otherwise": true, "formula": "0.035 * Shmoy" }
+      {
+        "when_shmoy_below_m2": 10,
+        "formula": "1"
+      },
+      {
+        "when_shmoy_below_m2": 50,
+        "formula": "1.75 - 0.01875*(50 - Shmoy)"
+      },
+      {
+        "otherwise": true,
+        "formula": "0.035 * Shmoy"
+      }
     ],
     "nadeq": [
-      { "when_nmax_below": 1.75, "formula": "Nmax" },
-      { "otherwise": true, "formula": "1.75 + 0.3*(Nmax - 1.75)" }
+      {
+        "when_nmax_below": 1.75,
+        "formula": "Nmax"
+      },
+      {
+        "otherwise": true,
+        "formula": "1.75 + 0.3*(Nmax - 1.75)"
+      }
     ]
   },
   "dhw": {
-    "liters_per_day_per_adult_at_40c": { "conventional": 56, "spendthrift": 79 },
+    "liters_per_day_per_adult_at_40c": {
+      "conventional": 56,
+      "spendthrift": 79
+    },
     "water_heat_capacity_wh_per_l_k": 1.163,
     "target_temperature_c": 40,
-    "occupied_days_per_month": { "1": 31, "2": 28, "3": 31, "4": 30, "5": 31, "6": 30, "7": 31, "8": 31, "9": 30, "10": 31, "11": 30, "12": 24 }
+    "occupied_days_per_month": {
+      "1": 31,
+      "2": 28,
+      "3": 31,
+      "4": 30,
+      "5": 31,
+      "6": 30,
+      "7": 31,
+      "8": 31,
+      "9": 30,
+      "10": 31,
+      "11": 30,
+      "12": 24
+    }
   },
   "internal_gains": {
     "equipment_plus_lighting_w_per_m2": 3.52,
@@ -47,5 +96,21 @@
     "medium": 2.9,
     "light": 2.5,
     "default_when_unknown": "medium"
+  },
+  "inertia_from_heavy_elements": {
+    "source": "Annexe 1 3CL-DPE 2021 consolidée, §7 « Détermination de l'inertie » (p.53-54) : définitions du plancher haut lourd (§7.1), plancher bas lourd (§7.2), paroi verticale lourde (§7.3) et tableau §7.4 « Inertie du bâtiment ». Même logique que le tableau III des règles Th-I. Lu le 2026-11-27.",
+    "class_by_heavy_count": {
+      "3": "heavy",
+      "2": "heavy",
+      "1": "medium",
+      "0": "light"
+    },
+    "class_by_heavy_count_note": "Official classes: 3 -> très lourde, 2 -> lourde, 1 -> moyenne, 0 -> légère; the engine merges lourde and très lourde (same exponent and I0 column, D-14).",
+    "unknown_defaults": {
+      "heavy_floor": true,
+      "heavy_ceiling": false,
+      "heavy_walls": false
+    },
+    "unknown_defaults_note": "§7.1: plancher haut d'inertie inconnue = léger ; §7.2: plancher bas (autre que sur terre-plein) inconnu = lourd ; §7.3: murs inconnus = faible inertie. The terre-plein exception is not modelled (unknown floor = heavy in all cases)."
   }
 }
