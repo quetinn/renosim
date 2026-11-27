@@ -763,3 +763,24 @@ recalibration unique.
 calés D-16 et la géométrie du bâti ancien sur un nouvel échantillon de calibration limité à la
 version de méthode en vigueur (protocole de la note §7).
 
+## 2026-11-27 (suite 5) — Préparation de la recalibration v1.1
+
+- `download_dpe.py --method-version` (filtre `version_dpe` de l'API, vérifié : 782 740 maisons
+  en 2.6) ; colonne `version_dpe` ajoutée aux extractions.
+- **Échantillon de calibration v3** : 11 192 maisons, aléatoire, 100 % version 2.6, disjoint de
+  tous les échantillons existants ; enrichi des consommations par usage.
+- **Mesure de départ** (branche v1.1, aucun réglage) : ±1 classe 93,2 % [92,7 ; 93,7], exact
+  53,2 %, biais +12,3 ; repondéré 86,1 % / 42,6 % / +39,3
+  (`results_v7_calib_v3_baseline.json`).
+- Nouvel outil `validation/diagnose_components.py` : rapport moteur/DPE à chaque étape
+  (déperditions, besoin chauffage, besoin ECS, conso chauffage, biais Cep) par époque et énergie
+  (`diagnosis_calib_v3_baseline.json`). Avant 1975 : l'enveloppe dérive (+12 à +17 %) ; après
+  2013 : le besoin dérive plus que l'enveloppe (apports sous-estimés) ; ECS exacte partout.
+- Surface de baies reconstituée (Sh/6) déplacée dans `conventions.json` (règle 3), résultat
+  identique vérifié sur v3.
+- **Plan de recalibration** écrit avant de régler : `docs/recalibration_v1.1.md` (échantillons,
+  mesure de départ, 5 paramètres autorisés avec leurs plages, méthode, mesure finale unique).
+
+**Prochaine étape :** sensibilités une à une de P1 à P5 sur la calibration v3, puis réglage
+conjoint, puis mesure finale unique sur le test.
+
