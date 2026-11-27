@@ -655,3 +655,23 @@ anciens et inertie Th-I, ponts thermiques par liaison et ITE/ITI, Ujn, ECS des P
 PAC, geste plancher bas, alertes RT existante ; puis la recalibration unique selon le protocole
 annoncé.
 
+## 2026-11-27 — v1.1, étape 2 : chauffage au bois (poêles et inserts à bûches)
+
+- Branche longue `feat/v1.1-conformity` : les étapes qui modifient les consommations y
+  restent jusqu'à la recalibration unique (le site et la note gardent les chiffres de la v1.0).
+- **Diagnostic sur la calibration** (jamais sur le test) des maisons « bois » par libellé de
+  générateur : poêles/inserts à bûches 429 (consommation/besoin DPE 1,46), chaudières 263,
+  libellé absent 2 087, et **1 121 lignes bois avec une PAC comme générateur principal**
+  (consommation/besoin 0,59-0,70 : PAC + appoint bois, simulées en tout-bois, biais +39 à +49).
+- **Moteur :** générateur `WOOD_LOG_STOVE` (rendements §13.1, tranches d'âge dans
+  `conventions.json`), test calculé à la main (Rg 0,50/0,60/0,70/0,75 ; chaîne 0,532 à 10 ans ;
+  pas d'auxiliaire). **Mapping M-5 révisé** (libellés poêle bûche, insert, foyer fermé,
+  cuisinière). **App :** choix « Poêle ou insert à bûches ».
+- Calibration : biais +11,3 → +12,5, ±1 classe 90,3 % inchangé ; le rendement corrigé dévoile
+  un besoin surestimé de 14 % sur les maisons anciennes au bois. D-22 partiellement levé.
+- Lecture du §13.2 (chaudières bois) reportée : le lecteur PDF ne s'affiche pas quand le volet
+  navigateur est masqué.
+
+**Prochaines étapes :** installations PAC + appoint bois (deux générateurs, §9 de l'annexe) ;
+rendements des chaudières bois (§13.2) ; murs anciens et inertie ; ponts thermiques.
+

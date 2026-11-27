@@ -370,10 +370,23 @@ Format : un écart = une entrée. Statut : `décidé` (au niveau du brief, pas e
   Piste v1.1 : brancher la résistance additionnelle des volets (règles Th-U fascicule 3) sur
   la réponse existante, avec une itération de calibration.
 
-## D-22 — Chaudière bois évaluée comme un poêle à granulés
+## D-22 — Chaudière bois évaluée comme un poêle à granulés — PARTIELLEMENT LEVÉ (27/11/2026)
 
 - **Statut :** codé (`systems.py`, `heating_system_efficiency`) — écart déjà décrit par le
   choix de mapping M-5 (`validation/mapping.py`), formalisé ici le 25/11/2026 (audit §4.3).
+- **Levé le 27/11/2026 (branche v1.1) pour les poêles et inserts à bûches :** nouveau générateur
+  `WOOD_LOG_STOVE` avec les rendements officiels du §13.1 (0,50 avant 1990 ; 0,60 en
+  1990-2004 ; 0,70 en 2005-2017 avec label ; 0,75 à partir de 2018 avec label), proposé dans
+  l'app (« Poêle ou insert à bûches ») et utilisé par le mapping quand le libellé du générateur
+  l'indique (M-5 révisé). Simplification : le label Flamme Verte n'est pas demandé ; la tranche
+  « à partir de 2005 sans label » (0,65) est assimilée à la tranche avec label (0,70).
+  Mesure sur la calibration (429 poêles étiquetés) : la chaîne de rendement rejoint celle du
+  DPE (consommation/besoin 1,54 contre 1,46) et fait apparaître un besoin surestimé de 14 % sur
+  ces maisons anciennes (biais Cep −16 → +17), à traiter avec les murs anciens et les ponts
+  thermiques. Calibration globale : biais +11,3 → +12,5, ±1 classe inchangé (90,3 %).
+- **Reste :** les vraies chaudières bois (rendements §13.2) et les libellés absents, toujours sur
+  l'approximation « poêle à granulés » ; les installations PAC + appoint bois (≈ 23 % des
+  lignes bois de la calibration, biais +39 à +49 kWhep/m²), simulées en tout-bois.
 - **3CL officielle :** rendements de génération propres aux chaudières bois (bûches,
   granulés, plaquettes) selon leur classe et leur ancienneté (§13), avec distribution
   hydraulique (Rd), régulation des radiateurs (Rr) et auxiliaires.
