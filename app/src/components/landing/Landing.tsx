@@ -125,20 +125,20 @@ export function Landing({ onOpenMethod }: { onOpenMethod: () => void }) {
         <div className="mx-auto grid max-w-6xl gap-8 px-4 py-12 sm:grid-cols-3 sm:px-6">
           <Reveal className="text-center sm:text-left">
             <p className="font-display text-4xl font-semibold text-pine">
-              <CountUp value={11496} />
+              <CountUp value={8046} />
             </p>
             <p className="mt-1 text-sm text-ink-soft">
-              DPE officiels tirés au hasard dans la base ADEME, jamais utilisés pour régler le
-              moteur
+              DPE officiels récents (méthode en vigueur) tirés au hasard dans la base ADEME,
+              jamais utilisés pour régler le moteur
             </p>
           </Reveal>
           <Reveal delay={0.1} className="text-center sm:text-left">
             <p className="font-display text-4xl font-semibold text-pine">
-              <CountUp value={87.0} format={(v) => `${v.toFixed(1).replace(".", ",")} %`} />
+              <CountUp value={95.0} format={(v) => `${v.toFixed(1).replace(".", ",")} %`} />
             </p>
             <p className="mt-1 text-sm text-ink-soft">
               d'étiquettes prédites à ±1 classe du diagnostic officiel (plus fiable pour le gaz,
-              le fioul et les maisons de 1975 à 2012)
+              le bois et les maisons de 1975 à 2012)
             </p>
           </Reveal>
           <Reveal delay={0.2} className="text-center sm:text-left">

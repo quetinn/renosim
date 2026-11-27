@@ -83,14 +83,14 @@ export function MethodPanel({ open, onClose }: { open: boolean; onClose: () => v
               <section className="space-y-2">
                 <h3 className="text-base font-semibold text-ink">La validation</h3>
                 <p>
-                  Le moteur a été confronté à <strong>11 496 DPE officiels</strong> de maisons
-                  individuelles tirés au hasard dans la base ouverte de l'ADEME, et jamais utilisés
-                  pour le régler : <strong>87 % des étiquettes prédites à ±1 classe</strong> du
-                  diagnostic officiel, 45 % exactement. La fiabilité est meilleure pour le gaz, le
-                  fioul et les maisons construites entre 1975 et 2012 (environ 90 à 96 %), plus
-                  faible pour le chauffage électrique et le bâti d'avant 1975, où le moteur tend à
-                  surestimer la consommation. Sur les seuls DPE établis avec la version actuelle de
-                  la méthode (2026), l'accord à ±1 classe atteint 93,6 %.{" "}
+                  Le moteur a été confronté à <strong>8 046 DPE officiels</strong> récents de maisons
+                  individuelles (méthode en vigueur), tirés au hasard dans la base ouverte de
+                  l'ADEME et jamais utilisés pour le régler : <strong>95 % des étiquettes prédites à
+                  ±1 classe</strong> du diagnostic officiel, 55 % exactement ; 89 % à ±1 classe une
+                  fois repondéré selon le parc réel. La fiabilité est meilleure pour le gaz, le bois
+                  et les maisons construites entre 1975 et 2012 (95 à 99 %), plus faible pour le bâti
+                  d'avant 1948 (84 %) et le chauffage électrique (92 %), où le moteur tend à
+                  surestimer la consommation.{" "}
                   <a
                     href={VALIDATION_NOTE_URL}
                     target="_blank"

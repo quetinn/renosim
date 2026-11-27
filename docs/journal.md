@@ -784,3 +784,30 @@ version de méthode en vigueur (protocole de la note §7).
 **Prochaine étape :** sensibilités une à une de P1 à P5 sur la calibration v3, puis réglage
 conjoint, puis mesure finale unique sur le test.
 
+## 2026-11-27 (suite 6) — Recalibration v1.1 et mesure finale
+
+- **Plages sourcées** (plan révisé et commité avant tout réglage) : surface de baies implicite des
+  DPE (médiane 0,133, p10 0,084, p90 0,211) et RE2020 art. 23-II (≥ 1/6, lu sur Légifrance) ;
+  Umur0 ; C1 §18.5 (coefficient solaire 0,45-0,62) ; profil de charge §13.2.1.1 (poids pleine
+  charge ≈ 0,13). Seuils de l'annexe 8.2 de l'arrêté DPE non relus (volet trop petit ; extraction
+  par script refusée par le classificateur, non contournée).
+- **Données par poste** : l'ADEME publie déperditions par paroi et apports ; `enrich_sample.py`
+  les récupère, `diagnose_envelope.py` compare poste par poste. Coupable avant 1975 : traduction
+  des étiquettes de qualité en U (toiture « insuffisante » 165 W/K contre 78 publiés).
+- **Étape A (M-14)** : facteurs de U par paroi/étiquette/époque calés sur les déperditions par
+  poste de la calibration v3 (`fit_quality_labels.py`). ±1 classe repondéré 86,1 → 89,9 %.
+- **Étape B** : grille de 100 essais (`recalibrate_grid.py`) ; seule le coefficient solaire agit ;
+  aucun essai ne tient le biais ±5 ; **écart décidé par l'auteur** : solaire 0,62, consigné avant
+  la mesure finale. P2 (U mur ancien non isolé de l'app) 2,0 → 1,7.
+- **Mesure finale unique** : test v2 (8 046 maisons v2.6, tiré après la calibration) : ±1 classe
+  95,0 % brut, 89,4 % repondéré, exact 54,7 %, biais +7,4 ; v1.0 sur les mêmes DPE : 93,2 %,
+  86,4 %, 55,5 %, +3,2. Avant 1948 76,2 → 83,5 %, 1948-1974 86,1 → 92,9 %. Test v1 (v2.6, 1 885) :
+  94,4 % / 85,8 %.
+- Note de validation v4, D-06, README, landing et panneau méthode à jour ; moteur 0.8.0.
+
+**État :** 231 tests, ruff/format/mypy OK, `npm run build` OK.
+
+**Prochaines étapes :** fusion de la branche v1.1 (sur accord) ; électricité (ECS ×1,10,
+auxiliaires) ; relire l'annexe 8.2 pour confronter M-14 ; rejouer les campagnes confort d'été et
+refroidissement (coefficient solaire modifié) ; figures de la note à régénérer pour la v4.
+

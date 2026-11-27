@@ -41,29 +41,32 @@ en bouquets : coût des travaux en fourchette, économies annuelles, temps de re
 ## Validation contre la base DPE de l'ADEME
 
 Le moteur, en mode conventionnel, est confronté aux diagnostics officiels de maisons
-individuelles (jeu « DPE Logements existants depuis juillet 2021 », Licence Ouverte). Résultats
-de la campagne v6 (note de validation v3, 26/11/2026) :
+individuelles (jeu « DPE Logements existants depuis juillet 2021 », Licence Ouverte). La
+référence est la **version de méthode en vigueur** (DPE v2.6). Résultats de la v1.1 (note de
+validation v4, 27/11/2026), mesurés **une seule fois** sur un échantillon de test tiré au hasard,
+jamais utilisé pour régler le moteur :
 
-| | Calibration | **Test indépendant** | Test, DPE de la méthode en vigueur (v2.6) |
+| Test v2 : 8 046 maisons, DPE v2.6 | v1.0 | **v1.1** | Critère |
 |---|---:|---:|---:|
-| Logements | 11 625 | **11 496** | 1 885 |
-| Accord à ±1 classe (critère : 90 %) | 90,3 % | **87,0 %** [86,4 ; 87,6] | **93,6 %** [92,4 ; 94,7] |
-| Accord exact (critère : 60 %) | 50,0 % | **44,9 %** | 55,2 % |
-| Biais moyen Cep (kWhep/m²/an) | +11,3 | **+33,3** | +2,3 |
-| ±1 classe, repondéré selon le parc | 81,4 % | 71,7 % | 86,3 % |
+| Accord à ±1 classe | 93,2 % | **95,0 %** [94,5 ; 95,5] | 90 % ✔ |
+| ±1 classe, repondéré selon le parc | 86,4 % | **89,4 %** [87,5 ; 91,2] | 90 % (de peu) |
+| Accord exact | 55,5 % | 54,7 % | 60 % ✘ |
+| Biais moyen Cep (kWhep/m²/an) | +3,2 | +7,4 | — |
+| Avant 1948, ±1 classe | 76,2 % | 83,5 % | — |
 
-*Intervalles de confiance à 95 % par bootstrap (1 000 tirages). Le test est un échantillon tiré
-au hasard, disjoint de la calibration, et n'a jamais servi à régler le moteur.*
+*Intervalles de confiance à 95 % par bootstrap (1 000 tirages). Calibration sur un autre
+échantillon aléatoire de 11 192 maisons, selon un protocole écrit avant le réglage
+([plan](docs/recalibration_v1.1.md)).*
 
-**Lecture.** Le critère fixé au départ (≥ 90 % à ±1 classe) est atteint sur les DPE établis avec
-la version actuelle de la méthode, mais **pas sur l'ensemble du test** : les DPE de 2022-2025
-sont surestimés d'environ 40 kWhep/m². Le moteur est fiable pour le gaz, le fioul et les maisons
-de 1975 à 2012 (90 à 96 %) ; ses points faibles sont le **chauffage électrique** et le **bâti
-d'avant 1975**, qui pèsent lourd dans le parc. Ces limites sont analysées dans la
-[note de validation](validation/report/note_validation.md), avec le protocole annoncé pour la
-prochaine calibration.
+**Lecture.** Le critère à ±1 classe est atteint sur données indépendantes, et presque atteint une
+fois repondéré selon le parc réel. Les progrès de la v1.1 portent sur le bâti ancien et le
+chauffage au bois : ponts thermiques et chaudières selon la méthode, appoint bois, et
+reconstitution des parois recalée sur les déperditions par poste publiées par l'ADEME. L'accord
+exact plafonne autour de 55 % : une description en deux minutes ne contient pas tout ce que
+relève un diagnostiqueur. Détails, limites et historique (v1.0 : 87 % sur un test mêlant toutes
+les versions de méthode) dans la [note de validation](validation/report/note_validation.md).
 
-![Accord à ±1 classe par époque de construction et par énergie de chauffage](validation/report/figures/within1_by_stratum_test_v6.svg)
+![Accord à ±1 classe par époque de construction et par énergie de chauffage (v1.0, test v1)](validation/report/figures/within1_by_stratum_test_v6.svg)
 
 ## Ce que fait l'outil
 
@@ -158,12 +161,14 @@ quarto render validation/report
 - [x] **Phase 5** — Consolidation : audit du 25/11/2026, prix et convention à jour, échantillon
       de test indépendant, note de validation finale, documentation
 
-**v1.1 « conformité réglementaire »** (une seule recalibration à la fin, selon le protocole annoncé
-dans la note) : ponts thermiques par liaison et distinction ITE/ITI, matériau des murs anciens,
-inertie selon les règles Th-I, volets en hiver (Ujn), chaudières bois et ECS des PAC selon la
-méthode, appoint des PAC et coût selon la puissance (la puissance nécessaire et l'alerte « isolez
-d'abord » sont déjà en place), geste « plancher bas », alertes sur les
-performances minimales de la réglementation thermique des bâtiments existants.
+- [x] **v1.1 « conformité réglementaire »** (27/11/2026) : poêles, inserts et chaudières bois
+      selon la méthode, appoint bois, ponts thermiques par liaison, inertie et matériau des murs
+      anciens déterminés comme dans la méthode, puissance de chauffage et alerte PAC, puis une
+      seule recalibration selon le protocole annoncé
+
+**Prochaines étapes** : volets en hiver (Ujn), ECS des PAC et appoint des PAC, choix ITE/ITI dans
+le geste murs, geste « plancher bas », alertes sur les performances minimales de la
+réglementation thermique des bâtiments existants, analyse du chauffage électrique.
 
 **Plus tard** : étiquette probabiliste (Monte-Carlo sur les entrées inconnues), carbone gris des
 travaux, parcours par étapes de type audit réglementaire, validation contre des consommations

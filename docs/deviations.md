@@ -100,6 +100,10 @@ Format : un écart = une entrée. Statut : `décidé` (au niveau du brief, pas e
   exactement le coefficient 0,5 calibré en Phase 3.
 - **Impact :** ±quelques % sur les besoins ; l'absolu reste calibré, seule la sensibilité à
   l'orientation/aux masques est ajoutée.
+- **Recalibration v1.1 (27/11/2026) :** coefficient 0,5 → **0,62**, borne haute de la plage
+  sourcée (moyenne des C1 verticaux des quatre orientations en saison de chauffe, sans masque,
+  §18.5) : seul paramètre de la grille à agir sur le biais, les besoins des maisons récentes
+  restant surestimés (`docs/recalibration_v1.1.md`, écart au plan consigné au §7).
 - **Correctif (11/07/2026) :** la table encodait par erreur la colonne *inclinée*
   (75° > x ≥ 25°) du §18.5 au lieu de la colonne *verticale* (≥ 75°, la bonne pour des
   fenêtres) — ex. sud H1a 1,857 au lieu de 1,00. Corrigé (`notes_correction` de la table) :
