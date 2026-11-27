@@ -52,6 +52,14 @@ M-13 (2026-11-27, v1.1) Linear thermal bridges (3CL §3.4, houses only): exposed
      "Légère" -> light walls and floor (no wall junction counted), "Très
      lourde" -> heavy top floor too, otherwise heavy walls and floor, light
      top floor (§7 defaults). Apartments keep the calibrated flat surcharge.
+M-14 (2026-11-27, recalibration v1.1, step A) Houses: the U of the walls, top
+     floor and ground floor from M-2/M-6 is multiplied by a factor per
+     (element, era before/from 1975, ADEME quality label or "absent") so that
+     the aggregated element losses match the per-component losses published
+     in the DPE of the calibration sample v3 (validation/fit_quality_labels.py,
+     validation/report/quality_label_factors_v3.json). Fitted on input losses,
+     never on consumption; cells under 30 rows keep a factor of 1. Set
+     ``QUALITY_LABEL_FACTORS = {}`` to disable (used by the fitting script).
 M-6  (calibration iteration 3) A missing insulation-quality field means missing
      DATA, not an uninsulated wall: mapped to "moyenne". Fully uninsulated
      pre-1975 walls use U = 2.0 (mid-range of the official Umur0 table for
@@ -94,10 +102,12 @@ M-11 (#16 brique 2) Cooling: a non-empty ``type_generateur_froid`` declares an
 
 from __future__ import annotations
 
+import json
 import math
 import re
 from dataclasses import dataclass
 from datetime import date
+from pathlib import Path
 
 from renosim.envelope import default_insulation_layout
 from renosim.models import (
@@ -286,6 +296,26 @@ def _parse_generator_age(label: str | None, construction_year: int) -> float:
         if m:
             return max(0.0, REFERENCE_YEAR - (int(m.group(1)) - 5))
     return max(0.0, REFERENCE_YEAR - construction_year)
+
+
+def _load_quality_label_factors() -> dict[str, float]:
+    """Choice M-14: per-label U factors fitted on calibration v3 (empty if absent)."""
+    path = Path(__file__).parent / "report" / "quality_label_factors_v3.json"
+    if not path.exists():
+        return {}
+    data = json.loads(path.read_text(encoding="utf-8"))
+    return {key: float(cell["factor"]) for key, cell in data["factors"].items()}
+
+
+#: Choice M-14 factors keyed "element|era|label" (era: "pre1975" / "1975+").
+QUALITY_LABEL_FACTORS: dict[str, float] = _load_quality_label_factors()
+
+
+def quality_label_factor(element: str, period: ConstructionPeriod, label: str | None) -> float:
+    """Choice M-14: U factor of an element for its ADEME quality label and era."""
+    early = period in (ConstructionPeriod.BEFORE_1948, ConstructionPeriod.Y1948_1974)
+    key = f"{element}|{'pre1975' if early else '1975+'}|{label or 'absent'}"
+    return QUALITY_LABEL_FACTORS.get(key, 1.0)
 
 
 #: Generator labels of wood-log stoves and inserts (3CL §13.1 rows), choice M-5.
@@ -556,6 +586,15 @@ def map_row(row: dict[str, object]) -> MappingResult:
     else:
         roof_b = 1.0
         floor_b = _ground_floor_b(floor_u)
+        # M-14: per-label U factors (houses), applied after b so losses scale linearly.
+        wall_u *= quality_label_factor(
+            "walls", period, str(row.get("qualite_isolation_murs") or "") or None
+        )
+        walls = [OpaqueEnvelopeElement(area_m2=wall_area, u_value_w_per_m2k=wall_u)]
+        roof_u *= quality_label_factor("roof", period, _roof_quality(row))
+        floor_u *= quality_label_factor(
+            "floor", period, str(row.get("qualite_isolation_plancher_bas") or "") or None
+        )
 
     # M-13: linear thermal bridges for houses (3CL §3.4).
     thermal_bridges: ThermalBridgeInputs | None = None

@@ -1,0 +1,185 @@
+{
+ "_meta": {
+  "description": "Choice M-14 (validation/mapping.py): U factor per (element, era, ADEME quality label) so that aggregated element losses match the per-component losses published in the DPE of the calibration sample. Houses only.",
+  "sample": "data/dpe_calib_v3.jsonl",
+  "fitted_on": "deperditions_murs / deperditions_planchers_hauts / deperditions_planchers_bas (ADEME dataset dpe03existant, Licence Ouverte v2.0)",
+  "min_rows_per_cell": 30,
+  "date": "2026-11-27"
+ },
+ "factors": {
+  "floor|1975+|absent": {
+   "factor": 1.4344,
+   "n": 42,
+   "engine_mean_w_per_k": 22.4,
+   "dpe_mean_w_per_k": 32.2
+  },
+  "floor|1975+|bonne": {
+   "factor": 1.115,
+   "n": 2728,
+   "engine_mean_w_per_k": 22.2,
+   "dpe_mean_w_per_k": 24.7
+  },
+  "floor|1975+|insuffisante": {
+   "factor": 1.7244,
+   "n": 2877,
+   "engine_mean_w_per_k": 25.3,
+   "dpe_mean_w_per_k": 43.6
+  },
+  "floor|1975+|moyenne": {
+   "factor": 1.3113,
+   "n": 1306,
+   "engine_mean_w_per_k": 24.6,
+   "dpe_mean_w_per_k": 32.3
+  },
+  "floor|1975+|très bonne": {
+   "factor": 0.9149,
+   "n": 1817,
+   "engine_mean_w_per_k": 17.9,
+   "dpe_mean_w_per_k": 16.4
+  },
+  "floor|pre1975|absent": {
+   "factor": 1.0,
+   "n": 16,
+   "engine_mean_w_per_k": 23.9,
+   "dpe_mean_w_per_k": 28.2
+  },
+  "floor|pre1975|bonne": {
+   "factor": 1.1619,
+   "n": 237,
+   "engine_mean_w_per_k": 22.3,
+   "dpe_mean_w_per_k": 25.9
+  },
+  "floor|pre1975|insuffisante": {
+   "factor": 1.7902,
+   "n": 1745,
+   "engine_mean_w_per_k": 25.0,
+   "dpe_mean_w_per_k": 44.8
+  },
+  "floor|pre1975|moyenne": {
+   "factor": 1.7014,
+   "n": 292,
+   "engine_mean_w_per_k": 21.9,
+   "dpe_mean_w_per_k": 37.3
+  },
+  "floor|pre1975|très bonne": {
+   "factor": 0.9395,
+   "n": 75,
+   "engine_mean_w_per_k": 15.1,
+   "dpe_mean_w_per_k": 14.2
+  },
+  "roof|1975+|absent": {
+   "factor": 1.0484,
+   "n": 45,
+   "engine_mean_w_per_k": 22.0,
+   "dpe_mean_w_per_k": 23.1
+  },
+  "roof|1975+|bonne": {
+   "factor": 0.9877,
+   "n": 1887,
+   "engine_mean_w_per_k": 18.0,
+   "dpe_mean_w_per_k": 17.8
+  },
+  "roof|1975+|insuffisante": {
+   "factor": 1.544,
+   "n": 1750,
+   "engine_mean_w_per_k": 31.1,
+   "dpe_mean_w_per_k": 48.0
+  },
+  "roof|1975+|moyenne": {
+   "factor": 0.9046,
+   "n": 1279,
+   "engine_mean_w_per_k": 22.9,
+   "dpe_mean_w_per_k": 20.7
+  },
+  "roof|1975+|très bonne": {
+   "factor": 1.0063,
+   "n": 3809,
+   "engine_mean_w_per_k": 11.1,
+   "dpe_mean_w_per_k": 11.2
+  },
+  "roof|pre1975|absent": {
+   "factor": 1.0,
+   "n": 13,
+   "engine_mean_w_per_k": 33.1,
+   "dpe_mean_w_per_k": 34.3
+  },
+  "roof|pre1975|bonne": {
+   "factor": 1.0042,
+   "n": 410,
+   "engine_mean_w_per_k": 17.0,
+   "dpe_mean_w_per_k": 17.1
+  },
+  "roof|pre1975|insuffisante": {
+   "factor": 0.4742,
+   "n": 1054,
+   "engine_mean_w_per_k": 165.4,
+   "dpe_mean_w_per_k": 78.4
+  },
+  "roof|pre1975|moyenne": {
+   "factor": 1.3668,
+   "n": 218,
+   "engine_mean_w_per_k": 36.8,
+   "dpe_mean_w_per_k": 50.3
+  },
+  "roof|pre1975|très bonne": {
+   "factor": 1.3716,
+   "n": 670,
+   "engine_mean_w_per_k": 9.9,
+   "dpe_mean_w_per_k": 13.6
+  },
+  "walls|1975+|bonne": {
+   "factor": 0.892,
+   "n": 2712,
+   "engine_mean_w_per_k": 48.8,
+   "dpe_mean_w_per_k": 43.5
+  },
+  "walls|1975+|insuffisante": {
+   "factor": 1.1213,
+   "n": 2652,
+   "engine_mean_w_per_k": 111.1,
+   "dpe_mean_w_per_k": 124.6
+  },
+  "walls|1975+|moyenne": {
+   "factor": 0.7947,
+   "n": 1445,
+   "engine_mean_w_per_k": 79.5,
+   "dpe_mean_w_per_k": 63.2
+  },
+  "walls|1975+|très bonne": {
+   "factor": 0.9733,
+   "n": 1961,
+   "engine_mean_w_per_k": 26.4,
+   "dpe_mean_w_per_k": 25.7
+  },
+  "walls|pre1975|absent": {
+   "factor": 1.0,
+   "n": 1,
+   "engine_mean_w_per_k": 91.3,
+   "dpe_mean_w_per_k": 0.0
+  },
+  "walls|pre1975|bonne": {
+   "factor": 0.6666,
+   "n": 214,
+   "engine_mean_w_per_k": 62.1,
+   "dpe_mean_w_per_k": 41.4
+  },
+  "walls|pre1975|insuffisante": {
+   "factor": 0.8469,
+   "n": 1779,
+   "engine_mean_w_per_k": 260.6,
+   "dpe_mean_w_per_k": 220.7
+  },
+  "walls|pre1975|moyenne": {
+   "factor": 0.5247,
+   "n": 178,
+   "engine_mean_w_per_k": 127.7,
+   "dpe_mean_w_per_k": 67.0
+  },
+  "walls|pre1975|très bonne": {
+   "factor": 0.9645,
+   "n": 193,
+   "engine_mean_w_per_k": 27.9,
+   "dpe_mean_w_per_k": 26.9
+  }
+ }
+}
